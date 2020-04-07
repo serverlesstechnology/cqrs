@@ -7,3 +7,11 @@ CREATE TABLE events (
     timestamp timestamp with time zone DEFAULT (CURRENT_TIMESTAMP),
     PRIMARY KEY (aggregate_type, aggregate_id, sequence)
 );
+
+
+CREATE TABLE xxxxxx_view (
+    aggregate_id text                        NOT NULL,
+    version      bigint CHECK (version >= 0) NOT NULL,
+    payload      jsonb                       NOT NULL,
+    PRIMARY KEY (aggregate_id)
+);

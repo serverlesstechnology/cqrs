@@ -40,11 +40,10 @@ impl<V, A, E> GenericViewRepository<V, A, E>
 
 
     pub fn load_mut(&self, conn: &Connection, aggregate_id: String) -> Result<(V, ViewContext<V>), AggregateError> {
-        let query = "SELECT version,payload FROM views WHERE view= $1 AND aggregate_id= $2";
-        let result = match conn.query(query, &[&self.view_name, &aggregate_id]) {
+        let query = format!("SELECT version,payload FROM {} WHERE aggregate_id= $1", &self.view_name);
+        let result = match conn.query(query.as_str(), &[&aggregate_id]) {
             Ok(result) => { result }
             Err(e) => {
-                // TODO split errors into validation and technical
                 return Err(AggregateError::new(e.description()));
             }
         };
@@ -96,8 +95,8 @@ impl<V, A, E> GenericViewRepository<V, A, E>
 
 
     pub fn load(&self, conn: &Connection, aggregate_id: String) -> Option<V> {
-        let query = "SELECT version,payload FROM views WHERE view= $1 AND aggregate_id= $2";
-        let result = conn.query(query, &[&self.view_name, &aggregate_id]).unwrap();
+        let query = format!("SELECT version,payload FROM {} WHERE aggregate_id= $1", &self.view_name);
+        let result = conn.query(query.as_str(), &[&aggregate_id]).unwrap();
         match result.iter().next() {
             Some(row) => {
                 let payload = row.get("payload");
@@ -134,13 +133,12 @@ impl<V> ViewContext<V>
 {
     pub fn commit(&self, conn: &Connection, view: V) {
         let sql = match self.version {
-            0 => "INSERT INTO views (payload, version, view, aggregate_id) VALUES ( $1, $2, $3, $4 )",
-            _ => "UPDATE views SET payload= $1 , version= $2 WHERE view= $3 AND aggregate_id= $4",
+            0 => format!("INSERT INTO {} (payload, version, aggregate_id) VALUES ( $1, $2, $3 )", &self.view_name),
+            _ => format!("UPDATE {} SET payload= $1 , version= $2 WHERE aggregate_id= $3", &self.view_name),
         };
         let payload = serde_json::to_value(&view).unwrap();
         let version = self.version + 1;
-        let view_name = &self.view_name;
         let aggregate_id = &self.aggregate_id;
-        conn.execute(sql, &[&payload, &version, view_name, aggregate_id]).unwrap();
+        conn.execute(sql.as_str(), &[&payload, &version, aggregate_id]).unwrap();
     }
 }
