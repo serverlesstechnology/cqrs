@@ -2,6 +2,13 @@
 
 A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures.
 
+![Build tag](https://codebuild.us-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoia3ZYcXozMjVZaFhoTldlUmhHemlWVm9LUjVaTC9LN3dSTFZpMkVTTmRycElkcGhJT3g2TUdtajZyRWZMd01xNktvUkNwLzdZYW15bzJkZldQMjJWZ1dNPSIsIml2UGFyYW1ldGVyU3BlYyI6InFORDNyaFFEQUNFQkE1NlUiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
+
+### Installation
+
+    [dependencies]
+    cqrs-es = "0.0.2"
+    
 ### Opinions
 
 - Aggregate persistence is via event sourcing only.

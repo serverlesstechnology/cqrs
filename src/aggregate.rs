@@ -44,10 +44,15 @@ pub trait AggregateId<A: Aggregate>: ToString + Eq + Hash {
     fn aggregate_type(&self) -> &'static str;
 }
 
+/// The base error for the framework.
 #[derive(Debug, PartialEq)]
 pub enum AggregateError {
-    TechnicalError(String),
+    /// The user has made an error, a String value contains a message to be delivered to the user.
     UserError(String),
+    /// A technical error was encountered that prevented the command from being applied to the
+    /// aggregate. In general the accompanying message should be logged for investigation rather
+    /// than returned to the user.
+    TechnicalError(String),
 }
 
 impl error::Error for AggregateError {}
@@ -66,6 +71,7 @@ impl fmt::Display for AggregateError {
 }
 
 impl AggregateError {
+    /// Convenience function to construct a [`UserError`] from a `&str`.
     pub fn new(msg: &str) -> Self { AggregateError::UserError(msg.to_string()) }
 }
 
@@ -80,24 +86,10 @@ impl From<serde_json::error::Error> for AggregateError {
     }
 }
 
-impl From<StorageError> for AggregateError {
-    fn from(e: StorageError) -> Self {
-        println!("error encountered storing events - {}", e.message);
-        AggregateError::new("server encountered an unknown error")
-    }
-}
+// impl From<StorageError> for AggregateError {
+//     fn from(e: StorageError) -> Self {
+//         println!("error encountered storing events - {}", e.message);
+//         AggregateError::new("server encountered an unknown error")
+//     }
+// }
 
-#[derive(Debug, PartialEq)]
-pub struct StorageError {
-    pub message: String
-}
-
-impl StorageError {
-    pub fn new(msg: &str) -> Self { StorageError { message: msg.to_string() } }
-}
-
-impl From<postgres_shared::error::Error> for StorageError {
-    fn from(err: postgres_shared::error::Error) -> Self {
-        StorageError::new(err.to_string().as_str())
-    }
-}

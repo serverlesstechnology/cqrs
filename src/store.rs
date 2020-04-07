@@ -5,7 +5,7 @@ use std::sync::RwLock;
 
 use postgres::Connection;
 
-use crate::aggregate::{Aggregate, AggregateId, StorageError};
+use crate::aggregate::{Aggregate, AggregateId, AggregateError};
 use crate::event::{DomainEvent, MessageEnvelope};
 
 /// The abstract central source for loading past events and committing new events.
@@ -16,7 +16,7 @@ pub trait EventStore<I, A, E>
     /// Load all events for a particular `aggregate_id`
     fn load(&self, aggregate_id: &I) -> Vec<MessageEnvelope<A, E>>;
     /// Commit new events
-    fn commit(&self, events: Vec<MessageEnvelope<A, E>>) -> Result<(), StorageError>;
+    fn commit(&self, events: Vec<MessageEnvelope<A, E>>) -> Result<(), AggregateError>;
 }
 
 ///  Simple memory store only useful for testing purposes
@@ -90,7 +90,7 @@ impl<I, A, E> EventStore<I, A, E> for MemStore<I, A, E>
         events
     }
 
-    fn commit(&self, events: Vec<MessageEnvelope<A, E>>) -> Result<(), StorageError> {
+    fn commit(&self, events: Vec<MessageEnvelope<A, E>>) -> Result<(), AggregateError> {
         let aggregate_id = self.aggregate_id(&events);
         let mut new_events = self.load_commited_events(aggregate_id.to_string());
         for event in events {
@@ -169,8 +169,13 @@ impl<I, A, E> EventStore<I, A, E> for PostgresStore<I, A, E>
         result
     }
 
-    fn commit(&self, events: Vec<MessageEnvelope<A, E>>) -> Result<(), StorageError> {
-        let trans = self.conn.transaction()?;
+    fn commit(&self, events: Vec<MessageEnvelope<A, E>>) -> Result<(), AggregateError> {
+        let trans = match self.conn.transaction() {
+            Ok(t) => {t},
+            Err(err) => {
+                return Err(AggregateError::TechnicalError(err.to_string()))
+            },
+        };
         for event in events {
             let agg_type = event.aggregate_type.clone();
             let id = event.aggregate_id.clone();
@@ -179,7 +184,9 @@ impl<I, A, E> EventStore<I, A, E> for PostgresStore<I, A, E>
             let metadata = serde_json::to_value(&event.metadata).unwrap();
             self.conn.execute(INSERT_EVENT, &[&agg_type, &id, &sequence, &payload, &metadata]).unwrap();
         }
-        trans.commit()?;
-        Ok(())
+        match trans.commit() {
+            Ok(_) => Ok(()),
+            Err(err) => Err(AggregateError::TechnicalError(err.to_string())),
+        }
     }
 }
