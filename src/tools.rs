@@ -30,7 +30,7 @@ impl<V, A, E> GenericViewRepository<V, A, E>
           E: DomainEvent<A>,
           A: Aggregate
 {
-    /// Creates a new [`GenericViewRepository`] that will store its' views in the table named
+    /// Creates a new `GenericViewRepository` that will store its' views in the table named
     /// identically to the `view_name` value provided. This table should be created by the user
     /// previously (see `/db/init.sql`).
     pub fn new(view_name: String) -> Self {

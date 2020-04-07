@@ -40,7 +40,7 @@ pub trait Aggregate: Default {
 /// is encouraged here and a future `derive` will support this.
 pub trait AggregateId<A: Aggregate>: ToString + Eq + Hash {
     /// aggregate_type specifies the unique `Aggregate` that this ID refers to.
-    /// This value should be identical to that of the [`Aggregate::aggregate_type()`]
+    /// This value should be identical to that of the `Aggregate::aggregate_type()`
     fn aggregate_type(&self) -> &'static str;
 }
 
@@ -71,7 +71,7 @@ impl fmt::Display for AggregateError {
 }
 
 impl AggregateError {
-    /// Convenience function to construct a [`UserError`] from a `&str`.
+    /// Convenience function to construct a `UserError` from a `&str`.
     pub fn new(msg: &str) -> Self { AggregateError::UserError(msg.to_string()) }
 }
 

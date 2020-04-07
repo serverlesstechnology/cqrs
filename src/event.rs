@@ -14,7 +14,7 @@ use crate::aggregate::Aggregate;
 /// A `DomainEvent` should always be in the past tense, e.g.,
 /// - `AdminPrivilegesGranted`
 /// - `EmailAddressChanged`
-/// - `DependentAdded`
+/// - `DependencyAdded`
 pub trait DomainEvent<A: Aggregate>: Serialize + DeserializeOwned + Clone + PartialEq + fmt::Debug {
     /// apply encapsulates all of the logic that determines how an event modifies the state of an
     /// `Aggregate`.

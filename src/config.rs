@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use chrono::Utc;
 
-/// A [`MetadataSupplier`] will add metadata to events as they are produced by the aggregate.
+/// A `MetadataSupplier` will add metadata to events as they are produced by the aggregate.
 pub trait MetadataSupplier
 {
     /// Provides the Metadata for a new event.
@@ -12,7 +12,7 @@ pub trait MetadataSupplier
     fn supply(&self) -> HashMap<String, String>;
 }
 
-/// A simple [`MetadataSupplier`] that adds no information.
+/// A simple `MetadataSupplier` that adds no information.
 pub struct NoopMetadataSupplier {}
 
 impl Default for NoopMetadataSupplier {
@@ -25,7 +25,7 @@ impl MetadataSupplier for NoopMetadataSupplier {
     fn supply(&self) -> HashMap<String, String, RandomState> { Default::default() }
 }
 
-/// A simple [`MetadataSupplier`] that adds the current time. Note that these times are not
+/// A simple `MetadataSupplier` that adds the current time. Note that these times are not
 /// guaranteed to be unique.
 pub struct TimeMetadataSupplier {}
 

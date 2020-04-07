@@ -1,13 +1,13 @@
 use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::DomainEvent;
 
-/// A [`Command`] represents a request to modify the state of an [`Aggregate`] by producing
-/// [`DomainEvent`]s.
+/// A `Command` represents a request to modify the state of an `Aggregate` by producing
+/// `DomainEvent`s.
 ///
 /// A `Command` is always named in the imperative, e.g.,
 /// - `GrantAdminPrivileges`
 /// - `ChangeEmailAddress`
-/// - `AddDependent`
+/// - `AddDependency`
 pub trait Command<A, E>
     where A: Aggregate,
           E: DomainEvent<A>
