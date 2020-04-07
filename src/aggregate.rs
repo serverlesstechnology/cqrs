@@ -85,11 +85,3 @@ impl From<serde_json::error::Error> for AggregateError {
         }
     }
 }
-
-// impl From<StorageError> for AggregateError {
-//     fn from(e: StorageError) -> Self {
-//         println!("error encountered storing events - {}", e.message);
-//         AggregateError::new("server encountered an unknown error")
-//     }
-// }
-

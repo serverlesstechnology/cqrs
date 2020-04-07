@@ -1,15 +1,28 @@
 # CQRS
 
-A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures.
+**A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures.**
 
 ![Build tag](https://codebuild.us-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoia3ZYcXozMjVZaFhoTldlUmhHemlWVm9LUjVaTC9LN3dSTFZpMkVTTmRycElkcGhJT3g2TUdtajZyRWZMd01xNktvUkNwLzdZYW15bzJkZldQMjJWZ1dNPSIsIml2UGFyYW1ldGVyU3BlYyI6InFORDNyaFFEQUNFQkE1NlUiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
+[![Crates.io](https://img.shields.io/crates/v/cqrs-es)](https://crates.io/crates/cqrs-es)
+[![docs](https://img.shields.io/badge/API-docs-blue.svg)](https://docs.rs/cqrs-es)
+---
 
-### Installation
+## Installation
 
-    [dependencies]
-    cqrs-es = "0.0.2"
-    
-### Opinions
+Cqrs-es is available from Crates.io or Github.
+
+```toml
+[dependencies]
+cqrs-es = "0.0.2"
+```
+
+Or for a specific branch
+```toml
+[dependencies]
+cqrs-es = { git = "https://github.com/serverlesstechnology/cqrs.git", branch = "master"}
+```
+
+## Opinions
 
 - Aggregate persistence is via event sourcing only.
 - Metadata is implemented only as a `HashMap<String,String>`. 
@@ -19,7 +32,7 @@ it supplies metadata for. This may be changed.
 - Generics are preferred over boxed traits.
 - Persistence is implemented through a Postgres database.
 
-### Todos/research
+## Todos/research
 
 - Event upcasters.
 - Some additional framework around `GenericViewRepository` to simplify event replay.

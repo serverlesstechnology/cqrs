@@ -7,6 +7,7 @@ use crate::config::MetadataSupplier;
 use crate::view::ViewProcessor;
 use crate::command::Command;
 
+/// This is the base framework for applying commands to produce events.
 pub struct CqrsFramework<I, A, E, ES, M>
     where
         I: AggregateId<A>,
@@ -29,6 +30,7 @@ impl<I, A, E, ES, M> CqrsFramework<I, A, E, ES, M>
         ES: EventStore<I, A, E>,
         M: MetadataSupplier
 {
+    /// Creates new framework for dispatching commands using the provided elements.
     pub fn new(store: ES, view: Rc<dyn ViewProcessor<I, A, E>>, metadata_supplier: M) -> CqrsFramework<I, A, E, ES, M>
         where
             I: AggregateId<A>,
@@ -45,6 +47,13 @@ impl<I, A, E, ES, M> CqrsFramework<I, A, E, ES, M>
         }
     }
 
+    /// This applies a command to an aggregate, this is the only way to make any change to
+    /// the state of an aggregate.
+    ///
+    /// An error while processing will result in no events committed and
+    /// an AggregateError being returned.
+    ///
+    /// If successful the events produced will be applied to the [`ViewProcessor`].
     pub fn execute<C: Command<A, E>>(&self, aggregate_id: &I, command: C) -> Result<(), AggregateError> {
         let (mut aggregate, current_sequence) = self.load_aggregate(aggregate_id);
         let resultant_events = command.handle(&mut aggregate)?;

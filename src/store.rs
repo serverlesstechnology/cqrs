@@ -52,6 +52,7 @@ impl<I, A, E> MemStore<I, A, E>
         A: Aggregate,
         E: DomainEvent<A>
 {
+    /// Creates a new event store with a shared event map.
     pub fn new_with_shared_events(events: Rc<LockedMessageEnvelopeMap<A, E>>) -> Self {
         MemStore {
             events,
@@ -104,7 +105,8 @@ impl<I, A, E> EventStore<I, A, E> for MemStore<I, A, E>
 }
 
 
-///  Storage engine using an Postgres backing
+/// Storage engine using an Postgres backing. This is the only persistent store currently
+/// provided.
 pub struct PostgresStore<I, A, E>
     where
         I: AggregateId<A>,
@@ -121,6 +123,7 @@ impl<I, A, E> PostgresStore<I, A, E>
         A: Aggregate,
         E: DomainEvent<A>
 {
+    /// Creates a new `PostgresStore` from the provided database connection.
     pub fn new(conn: Connection) -> Self {
         PostgresStore {
             conn,

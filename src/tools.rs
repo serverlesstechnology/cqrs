@@ -10,6 +10,9 @@ use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::{DomainEvent, MessageEnvelope};
 use crate::view::View;
 
+// TODO use of both 'view' and 'query' is confusing
+/// This provides a simple query/view repository that can be used both to return deserialized
+/// views and to act as a query processor.
 pub struct GenericViewRepository<V, A, E>
     where V: View<A, E>,
           E: DomainEvent<A>,
@@ -27,19 +30,24 @@ impl<V, A, E> GenericViewRepository<V, A, E>
           E: DomainEvent<A>,
           A: Aggregate
 {
+    /// Creates a new [`GenericViewRepository`] that will store its' views in the table named
+    /// identically to the `view_name` value provided. This table should be created by the user
+    /// previously (see `/db/init.sql`).
     pub fn new(view_name: String) -> Self {
         GenericViewRepository { view_name, error_handler: None, _phantom: PhantomData }
     }
+    /// Since inbound views cannot
     pub fn with_error_handler(&mut self, error_handler: Box<ErrorHandler>) {
         self.error_handler = Some(error_handler);
     }
 
+    /// Returns the originally configured view name.
     pub fn view_name(&self) -> String {
         self.view_name.to_string()
     }
 
 
-    pub fn load_mut(&self, conn: &Connection, aggregate_id: String) -> Result<(V, ViewContext<V>), AggregateError> {
+    fn load_mut(&self, conn: &Connection, aggregate_id: String) -> Result<(V, ViewContext<V>), AggregateError> {
         let query = format!("SELECT version,payload FROM {} WHERE aggregate_id= $1", &self.view_name);
         let result = match conn.query(query.as_str(), &[&aggregate_id]) {
             Ok(result) => { result }
@@ -73,6 +81,7 @@ impl<V, A, E> GenericViewRepository<V, A, E>
         }
     }
 
+    /// Used to apply committed events to a view.
     pub fn apply_events(&self, conn: &Connection, aggregate_id: &str, events: &[MessageEnvelope<A, E>])
     {
         match self.load_mut(conn, aggregate_id.to_string()) {
@@ -93,10 +102,11 @@ impl<V, A, E> GenericViewRepository<V, A, E>
         };
     }
 
-
-    pub fn load(&self, conn: &Connection, aggregate_id: String) -> Option<V> {
+    // TODO correct database field to also use 'view_id' instead of 'aggregate_id'
+    /// Loads and deserializes a view based on the view id.
+    pub fn load(&self, conn: &Connection, view_id: String) -> Option<V> {
         let query = format!("SELECT version,payload FROM {} WHERE aggregate_id= $1", &self.view_name);
-        let result = conn.query(query.as_str(), &[&aggregate_id]).unwrap();
+        let result = conn.query(query.as_str(), &[&view_id]).unwrap();
         match result.iter().next() {
             Some(row) => {
                 let payload = row.get("payload");
@@ -118,8 +128,7 @@ impl<V, A, E> GenericViewRepository<V, A, E>
     }
 }
 
-
-pub struct ViewContext<V>
+struct ViewContext<V>
     where V: Debug + Default + Serialize + DeserializeOwned + Default
 {
     view_name: String,
@@ -131,7 +140,7 @@ pub struct ViewContext<V>
 impl<V> ViewContext<V>
     where V: Debug + Default + Serialize + DeserializeOwned + Default
 {
-    pub fn commit(&self, conn: &Connection, view: V) {
+    fn commit(&self, conn: &Connection, view: V) {
         let sql = match self.version {
             0 => format!("INSERT INTO {} (payload, version, aggregate_id) VALUES ( $1, $2, $3 )", &self.view_name),
             _ => format!("UPDATE {} SET payload= $1 , version= $2 WHERE aggregate_id= $3", &self.view_name),
