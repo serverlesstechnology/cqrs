@@ -10,6 +10,7 @@ Further, the `MetadataSupplier` that the user provides has no insight into the e
 it supplies metadata for. This may be changed.
 - JSON serialization only.
 - Generics are preferred over boxed traits.
+- Persistence is implemented through a Postgres database.
 
 ### Todos/research
 
@@ -18,3 +19,4 @@ it supplies metadata for. This may be changed.
 - Explore options for increasing the usefulness of `MetadataSupplier`.
 - Event serialization uses the event type as the root node of the JSON tree. This simplifies
 deserialization but is non-standard.
+- Persistence implementation for DynamoDb.

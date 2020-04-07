@@ -6,14 +6,14 @@ use chrono::Utc;
 use postgres::{Connection, TlsMode};
 use serde::{Deserialize, Serialize};
 use static_assertions::assert_impl_all;
-use cqrs::aggregate::{Aggregate, AggregateId, AggregateError};
-use cqrs::event::{DomainEvent, MessageEnvelope};
-use cqrs::command::Command;
-use cqrs::view::ViewProcessor;
-use cqrs::store::{MemStore, PostgresStore, EventStore};
-use cqrs::config::TimeMetadataSupplier;
-use cqrs::cqrs::CqrsFramework;
-use cqrs::test::TestFramework;
+use cqrs_es::aggregate::{Aggregate, AggregateId, AggregateError};
+use cqrs_es::event::{DomainEvent, MessageEnvelope};
+use cqrs_es::command::Command;
+use cqrs_es::view::ViewProcessor;
+use cqrs_es::store::{MemStore, PostgresStore, EventStore};
+use cqrs_es::config::TimeMetadataSupplier;
+use cqrs_es::cqrs::CqrsFramework;
+use cqrs_es::test::TestFramework;
 
 #[derive(Debug)]
 pub struct TestAggregate {
@@ -217,8 +217,9 @@ fn load_events() {
 }
 
 #[test]
+#[ignore] // integration testing
 fn commit_and_load_events() {
-    let conn = Connection::connect("postgresql://stc_user:stc_pass@localhost:5432/stc", TlsMode::None).unwrap();
+    let conn = Connection::connect("postgresql://user:pass@localhost:5432/test_db", TlsMode::None).unwrap();
     let event_store = PostgresStore::<TestAggId, TestAggregate, TestEvent>::new(conn);
     let id = TestAggId(uuid::Uuid::new_v4().to_string());
     let id_str = id.to_string();
@@ -248,8 +249,9 @@ fn commit_and_load_events() {
 }
 
 #[test]
+#[ignore] // integration testing
 fn new_command() {
-    let conn = Connection::connect("postgresql://stc_user:stc_pass@localhost:5432/stc", TlsMode::None).unwrap();
+    let conn = Connection::connect("postgresql://user:pass@localhost:5432/test_db", TlsMode::None).unwrap();
     let event_store = PostgresStore::<TestAggId, TestAggregate, TestEvent>::new(conn);
     let id = TestAggId(uuid::Uuid::new_v4().to_string());
     let id_str = id.to_string();

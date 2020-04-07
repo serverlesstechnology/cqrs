@@ -65,7 +65,7 @@ impl<I, A, E> MemStore<I, A, E>
             None => {}
             Some(events) => {
                 for event in events {
-                    committed_events.push((*event).clone());
+                    committed_events.push(event.clone());
                 }
             }
         };

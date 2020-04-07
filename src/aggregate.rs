@@ -10,7 +10,7 @@ use std::hash::Hash;
 ///
 /// #Example
 /// ```rust
-/// # use cqrs::aggregate::Aggregate;
+/// # use cqrs_es::aggregate::Aggregate;
 /// struct Customer {
 ///     customer_id: String,
 ///     name: String,
