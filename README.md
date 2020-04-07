@@ -18,4 +18,3 @@ it supplies metadata for. This may be changed.
 - Explore options for increasing the usefulness of `MetadataSupplier`.
 - Event serialization uses the event type as the root node of the JSON tree. This simplifies
 deserialization but is non-standard.
-- In large

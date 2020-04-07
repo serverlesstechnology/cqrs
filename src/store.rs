@@ -60,16 +60,16 @@ impl<I, A, E> MemStore<I, A, E>
     }
     fn load_commited_events(&self, aggregate_id: String) -> Vec<MessageEnvelope<A, E>> {
         let event_map = self.events.read().unwrap();
-        let mut commited_events: Vec<MessageEnvelope<A, E>> = Vec::new();
+        let mut committed_events: Vec<MessageEnvelope<A, E>> = Vec::new();
         match event_map.get(aggregate_id.to_string().as_str()) {
             None => {}
             Some(events) => {
                 for event in events {
-                    commited_events.push(event.proper_clone());
+                    committed_events.push((*event).clone());
                 }
             }
         };
-        commited_events
+        committed_events
     }
     fn aggregate_id(&self, events: &[MessageEnvelope<A, E>]) -> String {
         let &first_event = events.iter().peekable().peek().unwrap();
@@ -94,7 +94,7 @@ impl<I, A, E> EventStore<I, A, E> for MemStore<I, A, E>
         let aggregate_id = self.aggregate_id(&events);
         let mut new_events = self.load_commited_events(aggregate_id.to_string());
         for event in events {
-            new_events.push(event.proper_clone());
+            new_events.push(event.clone());
         }
         println!("storing: {} events", &new_events.len());
         let mut event_map = self.events.write().unwrap();

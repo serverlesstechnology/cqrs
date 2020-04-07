@@ -59,7 +59,7 @@ impl<I, A, E, ES, M> CqrsFramework<I, A, E, ES, M>
     fn duplicate(wrapped_events: &[MessageEnvelope<A, E>]) -> Vec<MessageEnvelope<A, E>> {
         let mut committed_events = Vec::new();
         for wrapped_event in wrapped_events {
-            committed_events.push(wrapped_event.proper_clone());
+            committed_events.push((*wrapped_event).clone());
         }
         committed_events
     }

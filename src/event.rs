@@ -21,7 +21,7 @@ pub trait DomainEvent<A: Aggregate>: Serialize + DeserializeOwned + Clone + Part
 
 /// `MessageEnvelope` encapsulates an event with pertinent information. All of the associated data
 /// will be transported and persisted together.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct MessageEnvelope<A, E>
     where
         A: Aggregate,
@@ -35,19 +35,22 @@ pub struct MessageEnvelope<A, E>
     pub _phantom: PhantomData<A>,
 }
 
-impl<A: Aggregate, E: DomainEvent<A>> MessageEnvelope<A, E> {
-    pub fn proper_clone(&self) -> Self {
+impl<A,E> Clone for MessageEnvelope<A, E>
+    where
+        A: Aggregate,
+        E: DomainEvent<A>
+{
+    fn clone(&self) -> Self {
         MessageEnvelope {
             aggregate_id: self.aggregate_id.clone(),
             sequence: self.sequence,
             aggregate_type: self.aggregate_type.clone(),
             payload: self.payload.clone(),
             metadata: self.metadata.clone(),
-            _phantom: PhantomData,
+            _phantom: PhantomData
         }
     }
 }
-
 
 impl<A, E> MessageEnvelope<A, E>
     where
