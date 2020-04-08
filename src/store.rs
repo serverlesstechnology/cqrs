@@ -60,6 +60,7 @@ impl<I, A, E> MemStore<I, A, E>
         }
     }
     fn load_commited_events(&self, aggregate_id: String) -> Vec<MessageEnvelope<A, E>> {
+        // uninteresting unwrap: this is not a struct for production use
         let event_map = self.events.read().unwrap();
         let mut committed_events: Vec<MessageEnvelope<A, E>> = Vec::new();
         match event_map.get(aggregate_id.to_string().as_str()) {
@@ -73,6 +74,7 @@ impl<I, A, E> MemStore<I, A, E>
         committed_events
     }
     fn aggregate_id(&self, events: &[MessageEnvelope<A, E>]) -> String {
+        // uninteresting unwrap: this is not a struct for production use
         let &first_event = events.iter().peekable().peek().unwrap();
         first_event.aggregate_id.to_string()
     }
@@ -98,6 +100,7 @@ impl<I, A, E> EventStore<I, A, E> for MemStore<I, A, E>
             new_events.push(event.clone());
         }
         println!("storing: {} events", &new_events.len());
+        // uninteresting unwrap: this is not a struct for production use
         let mut event_map = self.events.write().unwrap();
         event_map.insert(aggregate_id.to_string(), new_events);
         Ok(())
@@ -155,7 +158,12 @@ impl<I, A, E> EventStore<I, A, E> for PostgresStore<I, A, E>
                     let aggregate_id: String = row.get("aggregate_id");
                     let s: i64 = row.get("sequence");
                     let sequence = s as usize;
-                    let payload: E = serde_json::from_value(row.get("payload")).unwrap();
+                    let payload: E = match serde_json::from_value(row.get("payload")) {
+                        Ok(payload) => payload,
+                        Err(err) => {
+                            panic!("bad payload found in events table for aggregate id {} with error: {}", &id, err);
+                        },
+                    };
                     let event = MessageEnvelope {
                         aggregate_id,
                         sequence,
@@ -183,9 +191,24 @@ impl<I, A, E> EventStore<I, A, E> for PostgresStore<I, A, E>
             let agg_type = event.aggregate_type.clone();
             let id = event.aggregate_id.clone();
             let sequence = event.sequence as i64;
-            let payload = serde_json::to_value(&event.payload).unwrap();
-            let metadata = serde_json::to_value(&event.metadata).unwrap();
-            self.conn.execute(INSERT_EVENT, &[&agg_type, &id, &sequence, &payload, &metadata]).unwrap();
+            let payload = match serde_json::to_value(&event.payload) {
+                Ok(payload) => payload,
+                Err(err) => {
+                    panic!("bad payload found in events table for aggregate id {} with error: {}", &id, err);
+                },
+            };
+            let metadata = match serde_json::to_value(&event.metadata) {
+                Ok(metadata) => metadata,
+                Err(err) => {
+                    panic!("bad metadata found in events table for aggregate id {} with error: {}", &id, err);
+                },
+            };
+            match self.conn.execute(INSERT_EVENT, &[&agg_type, &id, &sequence, &payload, &metadata]) {
+                Ok(_) => {},
+                Err(err) => {
+                    panic!("unable to insert event table for aggregate id {} with error: {}\n  and payload: {}", &id, err, &payload);
+                },
+            };
         }
         match trans.commit() {
             Ok(_) => Ok(()),

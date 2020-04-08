@@ -106,7 +106,12 @@ impl<V, A, E> GenericViewRepository<V, A, E>
     /// Loads and deserializes a view based on the view id.
     pub fn load(&self, conn: &Connection, view_id: String) -> Option<V> {
         let query = format!("SELECT version,payload FROM {} WHERE aggregate_id= $1", &self.view_name);
-        let result = conn.query(query.as_str(), &[&view_id]).unwrap();
+        let result = match conn.query(query.as_str(), &[&view_id]) {
+            Ok(result) => { result }
+            Err(err) => {
+                panic!("unable to load view '{}' with id: '{}', encountered: {}", &view_id, &self.view_name, err);
+            }
+        };
         match result.iter().next() {
             Some(row) => {
                 let payload = row.get("payload");
@@ -145,9 +150,19 @@ impl<V> ViewContext<V>
             0 => format!("INSERT INTO {} (payload, version, aggregate_id) VALUES ( $1, $2, $3 )", &self.view_name),
             _ => format!("UPDATE {} SET payload= $1 , version= $2 WHERE aggregate_id= $3", &self.view_name),
         };
-        let payload = serde_json::to_value(&view).unwrap();
         let version = self.version + 1;
-        let aggregate_id = &self.aggregate_id;
-        conn.execute(sql.as_str(), &[&payload, &version, aggregate_id]).unwrap();
+        let view_id = &self.aggregate_id;
+        let payload = match serde_json::to_value(&view) {
+            Ok(payload) => { payload }
+            Err(err) => {
+                panic!("unable to covert view '{}' with id: '{}', to value: {}\n  view: {:?}", &view_id, &self.view_name, err, &view);
+            }
+        };
+        match conn.execute(sql.as_str(), &[&payload, &version, view_id]) {
+            Ok(_) => {}
+            Err(err) => {
+                panic!("unable to update view '{}' with id: '{}', encountered: {}", &view_id, &self.view_name, err);
+            }
+        };
     }
 }

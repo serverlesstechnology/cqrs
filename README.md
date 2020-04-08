@@ -1,4 +1,4 @@
-# CQRS
+# cqrs
 
 **A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures.**
 
@@ -9,11 +9,11 @@
 
 ## Installation
 
-Cqrs-es is available from Crates.io or Github.
+cqrs-es is available from Crates.io or Github.
 
 ```toml
 [dependencies]
-cqrs-es = "0.0.2"
+cqrs-es = "0.0.3"
 ```
 
 Or for a specific branch
@@ -39,4 +39,5 @@ it supplies metadata for. This may be changed.
 - Explore options for increasing the usefulness of `MetadataSupplier`.
 - Event serialization uses the event type as the root node of the JSON tree. This simplifies
 deserialization but is non-standard.
+- Paging for PostgresEventStore
 - Persistence implementation for DynamoDb.
