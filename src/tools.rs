@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
@@ -33,6 +32,7 @@ impl<V, A, E> GenericViewRepository<V, A, E>
     /// Creates a new `GenericViewRepository` that will store its' views in the table named
     /// identically to the `view_name` value provided. This table should be created by the user
     /// previously (see `/db/init.sql`).
+    #[must_use]
     pub fn new(view_name: String) -> Self {
         GenericViewRepository { view_name, error_handler: None, _phantom: PhantomData }
     }
@@ -42,6 +42,7 @@ impl<V, A, E> GenericViewRepository<V, A, E>
     }
 
     /// Returns the originally configured view name.
+    #[must_use]
     pub fn view_name(&self) -> String {
         self.view_name.to_string()
     }
@@ -52,7 +53,7 @@ impl<V, A, E> GenericViewRepository<V, A, E>
         let result = match conn.query(query.as_str(), &[&aggregate_id]) {
             Ok(result) => { result }
             Err(e) => {
-                return Err(AggregateError::new(e.description()));
+                return Err(AggregateError::new(e.to_string().as_str()));
             }
         };
         match result.iter().next() {

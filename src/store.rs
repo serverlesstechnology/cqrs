@@ -63,7 +63,7 @@ impl<I, A, E> MemStore<I, A, E>
         // uninteresting unwrap: this is not a struct for production use
         let event_map = self.events.read().unwrap();
         let mut committed_events: Vec<MessageEnvelope<A, E>> = Vec::new();
-        match event_map.get(aggregate_id.to_string().as_str()) {
+        match event_map.get(aggregate_id.as_str()) {
             None => {}
             Some(events) => {
                 for event in events {
@@ -102,7 +102,7 @@ impl<I, A, E> EventStore<I, A, E> for MemStore<I, A, E>
         println!("storing: {} events", &new_events.len());
         // uninteresting unwrap: this is not a struct for production use
         let mut event_map = self.events.write().unwrap();
-        event_map.insert(aggregate_id.to_string(), new_events);
+        event_map.insert(aggregate_id, new_events);
         Ok(())
     }
 }

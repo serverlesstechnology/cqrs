@@ -14,10 +14,12 @@ impl<A, E> TestFramework<A, E>
     where A: Aggregate,
           E: DomainEvent<A> {
     /// Initiates an aggregate test with no previous events.
+    #[must_use]
     pub fn given_no_previous_events(&self) -> AggregateTestExecutor<A, E> {
         AggregateTestExecutor { events: Vec::new(), _phantom: PhantomData }
     }
     /// Initiates an aggregate test with a collection of previous events.
+    #[must_use]
     pub fn given(&self, events: Vec<E>) -> AggregateTestExecutor<A, E> {
         AggregateTestExecutor { events, _phantom: PhantomData }
     }
