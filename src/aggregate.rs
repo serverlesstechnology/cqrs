@@ -1,5 +1,4 @@
 use std::{error, fmt};
-use std::hash::Hash;
 
 /// A trait that defines an `Aggregate`, the fundamental component in CQRS that encapsulates the
 /// state and business logic for the application. An `Aggregate` is always an entity along with
@@ -33,15 +32,6 @@ use std::hash::Hash;
 pub trait Aggregate: Default {
     /// aggregate_type is a unique identifier for this aggregate
     fn aggregate_type() -> &'static str;
-}
-
-/// An `AggregateId` specifies a unique instance of an
-/// The [newtype pattern](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction)
-/// is encouraged here and a future `derive` will support this.
-pub trait AggregateId<A: Aggregate>: ToString + Eq + Hash {
-    /// aggregate_type specifies the unique `Aggregate` that this ID refers to.
-    /// This value should be identical to that of the `Aggregate::aggregate_type()`
-    fn aggregate_type(&self) -> &'static str;
 }
 
 /// The base error for the framework.

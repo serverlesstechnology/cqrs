@@ -5,34 +5,35 @@ use std::sync::RwLock;
 
 use postgres::Connection;
 
-use crate::aggregate::{Aggregate, AggregateId, AggregateError};
+use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::{DomainEvent, MessageEnvelope};
 
 /// The abstract central source for loading past events and committing new events.
-pub trait EventStore<I, A, E>
+pub trait EventStore<A, E>
     where A: Aggregate,
           E: DomainEvent<A>
 {
     /// Load all events for a particular `aggregate_id`
-    fn load(&self, aggregate_id: &I) -> Vec<MessageEnvelope<A, E>>;
+    fn load(&self, aggregate_id: &str) -> Vec<MessageEnvelope<A, E>>;
     /// Commit new events
     fn commit(&self, events: Vec<MessageEnvelope<A, E>>) -> Result<(), AggregateError>;
+    fn aggregate_type(&self) -> &str {
+        A::aggregate_type()
+    }
 }
 
 ///  Simple memory store only useful for testing purposes
-pub struct MemStore<I, A, E>
+pub struct MemStore<A, E>
     where
-        I: AggregateId<A>,
         A: Aggregate,
         E: DomainEvent<A>
 {
     events: Rc<LockedMessageEnvelopeMap<A, E>>,
-    _phantom: PhantomData<(I, A)>,
+    _phantom: PhantomData<A>,
 }
 
-impl<I, A, E> Default for MemStore<I, A, E>
+impl<A, E> Default for MemStore<A, E>
     where
-        I: AggregateId<A>,
         A: Aggregate,
         E: DomainEvent<A>
 {
@@ -46,9 +47,8 @@ impl<I, A, E> Default for MemStore<I, A, E>
 
 type LockedMessageEnvelopeMap<A, E> = RwLock<HashMap<String, Vec<MessageEnvelope<A, E>>>>;
 
-impl<I, A, E> MemStore<I, A, E>
+impl<A, E> MemStore<A, E>
     where
-        I: AggregateId<A>,
         A: Aggregate,
         E: DomainEvent<A>
 {
@@ -80,13 +80,12 @@ impl<I, A, E> MemStore<I, A, E>
     }
 }
 
-impl<I, A, E> EventStore<I, A, E> for MemStore<I, A, E>
+impl<A, E> EventStore<A, E> for MemStore<A, E>
     where
-        I: AggregateId<A>,
         A: Aggregate,
         E: DomainEvent<A>
 {
-    fn load(&self, aggregate_id: &I) -> Vec<MessageEnvelope<A, E>>
+    fn load(&self, aggregate_id: &str) -> Vec<MessageEnvelope<A, E>>
     {
         let events = self.load_commited_events(aggregate_id.to_string());
         println!("loading: {} events", &events.len());
@@ -110,19 +109,17 @@ impl<I, A, E> EventStore<I, A, E> for MemStore<I, A, E>
 
 /// Storage engine using an Postgres backing. This is the only persistent store currently
 /// provided.
-pub struct PostgresStore<I, A, E>
+pub struct PostgresStore<A, E>
     where
-        I: AggregateId<A>,
         A: Aggregate,
         E: DomainEvent<A>
 {
     conn: Connection,
-    _phantom: PhantomData<(I, A, E)>,
+    _phantom: PhantomData<(A, E)>,
 }
 
-impl<I, A, E> PostgresStore<I, A, E>
+impl<A, E> PostgresStore<A, E>
     where
-        I: AggregateId<A>,
         A: Aggregate,
         E: DomainEvent<A>
 {
@@ -141,14 +138,13 @@ static SELECT_EVENTS: &str = "SELECT aggregate_type, aggregate_id, sequence, pay
                                 FROM events
                                 WHERE aggregate_type = $1 AND aggregate_id = $2 ORDER BY sequence";
 
-impl<I, A, E> EventStore<I, A, E> for PostgresStore<I, A, E>
+impl<A, E> EventStore<A, E> for PostgresStore<A, E>
     where
-        I: AggregateId<A>,
         A: Aggregate,
         E: DomainEvent<A>
 {
-    fn load(&self, aggregate_id: &I) -> Vec<MessageEnvelope<A, E>> {
-        let agg_type = aggregate_id.aggregate_type();
+    fn load(&self, aggregate_id: &str) -> Vec<MessageEnvelope<A, E>> {
+        let agg_type = A::aggregate_type();
         let id = aggregate_id.to_string();
         let mut result = Vec::new();
         match self.conn.query(SELECT_EVENTS, &[&agg_type, &id]) {

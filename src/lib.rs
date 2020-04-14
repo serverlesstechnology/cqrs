@@ -1,5 +1,5 @@
-#![deny(missing_docs)]
-#![deny(clippy::all)]
+// #![deny(missing_docs)]
+// #![deny(clippy::all)]
 // #![warn(clippy::pedantic)]
 //! # srvrls - a lightweight serverless framework
 //! # cqrs

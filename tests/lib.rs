@@ -6,7 +6,7 @@ use chrono::Utc;
 use postgres::{Connection, TlsMode};
 use serde::{Deserialize, Serialize};
 use static_assertions::assert_impl_all;
-use cqrs_es::aggregate::{Aggregate, AggregateId, AggregateError};
+use cqrs_es::aggregate::{Aggregate, AggregateError};
 use cqrs_es::event::{DomainEvent, MessageEnvelope};
 use cqrs_es::command::Command;
 use cqrs_es::view::ViewProcessor;
@@ -76,17 +76,6 @@ impl DomainEvent<TestAggregate> for TestEvent {
     }
 }
 
-#[derive(PartialEq, Eq, Hash)]
-pub struct TestAggId(pub String);
-
-impl ToString for TestAggId { fn to_string(&self) -> String { self.0.to_string() } }
-
-impl AggregateId<TestAggregate> for TestAggId {
-    fn aggregate_type(&self) -> &'static str {
-        TestAggregate::aggregate_type()
-    }
-}
-
 pub struct CreateTest {
     pub id: String,
 }
@@ -133,8 +122,8 @@ impl TestView {
     fn new(events: Rc<RwLock<Vec<MessageEnvelope<TestAggregate, TestEvent>>>>) -> Self { TestView { events } }
 }
 
-impl ViewProcessor<TestAggId, TestAggregate, TestEvent> for TestView {
-    fn dispatch(&self, _aggregate_id: &TestAggId, events: Vec<MessageEnvelope<TestAggregate, TestEvent>>) {
+impl ViewProcessor<TestAggregate, TestEvent> for TestView {
+    fn dispatch(&self, _aggregate_id: &str, events: Vec<MessageEnvelope<TestAggregate, TestEvent>>) {
         for event in events {
             let mut event_list = self.events.write().unwrap();
             event_list.push(event);
@@ -145,7 +134,6 @@ impl ViewProcessor<TestAggId, TestAggregate, TestEvent> for TestView {
 
 pub type TestMessageEnvelope = MessageEnvelope<TestAggregate, TestEvent>;
 
-assert_impl_all!(agg_id; TestAggId,ToString);
 assert_impl_all!(aggregate; TestAggregate,Aggregate);
 assert_impl_all!(event; TestEvent,DomainEvent<TestAggregate>);
 
@@ -153,8 +141,8 @@ assert_impl_all!(command_a; CreateTest,Command<TestAggregate,TestEvent>);
 assert_impl_all!(command_b; ConfirmTest,Command<TestAggregate,TestEvent>);
 assert_impl_all!(command_c; DoSomethingElse,Command<TestAggregate,TestEvent>);
 
-assert_impl_all!(memstore; MemStore::<TestAggId,TestAggregate,TestEvent>, EventStore::<TestAggId,TestAggregate,TestEvent>);
-assert_impl_all!(rdbmsstore; PostgresStore::<TestAggId,TestAggregate,TestEvent>, EventStore::<TestAggId,TestAggregate,TestEvent>);
+assert_impl_all!(memstore; MemStore::<TestAggregate,TestEvent>, EventStore::<TestAggregate,TestEvent>);
+assert_impl_all!(rdbmsstore; PostgresStore::<TestAggregate,TestEvent>, EventStore::<TestAggregate,TestEvent>);
 
 fn metadata() -> HashMap<String, String> {
     let now = Utc::now();
@@ -165,8 +153,8 @@ fn metadata() -> HashMap<String, String> {
 
 #[test]
 fn load_events() {
-    let event_store = MemStore::<TestAggId, TestAggregate, TestEvent>::default();
-    let id = TestAggId("test_id_A".to_string());
+    let event_store = MemStore::<TestAggregate, TestEvent>::default();
+    let id = "test_id_A".to_string();
     let id_str = id.to_string();
     let initial_events = event_store.load(&id);
     assert_eq!(0, initial_events.len());
@@ -220,8 +208,8 @@ fn load_events() {
 #[ignore] // integration testing
 fn commit_and_load_events() {
     let conn = Connection::connect("postgresql://user:pass@localhost:5432/test_db", TlsMode::None).unwrap();
-    let event_store = PostgresStore::<TestAggId, TestAggregate, TestEvent>::new(conn);
-    let id = TestAggId(uuid::Uuid::new_v4().to_string());
+    let event_store = PostgresStore::<TestAggregate, TestEvent>::new(conn);
+    let id = uuid::Uuid::new_v4().to_string();
     let id_str = id.to_string();
     let aggregate_type = "TestAggregate".to_string();
 
@@ -252,8 +240,8 @@ fn commit_and_load_events() {
 #[ignore] // integration testing
 fn new_command() {
     let conn = Connection::connect("postgresql://user:pass@localhost:5432/test_db", TlsMode::None).unwrap();
-    let event_store = PostgresStore::<TestAggId, TestAggregate, TestEvent>::new(conn);
-    let id = TestAggId(uuid::Uuid::new_v4().to_string());
+    let event_store = PostgresStore::<TestAggregate, TestEvent>::new(conn);
+    let id = uuid::Uuid::new_v4().to_string();
     let id_str = id.to_string();
     let aggregate_type = "TestAggregate".to_string();
 
@@ -325,22 +313,22 @@ fn framework_test() {
 
     let cqrs = CqrsFramework::new(event_store, Rc::new(view), TimeMetadataSupplier {});
     let uuid = uuid::Uuid::new_v4().to_string();
-    let id = TestAggId(uuid.clone());
+    let id = uuid.clone().to_string();
     cqrs.execute(&id, CreateTest { id: uuid.clone() }).unwrap_or_default();
 
     assert_eq!(1, stored_events.read().unwrap().len());
     assert_eq!(1, delivered_events.read().unwrap().len());
 
     let test = "TEST_A";
-    let id = TestAggId(uuid.clone());
-    cqrs.execute(&id, ConfirmTest { test_name: test }).unwrap_or_default();
+    let id = uuid.clone().to_string();
+    cqrs.execute(id.as_str(), ConfirmTest { test_name: test }).unwrap_or_default();
 
     assert_eq!(2, delivered_events.read().unwrap().len());
     let stored_event_count = stored_events.read().unwrap().get(uuid.clone().as_str()).unwrap().len();
     assert_eq!(2, stored_event_count);
 
-    let id = TestAggId(uuid.clone());
-    let err = cqrs.execute(&id, ConfirmTest { test_name: test }).unwrap_err();
+    let id = uuid.clone().to_string();
+    let err = cqrs.execute(id.as_str(), ConfirmTest { test_name: test }).unwrap_err();
     assert_eq!(AggregateError::new("test already performed"), err);
 
     assert_eq!(2, delivered_events.read().unwrap().len());
