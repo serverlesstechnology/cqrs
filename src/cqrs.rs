@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 use std::rc::Rc;
-use crate::aggregate::{AggregateId, Aggregate, AggregateError};
+use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::{DomainEvent, MessageEnvelope};
 use crate::store::EventStore;
 use crate::config::MetadataSupplier;
@@ -8,42 +8,37 @@ use crate::view::ViewProcessor;
 use crate::command::Command;
 
 /// This is the base framework for applying commands to produce events.
-pub struct CqrsFramework<I, A, E, ES, M>
+pub struct CqrsFramework<A, E, ES, M>
     where
-        I: AggregateId<A>,
         A: Aggregate,
         E: DomainEvent<A>,
-        ES: EventStore<I, A, E>,
+        ES: EventStore<A, E>,
         M: MetadataSupplier
 {
     store: ES,
-    view: Rc<dyn ViewProcessor<I, A, E>>,
+    view: Rc<dyn ViewProcessor<A, E>>,
     metadata_supplier: M,
-    _phantom: PhantomData<I>,
 }
 
-impl<I, A, E, ES, M> CqrsFramework<I, A, E, ES, M>
+impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
     where
-        I: AggregateId<A>,
         A: Aggregate,
         E: DomainEvent<A>,
-        ES: EventStore<I, A, E>,
+        ES: EventStore<A, E>,
         M: MetadataSupplier
 {
     /// Creates new framework for dispatching commands using the provided elements.
-    pub fn new(store: ES, view: Rc<dyn ViewProcessor<I, A, E>>, metadata_supplier: M) -> CqrsFramework<I, A, E, ES, M>
+    pub fn new(store: ES, view: Rc<dyn ViewProcessor<A, E>>, metadata_supplier: M) -> CqrsFramework<A, E, ES, M>
         where
-            I: AggregateId<A>,
             A: Aggregate,
             E: DomainEvent<A>,
-            ES: EventStore<I, A, E>,
+            ES: EventStore<A, E>,
             M: MetadataSupplier
     {
         CqrsFramework {
             store,
             view,
             metadata_supplier,
-            _phantom: PhantomData::<I>,
         }
     }
 
@@ -54,12 +49,12 @@ impl<I, A, E, ES, M> CqrsFramework<I, A, E, ES, M>
     /// an AggregateError being returned.
     ///
     /// If successful the events produced will be applied to the `ViewProcessor`.
-    pub fn execute<C: Command<A, E>>(&self, aggregate_id: &I, command: C) -> Result<(), AggregateError> {
+    pub fn execute<C: Command<A, E>>(&self, aggregate_id: &str, command: C) -> Result<(), AggregateError> {
         let (mut aggregate, current_sequence) = self.load_aggregate(aggregate_id);
         let resultant_events = command.handle(&mut aggregate)?;
         let wrapped_events = self.wrap_events(aggregate_id, current_sequence, resultant_events);
 
-        let committed_events = <CqrsFramework<I, A, E, ES, M>>::duplicate(&wrapped_events);
+        let committed_events = <CqrsFramework<A, E, ES, M>>::duplicate(&wrapped_events);
         self.store.commit(wrapped_events)?;
         self.view.dispatch(&aggregate_id, committed_events);
         Ok(())
@@ -73,12 +68,12 @@ impl<I, A, E, ES, M> CqrsFramework<I, A, E, ES, M>
         committed_events
     }
 
-    fn wrap_events(&self, aggregate_id: &I, current_sequence: usize, resultant_events: Vec<E>) -> Vec<MessageEnvelope<A, E>> {
+    fn wrap_events(&self, aggregate_id: &str, current_sequence: usize, resultant_events: Vec<E>) -> Vec<MessageEnvelope<A, E>> {
         let mut sequence = current_sequence;
         let mut wrapped_events: Vec<MessageEnvelope<A, E>> = Vec::new();
         for payload in resultant_events {
             sequence += 1;
-            let aggregate_type = aggregate_id.aggregate_type().to_string();
+            let aggregate_type = A::aggregate_type().to_string();
             let aggregate_id: String = aggregate_id.to_string();
             let sequence = sequence;
             let metadata = self.metadata_supplier.supply();
@@ -94,7 +89,7 @@ impl<I, A, E, ES, M> CqrsFramework<I, A, E, ES, M>
         wrapped_events
     }
 
-    fn load_aggregate(&self, aggregate_id: &I) -> (A, usize) {
+    fn load_aggregate(&self, aggregate_id: &str) -> (A, usize) {
         let committed_events = self.store.load(aggregate_id);
         let mut aggregate = A::default();
         let mut current_sequence = 0;

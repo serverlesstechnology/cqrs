@@ -17,7 +17,7 @@
 //! 
 //! ```toml
 //! [dependencies]
-//! cqrs-es = "0.0.3"
+//! cqrs-es = "0.0.6"
 //! ```
 //! 
 //! Or for a specific branch
@@ -49,25 +49,25 @@
 
 #[cfg(test)]
 extern crate static_assertions;
-/// Aggregate module holds the central traits that define the fundamental component of CQRS.
-pub mod aggregate;
+// Aggregate module holds the central traits that define the fundamental component of CQRS.
+mod aggregate;
 
-/// Event module provides the abstract domain events and associated wrapper.
-pub mod event;
+// Event module provides the abstract domain events and associated wrapper.
+mod event;
 
-/// Store holds the abstact `EventStore` trait as well as an in-memory and Postgres implementation.
-pub mod store;
+// Store holds the abstact `EventStore` trait as well as an in-memory and Postgres implementation.
+mod store;
 
-/// Command module holds the `Command` trait which defines the only object that can make any
-/// modifications to the state of an aggregate.
-pub mod command;
+// Command module holds the `Command` trait which defines the only object that can make any
+// modifications to the state of an aggregate.
+mod command;
 
-/// Cqrs provides the base framework and associated logic for processing loading aggregates via an
-/// event store and subsequently processing commands.
-pub mod cqrs;
+// Cqrs provides the base framework and associated logic for processing loading aggregates via an
+// event store and subsequently processing commands.
+mod cqrs;
 
-/// Config has additional suppliers of metadata to be included with the committed events.
-pub mod config;
+// Config has additional suppliers of metadata to be included with the committed events.
+mod config;
 
 /// Test provides a test framework for building a resilient test base around aggregates.
 pub mod test;
@@ -78,3 +78,10 @@ pub mod tools;
 /// View provides the basic downstream query objects needed to render queries (or "views") that
 /// describe the state of the system.
 pub mod view;
+
+pub use crate::aggregate::*;
+pub use crate::command::*;
+pub use crate::cqrs::*;
+pub use crate::config::*;
+pub use crate::event::*;
+pub use crate::store::*;

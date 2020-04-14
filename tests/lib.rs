@@ -6,14 +6,20 @@ use chrono::Utc;
 use postgres::{Connection, TlsMode};
 use serde::{Deserialize, Serialize};
 use static_assertions::assert_impl_all;
-use cqrs_es::aggregate::{Aggregate, AggregateId, AggregateError};
-use cqrs_es::event::{DomainEvent, MessageEnvelope};
-use cqrs_es::command::Command;
-use cqrs_es::view::ViewProcessor;
-use cqrs_es::store::{MemStore, PostgresStore, EventStore};
-use cqrs_es::config::TimeMetadataSupplier;
-use cqrs_es::cqrs::CqrsFramework;
-use cqrs_es::test::TestFramework;
+
+use cqrs_es::{Aggregate,
+              AggregateError,
+              Command,
+              CqrsFramework,
+              DomainEvent,
+              EventStore,
+              MemStore,
+              MessageEnvelope,
+              PostgresStore,
+              TestFramework,
+              TimeMetadataSupplier,
+              ViewProcessor,
+};
 
 #[derive(Debug)]
 pub struct TestAggregate {
@@ -76,17 +82,6 @@ impl DomainEvent<TestAggregate> for TestEvent {
     }
 }
 
-#[derive(PartialEq, Eq, Hash)]
-pub struct TestAggId(pub String);
-
-impl ToString for TestAggId { fn to_string(&self) -> String { self.0.to_string() } }
-
-impl AggregateId<TestAggregate> for TestAggId {
-    fn aggregate_type(&self) -> &'static str {
-        TestAggregate::aggregate_type()
-    }
-}
-
 pub struct CreateTest {
     pub id: String,
 }
@@ -133,19 +128,17 @@ impl TestView {
     fn new(events: Rc<RwLock<Vec<MessageEnvelope<TestAggregate, TestEvent>>>>) -> Self { TestView { events } }
 }
 
-impl ViewProcessor<TestAggId, TestAggregate, TestEvent> for TestView {
-    fn dispatch(&self, _aggregate_id: &TestAggId, events: Vec<MessageEnvelope<TestAggregate, TestEvent>>) {
+impl ViewProcessor<TestAggregate, TestEvent> for TestView {
+    fn dispatch(&self, _aggregate_id: &str, events: Vec<MessageEnvelope<TestAggregate, TestEvent>>) {
         for event in events {
             let mut event_list = self.events.write().unwrap();
             event_list.push(event);
         }
-
     }
 }
 
 pub type TestMessageEnvelope = MessageEnvelope<TestAggregate, TestEvent>;
 
-assert_impl_all!(agg_id; TestAggId,ToString);
 assert_impl_all!(aggregate; TestAggregate,Aggregate);
 assert_impl_all!(event; TestEvent,DomainEvent<TestAggregate>);
 
@@ -153,8 +146,8 @@ assert_impl_all!(command_a; CreateTest,Command<TestAggregate,TestEvent>);
 assert_impl_all!(command_b; ConfirmTest,Command<TestAggregate,TestEvent>);
 assert_impl_all!(command_c; DoSomethingElse,Command<TestAggregate,TestEvent>);
 
-assert_impl_all!(memstore; MemStore::<TestAggId,TestAggregate,TestEvent>, EventStore::<TestAggId,TestAggregate,TestEvent>);
-assert_impl_all!(rdbmsstore; PostgresStore::<TestAggId,TestAggregate,TestEvent>, EventStore::<TestAggId,TestAggregate,TestEvent>);
+assert_impl_all!(memstore; MemStore::<TestAggregate,TestEvent>, EventStore::<TestAggregate,TestEvent>);
+assert_impl_all!(rdbmsstore; PostgresStore::<TestAggregate,TestEvent>, EventStore::<TestAggregate,TestEvent>);
 
 fn metadata() -> HashMap<String, String> {
     let now = Utc::now();
@@ -165,16 +158,15 @@ fn metadata() -> HashMap<String, String> {
 
 #[test]
 fn load_events() {
-    let event_store = MemStore::<TestAggId, TestAggregate, TestEvent>::default();
-    let id = TestAggId("test_id_A".to_string());
-    let id_str = id.to_string();
+    let event_store = MemStore::<TestAggregate, TestEvent>::default();
+    let id = "test_id_A";
     let initial_events = event_store.load(&id);
     assert_eq!(0, initial_events.len());
     let aggregate_type = "TestAggregate".to_string();
 
     event_store.commit(vec![
         TestMessageEnvelope::new_with_metadata(
-            id_str.clone(),
+            id.to_string(),
             0,
             aggregate_type.clone(),
             TestEvent::Created(Created { id: "test_event_A".to_string() }),
@@ -188,19 +180,19 @@ fn load_events() {
 
     event_store.commit(vec![
         TestMessageEnvelope::new_with_metadata(
-            id_str.clone(),
+            id.to_string(),
             1,
             aggregate_type.clone(),
             TestEvent::Tested(Tested { test_name: "test A".to_string() }),
             metadata()),
         TestMessageEnvelope::new_with_metadata(
-            id_str.clone(),
+            id.to_string(),
             2,
             aggregate_type.clone(),
             TestEvent::Tested(Tested { test_name: "test B".to_string() }),
             metadata()),
         TestMessageEnvelope::new_with_metadata(
-            id_str.clone(),
+            id.to_string(),
             3,
             aggregate_type.clone(),
             TestEvent::SomethingElse(SomethingElse { description: "something else happening here".to_string() }),
@@ -220,9 +212,8 @@ fn load_events() {
 #[ignore] // integration testing
 fn commit_and_load_events() {
     let conn = Connection::connect("postgresql://user:pass@localhost:5432/test_db", TlsMode::None).unwrap();
-    let event_store = PostgresStore::<TestAggId, TestAggregate, TestEvent>::new(conn);
-    let id = TestAggId(uuid::Uuid::new_v4().to_string());
-    let id_str = id.to_string();
+    let event_store = PostgresStore::<TestAggregate, TestEvent>::new(conn);
+    let id = uuid::Uuid::new_v4().to_string();
     let aggregate_type = "TestAggregate".to_string();
 
     let events = event_store.load(&id);
@@ -230,14 +221,14 @@ fn commit_and_load_events() {
 
     event_store.commit(vec![
         TestMessageEnvelope::new_with_metadata(
-            id_str.clone(),
+            id.clone(),
             0,
             aggregate_type.clone(),
             TestEvent::Created(Created { id: "test_event_A".to_string() }),
             metadata(),
         ),
         TestMessageEnvelope::new_with_metadata(
-            id_str.clone(),
+            id.clone(),
             1,
             aggregate_type.clone(),
             TestEvent::Tested(Tested { test_name: "test A".to_string() }),
@@ -252,8 +243,8 @@ fn commit_and_load_events() {
 #[ignore] // integration testing
 fn new_command() {
     let conn = Connection::connect("postgresql://user:pass@localhost:5432/test_db", TlsMode::None).unwrap();
-    let event_store = PostgresStore::<TestAggId, TestAggregate, TestEvent>::new(conn);
-    let id = TestAggId(uuid::Uuid::new_v4().to_string());
+    let event_store = PostgresStore::<TestAggregate, TestEvent>::new(conn);
+    let id = uuid::Uuid::new_v4().to_string();
     let id_str = id.to_string();
     let aggregate_type = "TestAggregate".to_string();
 
@@ -280,38 +271,41 @@ fn new_command() {
     assert_eq!(2, events.len());
 }
 
-type ThisTestFramework = TestFramework<TestAggregate,TestEvent>;
+type ThisTestFramework = TestFramework<TestAggregate, TestEvent>;
+
 #[test]
 fn test_framework_test() {
     let test_name = "test A";
     let test_framework = ThisTestFramework::default();
 
-    test_framework.given(vec![TestEvent::Created(Created{ id: "test_id_A".to_string() })])
-        .when(ConfirmTest{ test_name })
-        .then_expect_events(vec![TestEvent::Tested(Tested{ test_name: test_name.to_string() })]);
+    test_framework.given(vec![TestEvent::Created(Created { id: "test_id_A".to_string() })])
+        .when(ConfirmTest { test_name })
+        .then_expect_events(vec![TestEvent::Tested(Tested { test_name: test_name.to_string() })]);
 
-    test_framework.given(vec![TestEvent::Tested(Tested{ test_name: test_name.to_string() })])
-        .when(ConfirmTest{ test_name })
+    test_framework.given(vec![TestEvent::Tested(Tested { test_name: test_name.to_string() })])
+        .when(ConfirmTest { test_name })
         .then_expect_error("test already performed")
 }
+
 #[test]
 #[should_panic]
 fn test_framework_failure_test() {
     let test_name = "test A";
     let test_framework = ThisTestFramework::default();
 
-    test_framework.given(vec![TestEvent::Tested(Tested{ test_name: test_name.to_string() })])
-        .when(ConfirmTest{ test_name })
-        .then_expect_events(vec![TestEvent::Tested(Tested{ test_name: test_name.to_string() })]);
+    test_framework.given(vec![TestEvent::Tested(Tested { test_name: test_name.to_string() })])
+        .when(ConfirmTest { test_name })
+        .then_expect_events(vec![TestEvent::Tested(Tested { test_name: test_name.to_string() })]);
 }
+
 #[test]
 #[should_panic]
 fn test_framework_failure_test_b() {
     let test_name = "test A";
     let test_framework = ThisTestFramework::default();
 
-    test_framework.given(vec![TestEvent::Created(Created{ id: "test_id_A".to_string() })])
-        .when(ConfirmTest{ test_name })
+    test_framework.given(vec![TestEvent::Created(Created { id: "test_id_A".to_string() })])
+        .when(ConfirmTest { test_name })
         .then_expect_error("some error message")
 }
 
@@ -325,21 +319,21 @@ fn framework_test() {
 
     let cqrs = CqrsFramework::new(event_store, Rc::new(view), TimeMetadataSupplier {});
     let uuid = uuid::Uuid::new_v4().to_string();
-    let id = TestAggId(uuid.clone());
+    let id = uuid.clone();
     cqrs.execute(&id, CreateTest { id: uuid.clone() }).unwrap_or_default();
 
     assert_eq!(1, stored_events.read().unwrap().len());
     assert_eq!(1, delivered_events.read().unwrap().len());
 
     let test = "TEST_A";
-    let id = TestAggId(uuid.clone());
+    let id = uuid.clone();
     cqrs.execute(&id, ConfirmTest { test_name: test }).unwrap_or_default();
 
     assert_eq!(2, delivered_events.read().unwrap().len());
     let stored_event_count = stored_events.read().unwrap().get(uuid.clone().as_str()).unwrap().len();
     assert_eq!(2, stored_event_count);
 
-    let id = TestAggId(uuid.clone());
+    let id = uuid.clone();
     let err = cqrs.execute(&id, ConfirmTest { test_name: test }).unwrap_err();
     assert_eq!(AggregateError::new("test already performed"), err);
 
