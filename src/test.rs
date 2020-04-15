@@ -55,7 +55,7 @@ impl<A, E> AggregateTestExecutor<A, E>
         for event in self.events {
             event.apply(&mut aggregate)
         }
-        let result = command.handle(&mut aggregate);
+        let result = command.handle(&aggregate);
         AggregateResultValidator { result, _phantom: PhantomData }
     }
 }

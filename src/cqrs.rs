@@ -50,8 +50,8 @@ impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
     ///
     /// If successful the events produced will be applied to the `ViewProcessor`.
     pub fn execute<C: Command<A, E>>(&self, aggregate_id: &str, command: C) -> Result<(), AggregateError> {
-        let (mut aggregate, current_sequence) = self.load_aggregate(aggregate_id);
-        let resultant_events = command.handle(&mut aggregate)?;
+        let (aggregate, current_sequence) = self.load_aggregate(aggregate_id);
+        let resultant_events = command.handle(&aggregate)?;
         let wrapped_events = self.wrap_events(aggregate_id, current_sequence, resultant_events);
 
         let committed_events = <CqrsFramework<A, E, ES, M>>::duplicate(&wrapped_events);

@@ -18,5 +18,5 @@ pub trait Command<A, E>
     ///
     /// If the command is rejected an `AggregateError` (`AggregateError::UserError` in nearly
     /// all instances) should carry a message for the user as to why the request was rejected.
-    fn handle(&self, aggregate: &mut A) -> Result<Vec<E>, AggregateError>;
+    fn handle(&self, aggregate: &A) -> Result<Vec<E>, AggregateError>;
 }
