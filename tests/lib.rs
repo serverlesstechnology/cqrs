@@ -87,7 +87,7 @@ pub struct CreateTest {
 }
 
 impl Command<TestAggregate, TestEvent> for CreateTest {
-    fn handle(&self, _aggregate: &TestAggregate) -> Result<Vec<TestEvent>, AggregateError> {
+    fn handle(self, _aggregate: &TestAggregate) -> Result<Vec<TestEvent>, AggregateError> {
         let event = TestEvent::Created(Created { id: self.id.to_string() });
         Ok(vec![event])
     }
@@ -98,7 +98,7 @@ pub struct ConfirmTest<'a> {
 }
 
 impl<'a> Command<TestAggregate, TestEvent> for ConfirmTest<'a> {
-    fn handle(&self, aggregate: &TestAggregate) -> Result<Vec<TestEvent>, AggregateError> {
+    fn handle(self, aggregate: &TestAggregate) -> Result<Vec<TestEvent>, AggregateError> {
         for test in &aggregate.tests {
             if test == &self.test_name {
                 return Err(AggregateError::new("test already performed"));
@@ -114,7 +114,7 @@ pub struct DoSomethingElse {
 }
 
 impl Command<TestAggregate, TestEvent> for DoSomethingElse {
-    fn handle(&self, _aggregate: &TestAggregate) -> Result<Vec<TestEvent>, AggregateError> {
+    fn handle(self, _aggregate: &TestAggregate) -> Result<Vec<TestEvent>, AggregateError> {
         let event = TestEvent::SomethingElse(SomethingElse { description: self.description.clone() });
         Ok(vec![event])
     }
