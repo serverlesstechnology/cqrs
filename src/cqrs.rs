@@ -48,7 +48,7 @@ impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
     /// An error while processing will result in no events committed and
     /// an AggregateError being returned.
     ///
-    /// If successful the events produced will be applied to the `ViewProcessor`.
+    /// If successful the events produced will be applied to the configured `ViewProcessor`.
     pub fn execute<C: Command<A, E>>(&self, aggregate_id: &str, command: C) -> Result<(), AggregateError> {
         let (aggregate, current_sequence) = self.load_aggregate(aggregate_id);
         let resultant_events = command.handle(&aggregate)?;

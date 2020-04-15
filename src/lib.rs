@@ -17,7 +17,7 @@
 //! 
 //! ```toml
 //! [dependencies]
-//! cqrs-es = "0.0.6"
+//! cqrs-es = "0.0.7"
 //! ```
 //! 
 //! Or for a specific branch
