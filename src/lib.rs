@@ -17,7 +17,7 @@
 //! 
 //! ```toml
 //! [dependencies]
-//! cqrs-es = "0.0.7"
+//! cqrs-es = "0.0.8"
 //! ```
 //! 
 //! Or for a specific branch
@@ -68,6 +68,9 @@ mod cqrs;
 
 // Config has additional suppliers of metadata to be included with the committed events.
 mod config;
+
+/// An in-memory event store suitable for local testing.
+pub mod mem_store;
 
 /// Test provides a test framework for building a resilient test base around aggregates.
 pub mod test;

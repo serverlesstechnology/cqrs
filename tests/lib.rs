@@ -13,11 +13,12 @@ use cqrs_es::{Aggregate,
               CqrsFramework,
               DomainEvent,
               EventStore,
-              MemStore,
               MessageEnvelope,
               PostgresStore,
               TimeMetadataSupplier,
 };
+
+use cqrs_es::mem_store::MemStore;
 use cqrs_es::test::TestFramework;
 use cqrs_es::view::ViewProcessor;
 

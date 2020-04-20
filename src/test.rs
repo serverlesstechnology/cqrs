@@ -89,7 +89,7 @@ impl<A, E> AggregateResultValidator<A, E>
                         panic!("expected user error but found technical error: {}", err)
                     },
                     AggregateError::UserError(err) => {
-                        assert_eq!(err, error_message);
+                        assert_eq!(err.message, Some(error_message.to_string()));
                     },
                 }
             }
