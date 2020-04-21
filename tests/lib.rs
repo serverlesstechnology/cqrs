@@ -22,7 +22,7 @@ use cqrs_es::mem_store::MemStore;
 use cqrs_es::test::TestFramework;
 use cqrs_es::view::ViewProcessor;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct TestAggregate {
     id: String,
     description: String,

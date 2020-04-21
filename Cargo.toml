@@ -1,6 +1,6 @@
 [package]
 name = "cqrs-es"
-version = "0.0.8"
+version = "0.0.9"
 authors = ["Dave Garred <dgarred@starbucks.com>"]
 edition = "2018"
 license-file = "LICENSE"

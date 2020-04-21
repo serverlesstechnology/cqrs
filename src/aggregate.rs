@@ -1,6 +1,8 @@
 use std::{error, fmt};
-use serde::{Serialize,Deserialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+use serde::de::DeserializeOwned;
 
 /// A trait that defines an `Aggregate`, the fundamental component in CQRS that encapsulates the
 /// state and business logic for the application. An `Aggregate` is always an entity along with
@@ -12,6 +14,8 @@ use std::collections::HashMap;
 /// #Example
 /// ```rust
 /// # use cqrs_es::Aggregate;
+/// use serde::{Serialize,Deserialize};
+/// #[derive(Serialize,Deserialize)]
 /// struct Customer {
 ///     customer_id: String,
 ///     name: String,
@@ -31,7 +35,7 @@ use std::collections::HashMap;
 ///     }
 /// }
 /// ```
-pub trait Aggregate: Default {
+pub trait Aggregate: Default + Serialize + DeserializeOwned {
     /// aggregate_type is a unique identifier for this aggregate
     fn aggregate_type() -> &'static str;
 }
@@ -57,7 +61,7 @@ pub struct UserErrorPayload {
     /// An optional message describing the error, meant to be returned to the user.
     pub message: Option<String>,
     /// Optional additional parameters for adding additional context to the error.
-    pub params: Option<HashMap<String,String>>,
+    pub params: Option<HashMap<String, String>>,
 }
 
 impl error::Error for AggregateError {}
@@ -67,10 +71,10 @@ impl fmt::Display for AggregateError {
         match self {
             AggregateError::TechnicalError(message) => {
                 write!(f, "{}", message)
-            },
+            }
             AggregateError::UserError(message) => {
                 write!(f, "{}", message)
-            },
+            }
         }
     }
 }
@@ -83,11 +87,13 @@ impl fmt::Display for UserErrorPayload {
 
 impl AggregateError {
     /// Convenience function to construct a simple `UserError` from a `&str`.
-    pub fn new(msg: &str) -> Self { AggregateError::UserError(UserErrorPayload{
-        code: None,
-        message: Some(msg.to_string()),
-        params: None,
-    }) }
+    pub fn new(msg: &str) -> Self {
+        AggregateError::UserError(UserErrorPayload {
+            code: None,
+            message: Some(msg.to_string()),
+            params: None,
+        })
+    }
 }
 
 impl From<serde_json::error::Error> for AggregateError {
