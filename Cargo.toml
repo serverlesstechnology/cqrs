@@ -1,7 +1,7 @@
 [package]
 name = "cqrs-es"
 version = "0.0.10"
-authors = ["Dave Garred <dgarred@starbucks.com>"]
+authors = ["Dave Garred <dave.garred@serverlesstechnology.com>"]
 edition = "2018"
 license-file = "LICENSE"
 keywords = ["cqrs", "event-sourcing", "serverless", "lambda"]
