@@ -76,8 +76,6 @@ pub mod mem_store;
 /// Test provides a test framework for building a resilient test base around aggregates.
 pub mod test;
 
-/// Tools provides a simple postgres view repository to simplify loading and updating views.
-pub mod tools;
 
 /// View provides the basic downstream query objects needed to render queries (or "views") that
 /// describe the state of the system.

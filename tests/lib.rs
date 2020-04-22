@@ -3,7 +3,6 @@ use std::rc::Rc;
 use std::sync::RwLock;
 
 use chrono::Utc;
-use postgres::{Connection, TlsMode};
 use serde::{Deserialize, Serialize};
 use static_assertions::assert_impl_all;
 
@@ -14,7 +13,6 @@ use cqrs_es::{Aggregate,
               DomainEvent,
               EventStore,
               MessageEnvelope,
-              PostgresStore,
               TimeMetadataSupplier,
 };
 
@@ -148,7 +146,6 @@ assert_impl_all!(command_b; ConfirmTest,Command<TestAggregate,TestEvent>);
 assert_impl_all!(command_c; DoSomethingElse,Command<TestAggregate,TestEvent>);
 
 assert_impl_all!(memstore; MemStore::<TestAggregate,TestEvent>, EventStore::<TestAggregate,TestEvent>);
-assert_impl_all!(rdbmsstore; PostgresStore::<TestAggregate,TestEvent>, EventStore::<TestAggregate,TestEvent>);
 
 fn metadata() -> HashMap<String, String> {
     let now = Utc::now();
@@ -207,69 +204,6 @@ fn load_events() {
         event.apply(&mut agg);
     }
     println!("{:#?}", agg);
-}
-
-#[test]
-#[ignore] // integration testing
-fn commit_and_load_events() {
-    let conn = Connection::connect("postgresql://user:pass@localhost:5432/test_db", TlsMode::None).unwrap();
-    let event_store = PostgresStore::<TestAggregate, TestEvent>::new(conn);
-    let id = uuid::Uuid::new_v4().to_string();
-    let aggregate_type = "TestAggregate".to_string();
-
-    let events = event_store.load(&id);
-    assert_eq!(0, events.len());
-
-    event_store.commit(vec![
-        TestMessageEnvelope::new_with_metadata(
-            id.clone(),
-            0,
-            aggregate_type.clone(),
-            TestEvent::Created(Created { id: "test_event_A".to_string() }),
-            metadata(),
-        ),
-        TestMessageEnvelope::new_with_metadata(
-            id.clone(),
-            1,
-            aggregate_type.clone(),
-            TestEvent::Tested(Tested { test_name: "test A".to_string() }),
-            metadata()),
-    ]);
-
-    let events = event_store.load(&id);
-    assert_eq!(2, events.len());
-}
-
-#[test]
-#[ignore] // integration testing
-fn new_command() {
-    let conn = Connection::connect("postgresql://user:pass@localhost:5432/test_db", TlsMode::None).unwrap();
-    let event_store = PostgresStore::<TestAggregate, TestEvent>::new(conn);
-    let id = uuid::Uuid::new_v4().to_string();
-    let id_str = id.to_string();
-    let aggregate_type = "TestAggregate".to_string();
-
-    let events = event_store.load(&id);
-    assert_eq!(0, events.len());
-
-    event_store.commit(vec![
-        TestMessageEnvelope::new_with_metadata(
-            id_str.clone(),
-            0,
-            aggregate_type.clone(),
-            TestEvent::Created(Created { id: "test_event_A".to_string() }),
-            metadata(),
-        ),
-        TestMessageEnvelope::new_with_metadata(
-            id_str.clone(),
-            1,
-            aggregate_type.clone(),
-            TestEvent::Tested(Tested { test_name: "test A".to_string() }),
-            metadata()),
-    ]);
-
-    let events = event_store.load(&id);
-    assert_eq!(2, events.len());
 }
 
 type ThisTestFramework = TestFramework<TestAggregate, TestEvent>;
