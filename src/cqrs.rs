@@ -4,7 +4,7 @@ use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::{DomainEvent, MessageEnvelope};
 use crate::store::EventStore;
 use crate::config::MetadataSupplier;
-use crate::view::ViewProcessor;
+use crate::query::QueryProcessor;
 use crate::command::Command;
 
 /// This is the base framework for applying commands to produce events.
@@ -16,7 +16,7 @@ pub struct CqrsFramework<A, E, ES, M>
         M: MetadataSupplier
 {
     store: ES,
-    view: Rc<dyn ViewProcessor<A, E>>,
+    query_processor: Rc<dyn QueryProcessor<A, E>>,
     metadata_supplier: M,
 }
 
@@ -28,7 +28,7 @@ impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
         M: MetadataSupplier
 {
     /// Creates new framework for dispatching commands using the provided elements.
-    pub fn new(store: ES, view: Rc<dyn ViewProcessor<A, E>>, metadata_supplier: M) -> CqrsFramework<A, E, ES, M>
+    pub fn new(store: ES, query_processor: Rc<dyn QueryProcessor<A, E>>, metadata_supplier: M) -> CqrsFramework<A, E, ES, M>
         where
             A: Aggregate,
             E: DomainEvent<A>,
@@ -37,7 +37,7 @@ impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
     {
         CqrsFramework {
             store,
-            view,
+            query_processor,
             metadata_supplier,
         }
     }
@@ -48,7 +48,7 @@ impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
     /// An error while processing will result in no events committed and
     /// an AggregateError being returned.
     ///
-    /// If successful the events produced will be applied to the configured `ViewProcessor`.
+    /// If successful the events produced will be applied to the configured `QueryProcessor`.
     pub fn execute<C: Command<A, E>>(&self, aggregate_id: &str, command: C) -> Result<(), AggregateError> {
         let (aggregate, current_sequence) = self.load_aggregate(aggregate_id);
         let resultant_events = command.handle(&aggregate)?;
@@ -56,7 +56,7 @@ impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
 
         let committed_events = <CqrsFramework<A, E, ES, M>>::duplicate(&wrapped_events);
         self.store.commit(wrapped_events)?;
-        self.view.dispatch(&aggregate_id, committed_events);
+        self.query_processor.dispatch(&aggregate_id, committed_events);
         Ok(())
     }
 
