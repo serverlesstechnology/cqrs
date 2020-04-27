@@ -245,8 +245,8 @@ fn test_framework_failure_test_b() {
 
 #[test]
 fn framework_test() {
-    let stored_events = Default::default();
-    let event_store = MemStore::new_with_shared_events(Rc::clone(&stored_events));
+    let event_store = MemStore::default();
+    let stored_events = event_store.get_events();
 
     let delivered_events = Default::default();
     let view = TestView::new(Rc::clone(&delivered_events));
