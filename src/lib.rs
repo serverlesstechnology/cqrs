@@ -2,7 +2,6 @@
 #![deny(missing_docs)]
 #![deny(clippy::all)]
 // #![warn(clippy::pedantic)]
-//! # srvrls - a lightweight serverless framework
 //! # cqrs
 //! 
 //! **A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures.**
@@ -18,7 +17,7 @@
 //! 
 //! ```toml
 //! [dependencies]
-//! cqrs-es = "0.0.10"
+//! cqrs-es = "0.0.11"
 //! ```
 //! 
 //! Or for a specific branch
@@ -40,11 +39,9 @@
 //! ## Todos/research
 //! 
 //! - Event upcasters.
-//! - Some additional framework around `GenericViewRepository` to simplify event replay.
 //! - Explore options for increasing the usefulness of `MetadataSupplier`.
 //! - Event serialization uses the event type as the root node of the JSON tree. This simplifies
 //! deserialization but is non-standard.
-//! - Paging for PostgresEventStore
 //! - Persistence implementation for DynamoDb.
 //!
 
@@ -77,9 +74,9 @@ pub mod mem_store;
 pub mod test;
 
 
-/// View provides the basic downstream query objects needed to render queries (or "views") that
-/// describe the state of the system.
-pub mod view;
+// View provides the basic downstream query objects needed to render queries (or "views") that
+// describe the state of the system.
+mod query;
 
 pub use crate::aggregate::*;
 pub use crate::command::*;
@@ -87,3 +84,4 @@ pub use crate::cqrs::*;
 pub use crate::config::*;
 pub use crate::event::*;
 pub use crate::store::*;
+pub use crate::query::*;

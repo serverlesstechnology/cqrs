@@ -15,10 +15,9 @@ use cqrs_es::{Aggregate,
               MessageEnvelope,
               TimeMetadataSupplier,
 };
-
 use cqrs_es::mem_store::MemStore;
+use cqrs_es::QueryProcessor;
 use cqrs_es::test::TestFramework;
-use cqrs_es::view::ViewProcessor;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TestAggregate {
@@ -127,7 +126,7 @@ impl TestView {
     fn new(events: Rc<RwLock<Vec<MessageEnvelope<TestAggregate, TestEvent>>>>) -> Self { TestView { events } }
 }
 
-impl ViewProcessor<TestAggregate, TestEvent> for TestView {
+impl QueryProcessor<TestAggregate, TestEvent> for TestView {
     fn dispatch(&self, _aggregate_id: &str, events: Vec<MessageEnvelope<TestAggregate, TestEvent>>) {
         for event in events {
             let mut event_list = self.events.write().unwrap();
