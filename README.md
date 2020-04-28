@@ -13,29 +13,19 @@ cqrs-es is available from Crates.io or Github.
 
 ```toml
 [dependencies]
-cqrs-es = "0.0.12"
-```
-
-Or for a specific branch
-```toml
-[dependencies]
-cqrs-es = { git = "https://github.com/serverlesstechnology/cqrs.git", branch = "master"}
+cqrs-es = "0.0.13"
 ```
 
 ## Opinions
 
 - Aggregate persistence is via event sourcing only.
-- Metadata is implemented only as a `HashMap<String,String>`. 
-Further, the `MetadataSupplier` that the user provides has no insight into the event or aggregate that 
-it supplies metadata for. This may be changed.
-- JSON serialization only.
+- Support for JSON serialization only.
 - Generics are preferred over boxed traits.
 - Persistence is implemented through a Postgres database.
 
 ## Todos/research
 
 - Event upcasters.
-- Explore options for increasing the usefulness of `MetadataSupplier`.
 - Event serialization uses the event type as the root node of the JSON tree. This simplifies
 deserialization but is non-standard.
 - A persistence implementation for DynamoDb.

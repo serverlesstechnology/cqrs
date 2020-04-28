@@ -17,13 +17,7 @@
 //! 
 //! ```toml
 //! [dependencies]
-//! cqrs-es = "0.0.12"
-//! ```
-//! 
-//! Or for a specific branch
-//! ```toml
-//! [dependencies]
-//! cqrs-es = { git = "https://github.com/serverlesstechnology/cqrs.git", branch = "master"}
+//! cqrs-es = "0.0.13"
 //! ```
 //! 
 //! ## Opinions
@@ -64,9 +58,6 @@ mod command;
 // event store and subsequently processing commands.
 mod cqrs;
 
-// Config has additional suppliers of metadata to be included with the committed events.
-mod config;
-
 /// An in-memory event store suitable for local testing.
 pub mod mem_store;
 
@@ -81,7 +72,6 @@ mod query;
 pub use crate::aggregate::*;
 pub use crate::command::*;
 pub use crate::cqrs::*;
-pub use crate::config::*;
 pub use crate::event::*;
 pub use crate::store::*;
 pub use crate::query::*;
