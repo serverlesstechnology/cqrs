@@ -15,7 +15,7 @@ pub trait QueryProcessor<A, E>
 {
     /// Events will be dispatched here immediately after being committed for the downstream queries
     /// to be updated.
-    fn dispatch(&self, aggregate_id: &str, events: Vec<MessageEnvelope<A, E>>);
+    fn dispatch(&self, aggregate_id: &str, events: &[MessageEnvelope<A, E>]);
 }
 
 /// Downstream `Query`s are the read elements in a CQRS system. As events are emitted these queries

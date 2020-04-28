@@ -13,7 +13,7 @@ cqrs-es is available from Crates.io or Github.
 
 ```toml
 [dependencies]
-cqrs-es = "0.0.11"
+cqrs-es = "0.0.12"
 ```
 
 Or for a specific branch

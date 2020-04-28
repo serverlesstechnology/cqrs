@@ -22,8 +22,9 @@ impl<A, E> Default for MemStore<A, E>
         E: DomainEvent<A>
 {
     fn default() -> Self {
+        let events = Default::default();
         MemStore {
-            events: Default::default(),
+            events,
         }
     }
 }
@@ -35,11 +36,9 @@ impl<A, E> MemStore<A, E>
         A: Aggregate,
         E: DomainEvent<A>
 {
-    /// Creates a new event store with a shared event map.
-    pub fn new_with_shared_events(events: Rc<LockedMessageEnvelopeMap<A, E>>) -> Self {
-        MemStore {
-            events,
-        }
+    /// Get a shared copy of the events stored within the event store.
+    pub fn get_events(&self) -> Rc<LockedMessageEnvelopeMap<A, E>> {
+        Rc::clone(&self.events)
     }
     fn load_commited_events(&self, aggregate_id: String) -> Vec<MessageEnvelope<A, E>> {
         // uninteresting unwrap: this will not be used in production, for tests only
