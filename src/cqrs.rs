@@ -1,5 +1,4 @@
 use std::marker::PhantomData;
-use std::rc::Rc;
 use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::{DomainEvent, MessageEnvelope};
 use crate::store::EventStore;
@@ -16,7 +15,7 @@ pub struct CqrsFramework<A, E, ES, M>
         M: MetadataSupplier
 {
     store: ES,
-    query_processor: Rc<dyn QueryProcessor<A, E>>,
+    query_processors: Vec<Box<dyn QueryProcessor<A, E>>>,
     metadata_supplier: M,
 }
 
@@ -28,7 +27,7 @@ impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
         M: MetadataSupplier
 {
     /// Creates new framework for dispatching commands using the provided elements.
-    pub fn new(store: ES, query_processor: Rc<dyn QueryProcessor<A, E>>, metadata_supplier: M) -> CqrsFramework<A, E, ES, M>
+    pub fn new(store: ES, query_processors: Vec<Box<dyn QueryProcessor<A, E>>>, metadata_supplier: M) -> CqrsFramework<A, E, ES, M>
         where
             A: Aggregate,
             E: DomainEvent<A>,
@@ -37,7 +36,7 @@ impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
     {
         CqrsFramework {
             store,
-            query_processor,
+            query_processors,
             metadata_supplier,
         }
     }
@@ -56,7 +55,9 @@ impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
 
         let committed_events = <CqrsFramework<A, E, ES, M>>::duplicate(&wrapped_events);
         self.store.commit(wrapped_events)?;
-        self.query_processor.dispatch(&aggregate_id, committed_events);
+        for processor in &self.query_processors {
+            processor.dispatch(&aggregate_id, &committed_events);
+        }
         Ok(())
     }
 
