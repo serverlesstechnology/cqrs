@@ -6,8 +6,8 @@ use serde::Serialize;
 use crate::aggregate::Aggregate;
 use crate::event::{DomainEvent, MessageEnvelope};
 
-/// Each CQRS platform will have a single `QueryProcessor` where it will distribute committed events,
-/// it is the responsibility of the `QueryProcessor` to distribute these events to any interested
+/// Each CQRS platform should have one or more `QueryProcessor`s where it will distribute committed
+/// events, it is the responsibility of the `QueryProcessor` to update any interested
 /// queries.
 pub trait QueryProcessor<A, E>
     where E: DomainEvent<A>,
