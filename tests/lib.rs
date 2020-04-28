@@ -13,7 +13,6 @@ use cqrs_es::{Aggregate,
               DomainEvent,
               EventStore,
               MessageEnvelope,
-              TimeMetadataSupplier,
 };
 use cqrs_es::mem_store::MemStore;
 use cqrs_es::QueryProcessor;
@@ -131,32 +130,6 @@ impl Command<TestAggregate, TestEvent> for TestCommand {
         aggregate.handle(self)
     }
 }
-// impl Command<TestAggregate, TestEvent> for CreateTest {
-//     fn handle(self, _aggregate: &TestAggregate) -> Result<Vec<TestEvent>, AggregateError> {
-//         let event = TestEvent::Created(Created { id: self.id.to_string() });
-//         Ok(vec![event])
-//     }
-// }
-
-
-// impl Command<TestAggregate, TestEvent> for ConfirmTest {
-//     fn handle(self, aggregate: &TestAggregate) -> Result<Vec<TestEvent>, AggregateError> {
-//         for test in &aggregate.tests {
-//             if test == &self.test_name {
-//                 return Err(AggregateError::new("test already performed"));
-//             }
-//         }
-//         let event = TestEvent::Tested(Tested { test_name: self.test_name.to_string() });
-//         Ok(vec![event])
-//     }
-// }
-
-// impl Command<TestAggregate, TestEvent> for DoSomethingElse {
-//     fn handle(self, _aggregate: &TestAggregate) -> Result<Vec<TestEvent>, AggregateError> {
-//         let event = TestEvent::SomethingElse(SomethingElse { description: self.description.clone() });
-//         Ok(vec![event])
-//     }
-// }
 
 struct TestView {
     events: Rc<RwLock<Vec<MessageEnvelope<TestAggregate, TestEvent>>>>
@@ -167,7 +140,7 @@ impl TestView {
 }
 
 impl QueryProcessor<TestAggregate, TestEvent> for TestView {
-    fn dispatch(&self, _aggregate_id: &str, events: &Vec<MessageEnvelope<TestAggregate, TestEvent>>) {
+    fn dispatch(&self, _aggregate_id: &str, events: &[MessageEnvelope<TestAggregate, TestEvent>]) {
         for event in events {
             let mut event_list = self.events.write().unwrap();
             event_list.push(event.clone());
@@ -181,9 +154,6 @@ assert_impl_all!(aggregate; TestAggregate,Aggregate);
 assert_impl_all!(event; TestEvent,DomainEvent<TestAggregate>);
 
 assert_impl_all!(command; TestCommand,Command<TestAggregate,TestEvent>);
-// assert_impl_all!(command_a; CreateTest,Command<TestAggregate,TestEvent>);
-// assert_impl_all!(command_b; ConfirmTest,Command<TestAggregate,TestEvent>);
-// assert_impl_all!(command_c; DoSomethingElse,Command<TestAggregate,TestEvent>);
 
 assert_impl_all!(memstore; MemStore::<TestAggregate,TestEvent>, EventStore::<TestAggregate,TestEvent>);
 
@@ -290,10 +260,11 @@ fn framework_test() {
     let delivered_events = Default::default();
     let view = TestView::new(Rc::clone(&delivered_events));
 
-    let cqrs = CqrsFramework::new(event_store, vec![Box::new(view)], TimeMetadataSupplier {});
+    let cqrs = CqrsFramework::new(event_store, vec![Box::new(view)]);
     let uuid = uuid::Uuid::new_v4().to_string();
     let id = uuid.clone();
-    cqrs.execute(&id, TestCommand::ConfirmTest(ConfirmTest { test_name: uuid.clone() })).unwrap_or_default();
+    let metadata = metadata();
+    cqrs.execute_with_metadata(&id, TestCommand::ConfirmTest(ConfirmTest { test_name: uuid.clone() }), metadata).unwrap_or_default();
 
     assert_eq!(1, stored_events.read().unwrap().len());
     assert_eq!(1, delivered_events.read().unwrap().len());

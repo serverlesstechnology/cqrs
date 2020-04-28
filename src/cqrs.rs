@@ -1,59 +1,73 @@
+use std::collections::HashMap;
 use std::marker::PhantomData;
+
 use crate::aggregate::{Aggregate, AggregateError};
-use crate::event::{DomainEvent, MessageEnvelope};
-use crate::store::EventStore;
-use crate::config::MetadataSupplier;
-use crate::query::QueryProcessor;
 use crate::command::Command;
+use crate::event::{DomainEvent, MessageEnvelope};
+use crate::query::QueryProcessor;
+use crate::store::EventStore;
 
 /// This is the base framework for applying commands to produce events.
-pub struct CqrsFramework<A, E, ES, M>
+pub struct CqrsFramework<A, E, ES>
     where
         A: Aggregate,
         E: DomainEvent<A>,
         ES: EventStore<A, E>,
-        M: MetadataSupplier
 {
     store: ES,
     query_processors: Vec<Box<dyn QueryProcessor<A, E>>>,
-    metadata_supplier: M,
 }
 
-impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
+impl<A, E, ES> CqrsFramework<A, E, ES>
     where
         A: Aggregate,
         E: DomainEvent<A>,
-        ES: EventStore<A, E>,
-        M: MetadataSupplier
+        ES: EventStore<A, E>
 {
     /// Creates new framework for dispatching commands using the provided elements.
-    pub fn new(store: ES, query_processors: Vec<Box<dyn QueryProcessor<A, E>>>, metadata_supplier: M) -> CqrsFramework<A, E, ES, M>
+    pub fn new(store: ES, query_processors: Vec<Box<dyn QueryProcessor<A, E>>>) -> CqrsFramework<A, E, ES>
         where
             A: Aggregate,
             E: DomainEvent<A>,
-            ES: EventStore<A, E>,
-            M: MetadataSupplier
+            ES: EventStore<A, E>
     {
         CqrsFramework {
             store,
             query_processors,
-            metadata_supplier,
         }
     }
-
-    /// This applies a command to an aggregate, this is the only way to make any change to
+    /// This applies a command to an aggregate. Executing a command
+    /// in this way is the only way to make any change to
     /// the state of an aggregate.
     ///
     /// An error while processing will result in no events committed and
     /// an AggregateError being returned.
     ///
-    /// If successful the events produced will be applied to the configured `QueryProcessor`.
+    /// If successful the events produced will be applied to the configured `QueryProcessor`s.
     pub fn execute<C: Command<A, E>>(&self, aggregate_id: &str, command: C) -> Result<(), AggregateError> {
+        self.execute_with_metadata(aggregate_id, command, HashMap::new())
+    }
+
+    /// This applies a command to an aggregate along with associated metadata. Executing a command
+    /// in this way to make any change to the state of an aggregate.
+    ///
+    /// A `Hashmap<String,String>` is supplied with any contextual information that should be
+    /// associated with this change. This metadata will be attached to any produced events and is
+    /// meant to assist in debugging and auditing. Common information might include:
+    /// - time of commit
+    /// - user making the change
+    /// - application version
+    ///
+    /// An error while processing will result in no events committed and
+    /// an AggregateError being returned.
+    ///
+    /// If successful the events produced will be applied to the configured `QueryProcessor`s.
+    pub fn execute_with_metadata<C: Command<A, E>>(&self, aggregate_id: &str, command: C, metadata: HashMap<String, String>) -> Result<(), AggregateError> {
         let (aggregate, current_sequence) = self.load_aggregate(aggregate_id);
         let resultant_events = command.handle(&aggregate)?;
-        let wrapped_events = self.wrap_events(aggregate_id, current_sequence, resultant_events);
+        let wrapped_events = self.wrap_events(aggregate_id, current_sequence, resultant_events, metadata);
 
-        let committed_events = <CqrsFramework<A, E, ES, M>>::duplicate(&wrapped_events);
+        let committed_events = <CqrsFramework<A, E, ES>>::duplicate(&wrapped_events);
         self.store.commit(wrapped_events)?;
         for processor in &self.query_processors {
             processor.dispatch(&aggregate_id, &committed_events);
@@ -69,7 +83,7 @@ impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
         committed_events
     }
 
-    fn wrap_events(&self, aggregate_id: &str, current_sequence: usize, resultant_events: Vec<E>) -> Vec<MessageEnvelope<A, E>> {
+    fn wrap_events(&self, aggregate_id: &str, current_sequence: usize, resultant_events: Vec<E>, base_metadata: HashMap<String, String>) -> Vec<MessageEnvelope<A, E>> {
         let mut sequence = current_sequence;
         let mut wrapped_events: Vec<MessageEnvelope<A, E>> = Vec::new();
         for payload in resultant_events {
@@ -77,7 +91,7 @@ impl<A, E, ES, M> CqrsFramework<A, E, ES, M>
             let aggregate_type = A::aggregate_type().to_string();
             let aggregate_id: String = aggregate_id.to_string();
             let sequence = sequence;
-            let metadata = self.metadata_supplier.supply();
+            let metadata = base_metadata.clone();
             wrapped_events.push(MessageEnvelope {
                 aggregate_id,
                 sequence,
