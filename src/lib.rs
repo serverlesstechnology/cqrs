@@ -17,15 +17,12 @@
 //! 
 //! ```toml
 //! [dependencies]
-//! cqrs-es = "0.0.13"
+//! cqrs-es = "0.0.14"
 //! ```
 //! 
 //! ## Opinions
 //! 
 //! - Aggregate persistence is via event sourcing only.
-//! - Metadata is implemented only as a `HashMap<String,String>`. 
-//! Further, the `MetadataSupplier` that the user provides has no insight into the event or aggregate that 
-//! it supplies metadata for. This may be changed.
 //! - JSON serialization only.
 //! - Generics are preferred over boxed traits.
 //! - Persistence is implemented through a Postgres database.
@@ -33,14 +30,21 @@
 //! ## Todos/research
 //! 
 //! - Event upcasters.
-//! - Explore options for increasing the usefulness of `MetadataSupplier`.
 //! - Event serialization uses the event type as the root node of the JSON tree. This simplifies
 //! deserialization but is non-standard.
 //! - Persistence implementation for DynamoDb.
-//!
+//! - Support for snapshots.
 
 #[cfg(test)]
 extern crate static_assertions;
+
+pub use crate::aggregate::*;
+pub use crate::command::*;
+pub use crate::cqrs::*;
+pub use crate::event::*;
+pub use crate::query::*;
+pub use crate::store::*;
+
 // Aggregate module holds the central traits that define the fundamental component of CQRS.
 mod aggregate;
 
@@ -58,20 +62,20 @@ mod command;
 // event store and subsequently processing commands.
 mod cqrs;
 
+// Documentation items
+#[doc(hidden)]
+pub mod doc;
+
 /// An in-memory event store suitable for local testing.
 pub mod mem_store;
 
 /// Test provides a test framework for building a resilient test base around aggregates.
+/// A `TestFramework` should be used to build a comprehensive set of aggregate tests to verify
+/// your application logic (aka business rules).
 pub mod test;
 
 
-// View provides the basic downstream query objects needed to render queries (or "views") that
+// Query provides the basic downstream query objects needed to render queries (or "views") that
 // describe the state of the system.
 mod query;
 
-pub use crate::aggregate::*;
-pub use crate::command::*;
-pub use crate::cqrs::*;
-pub use crate::event::*;
-pub use crate::store::*;
-pub use crate::query::*;

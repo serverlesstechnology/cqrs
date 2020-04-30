@@ -4,17 +4,14 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
 
-/// A trait that defines an `Aggregate`, the fundamental component in CQRS that encapsulates the
-/// state and business logic for the application. An `Aggregate` is always an entity along with
-/// all objects associated with it.
+/// In CQRS (and Domain Driven Design) an `Aggregate` is the fundamental component that
+/// encapsulates the state and application logic (aka business rules) for the application.
+/// An `Aggregate` is always an entity along with all objects associated with it.
 ///
-/// In [DDD](https://en.wikipedia.org/wiki/Domain-driven_design) we require that changes are made
-/// only after loading the full `Aggregate` in order to ensure that the full context is understood.
-///
-/// #Example
+/// # Examples
 /// ```rust
 /// # use cqrs_es::Aggregate;
-/// use serde::{Serialize,Deserialize};
+/// # use serde::{Serialize,Deserialize};
 /// #[derive(Serialize,Deserialize)]
 /// struct Customer {
 ///     customer_id: String,

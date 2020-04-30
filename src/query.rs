@@ -18,11 +18,12 @@ pub trait QueryProcessor<A, E>
     fn dispatch(&self, aggregate_id: &str, events: &[MessageEnvelope<A, E>]);
 }
 
-/// Downstream `Query`s are the read elements in a CQRS system. As events are emitted these queries
-/// , or views, are updated to reflect the currente state of the system.
+/// A `Query` is a read element in a CQRS system. As events are emitted multiple downstream queries
+/// are updated to reflect the current state of the system. A query may also be referred to as a
+/// 'view', the concepts are identical but 'query' is used here to conform with CQRS nomenclature.
 ///
-/// These are regularly a serialized view, usually stored in a standard database, but could
-/// also include messaging platform or other asynchronous eventually consistent platforms.
+/// Queries are generally serialized for persistence, usually in a standard database, but a query
+/// could also utilize messaging platform or other asynchronous, eventually-consistent systems.
 pub trait Query<A, E>: Debug + Default + Serialize + DeserializeOwned + Default
     where E: DomainEvent<A>,
           A: Aggregate

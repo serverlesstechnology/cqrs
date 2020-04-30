@@ -4,8 +4,34 @@ use crate::aggregate::{Aggregate, AggregateError};
 use crate::command::Command;
 use crate::event::DomainEvent;
 
-/// A framework for rigorously testing the aggregate logic, one of the **most important**
+/// A framework for rigorously testing the aggregate logic, one of the ***most important***
 /// parts of any CQRS system.
+///
+/// ```
+/// # use cqrs_es::test::TestFramework;
+/// # use cqrs_es::doc::{Customer, CustomerEvent, AddCustomerName, NameAdded};
+/// type CustomerTestFramework = TestFramework<Customer, CustomerEvent>;
+///
+/// CustomerTestFramework::default()
+///         .given_no_previous_events()
+///         .when(AddCustomerName{
+///                 changed_name: "John Doe".to_string()
+///             })
+///         .then_expect_events(vec![
+///             CustomerEvent::NameAdded(NameAdded{
+///                 changed_name: "John Doe".to_string()
+///             })
+///         ]);
+///
+/// CustomerTestFramework::default()
+///         .given(vec![
+///             CustomerEvent::NameAdded(NameAdded {
+///                 changed_name: "John Doe".to_string()
+///             })
+///         ])
+///         .when(AddCustomerName { changed_name: "John Doe".to_string() })
+///         .then_expect_error("a name has already been added for this customer")
+/// ```
 pub struct TestFramework<A, E> {
     _phantom: PhantomData<(A, E)>
 }
@@ -95,4 +121,9 @@ impl<A, E> AggregateResultValidator<A, E>
             }
         };
     }
+}
+
+#[cfg(test)]
+mod test_framework_tests {
+
 }

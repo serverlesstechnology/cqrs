@@ -8,6 +8,18 @@ use crate::query::QueryProcessor;
 use crate::store::EventStore;
 
 /// This is the base framework for applying commands to produce events.
+///
+/// In [Domain Driven Design](https://en.wikipedia.org/wiki/Domain-driven_design) we require that
+/// changes are made only after loading the entire `Aggregate` in order to ensure that the full
+/// context is understood.
+/// With event-sourcing this means:
+/// 1. loading all previous events for the aggregate instance
+/// 1. applying these events, in order, to a new `Aggregate`
+/// 1. using the recreated `Aggregate` to handle an inbound `Command`
+/// 1. persisting any generated events or rolling back on an error
+///
+/// To manage these tasks we use a `CqrsFramework`.
+///
 pub struct CqrsFramework<A, E, ES>
     where
         A: Aggregate,
@@ -44,6 +56,9 @@ impl<A, E, ES> CqrsFramework<A, E, ES>
     /// an AggregateError being returned.
     ///
     /// If successful the events produced will be applied to the configured `QueryProcessor`s.
+    ///
+    /// # Error
+    /// If an error is generated while processing the command this will be returned.
     pub fn execute<C: Command<A, E>>(&self, aggregate_id: &str, command: C) -> Result<(), AggregateError> {
         self.execute_with_metadata(aggregate_id, command, HashMap::new())
     }

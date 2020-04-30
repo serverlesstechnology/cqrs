@@ -11,16 +11,72 @@ use crate::aggregate::Aggregate;
 /// are immutable and with [event sourcing](https://martinfowler.com/eaaDev/EventSourcing.html)
 /// they are the source of truth.
 ///
-/// A `DomainEvent` should always be in the past tense, e.g.,
+/// The name of a `DomainEvent` should always be in the past tense, e.g.,
 /// - `AdminPrivilegesGranted`
 /// - `EmailAddressChanged`
 /// - `DependencyAdded`
+///
+/// To simplify serialization, an event should be an enum, and each element should have a payload.
+/// By convention, the payload has the same name as the element, and elements that do not require
+/// additional information use an empty payload.
+///
+/// Though the `DomainEvent` trait only has a single function, the events must also derive a
+/// number of standard traits.
+/// - `Clone` - events may be cloned throughout the framework, particularly when applied to queries
+/// - `Serialize` and `Deserialize` - required for persistence
+/// - `PartialEq` and `Debug` - needed for effective testing
+///
+/// # Examples
+/// ```
+/// # use cqrs_es::doc::Customer;
+/// # use cqrs_es::{Aggregate,DomainEvent};
+/// # use serde::{Serialize,Deserialize};
+/// #[derive(Clone,Debug,Serialize,Deserialize,PartialEq)]
+/// pub enum CustomerEvent {
+///     NameChanged(NameChanged),
+///     EmailUpdated(EmailUpdated)
+/// }
+///
+/// #[derive(Clone,Debug,Serialize,Deserialize,PartialEq)]
+/// pub struct NameChanged {
+///     changed_name: String
+/// }
+///
+/// #[derive(Clone,Debug,Serialize,Deserialize,PartialEq)]
+/// pub struct EmailUpdated {
+///     new_email: String
+/// }
+/// ```
 pub trait DomainEvent<A: Aggregate>: Serialize + DeserializeOwned + Clone + PartialEq + fmt::Debug {
-    /// apply encapsulates all of the logic that determines how an event modifies the state of an
+    /// This method encapsulates all of the logic that determines how an event modifies the state of an
     /// `Aggregate`.
     ///
-    /// Note the lack of return value, because they will be replay events can not change the state
-    /// of any other object and should never result in an error.
+    /// Note the lack of return value. Events are records of past changes and so should never
+    /// result in an error.
+    ///
+    /// # Examples
+    /// ```
+    /// # use cqrs_es::doc::{Customer, NameAdded, EmailUpdated};
+    /// # use cqrs_es::{Aggregate,DomainEvent};
+    /// # use serde::{Serialize,Deserialize};
+    /// # #[derive(Clone,Debug,Serialize,Deserialize,PartialEq)]
+    /// # pub enum CustomerEvent {
+    /// #     NameAdded(NameAdded),
+    /// #     EmailUpdated(EmailUpdated)
+    /// # }
+    /// impl DomainEvent<Customer> for CustomerEvent {
+    ///     fn apply(self, customer: &mut Customer) {
+    ///         match self {
+    ///             CustomerEvent::NameAdded(payload) => {
+    ///                 customer.name = payload.changed_name;
+    ///             }
+    ///             CustomerEvent::EmailUpdated(payload) => {
+    ///                 customer.email = payload.new_email;
+    ///             }
+    ///         }
+    ///     }
+    /// }
+    /// ```
     fn apply(self, aggregate: &mut A);
 }
 
@@ -71,8 +127,8 @@ impl<A, E> MessageEnvelope<A, E>
         E: DomainEvent<A>
 {
 
-    /// Convenience function for packaging an event in a `MessageEnvelope`, used for
-    /// testing `ViewProcessor`s.
+    /// A convenience function for packaging an event in a `MessageEnvelope`, used for
+    /// testing `QueryProcessor`s.
     pub fn new(aggregate_id: String, sequence: usize, aggregate_type: String, payload: E) -> Self
     {
         MessageEnvelope {
@@ -84,8 +140,8 @@ impl<A, E> MessageEnvelope<A, E>
             _phantom: PhantomData,
         }
     }
-    /// Convenience function for packaging an event in a `MessageEnvelope`, used for
-    /// testing `ViewProcessor`s.
+    /// A convenience function for packaging an event in a `MessageEnvelope`, used for
+    /// testing `QueryProcessor`s. This version allows custom metadata to also be processed.
     pub fn new_with_metadata(aggregate_id: String, sequence: usize, aggregate_type: String, payload: E, metadata: HashMap<String, String>) -> Self
     {
         MessageEnvelope {
