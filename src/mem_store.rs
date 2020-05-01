@@ -1,11 +1,9 @@
 use std::collections::HashMap;
-use std::rc::Rc;
-use std::sync::RwLock;
+use std::sync::{Arc, RwLock};
 
 use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::{DomainEvent, MessageEnvelope};
 use crate::EventStore;
-
 
 ///  Simple memory store only useful for testing purposes
 pub struct MemStore<A, E>
@@ -13,7 +11,7 @@ pub struct MemStore<A, E>
         A: Aggregate,
         E: DomainEvent<A>
 {
-    events: Rc<LockedMessageEnvelopeMap<A, E>>,
+    events: Arc<LockedMessageEnvelopeMap<A, E>>,
 }
 
 impl<A, E> Default for MemStore<A, E>
@@ -37,8 +35,8 @@ impl<A, E> MemStore<A, E>
         E: DomainEvent<A>
 {
     /// Get a shared copy of the events stored within the event store.
-    pub fn get_events(&self) -> Rc<LockedMessageEnvelopeMap<A, E>> {
-        Rc::clone(&self.events)
+    pub fn get_events(&self) -> Arc<LockedMessageEnvelopeMap<A, E>> {
+        Arc::clone(&self.events)
     }
     fn load_commited_events(&self, aggregate_id: String) -> Vec<MessageEnvelope<A, E>> {
         // uninteresting unwrap: this will not be used in production, for tests only

@@ -2,7 +2,7 @@ use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::{DomainEvent, MessageEnvelope};
 
 /// The abstract central source for loading past events and committing new events.
-pub trait EventStore<A, E>
+pub trait EventStore<A, E>: Sync + Send
     where A: Aggregate,
           E: DomainEvent<A>
 {

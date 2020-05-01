@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::sync::RwLock;
+use std::sync::{Arc, RwLock};
 
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -38,14 +38,12 @@ impl Default for TestAggregate {
 }
 
 impl TestAggregate {
-    fn handle(&self, command: TestCommand) -> Result<Vec<TestEvent>,AggregateError>{
-
+    fn handle(&self, command: TestCommand) -> Result<Vec<TestEvent>, AggregateError> {
         match &command {
-
             TestCommand::CreateTest(command) => {
                 let event = TestEvent::Created(Created { id: command.id.to_string() });
                 Ok(vec![event])
-            },
+            }
 
             TestCommand::ConfirmTest(command) => {
                 for test in &self.tests {
@@ -55,14 +53,13 @@ impl TestAggregate {
                 }
                 let event = TestEvent::Tested(Tested { test_name: command.test_name.to_string() });
                 Ok(vec![event])
-            },
+            }
 
             TestCommand::DoSomethingElse(command) => {
                 let event = TestEvent::SomethingElse(SomethingElse { description: command.description.clone() });
                 Ok(vec![event])
             }
         }
-
     }
 }
 
@@ -114,12 +111,15 @@ pub enum TestCommand {
     ConfirmTest(ConfirmTest),
     DoSomethingElse(DoSomethingElse),
 }
+
 pub struct CreateTest {
     pub id: String,
 }
+
 pub struct ConfirmTest {
     pub test_name: String,
 }
+
 pub struct DoSomethingElse {
     pub description: String,
 }
@@ -132,11 +132,11 @@ impl Command<TestAggregate, TestEvent> for TestCommand {
 }
 
 struct TestView {
-    events: Rc<RwLock<Vec<MessageEnvelope<TestAggregate, TestEvent>>>>
+    events: Arc<RwLock<Vec<MessageEnvelope<TestAggregate, TestEvent>>>>
 }
 
 impl TestView {
-    fn new(events: Rc<RwLock<Vec<MessageEnvelope<TestAggregate, TestEvent>>>>) -> Self { TestView { events } }
+    fn new(events: Arc<RwLock<Vec<MessageEnvelope<TestAggregate, TestEvent>>>>) -> Self { TestView { events } }
 }
 
 impl QueryProcessor<TestAggregate, TestEvent> for TestView {
@@ -258,7 +258,7 @@ fn framework_test() {
     let stored_events = event_store.get_events();
 
     let delivered_events = Default::default();
-    let view = TestView::new(Rc::clone(&delivered_events));
+    let view = TestView::new(Arc::clone(&delivered_events));
 
     let cqrs = CqrsFramework::new(event_store, vec![Box::new(view)]);
     let uuid = uuid::Uuid::new_v4().to_string();

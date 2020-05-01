@@ -32,7 +32,7 @@ use serde::de::DeserializeOwned;
 ///     }
 /// }
 /// ```
-pub trait Aggregate: Default + Serialize + DeserializeOwned {
+pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// aggregate_type is a unique identifier for this aggregate
     fn aggregate_type() -> &'static str;
 }

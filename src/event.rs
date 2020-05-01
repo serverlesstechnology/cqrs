@@ -47,7 +47,7 @@ use crate::aggregate::Aggregate;
 ///     new_email: String
 /// }
 /// ```
-pub trait DomainEvent<A: Aggregate>: Serialize + DeserializeOwned + Clone + PartialEq + fmt::Debug {
+pub trait DomainEvent<A: Aggregate>: Serialize + DeserializeOwned + Clone + PartialEq + fmt::Debug + Sync + Send {
     /// This method encapsulates all of the logic that determines how an event modifies the state of an
     /// `Aggregate`.
     ///
