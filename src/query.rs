@@ -9,7 +9,7 @@ use crate::event::{DomainEvent, MessageEnvelope};
 /// Each CQRS platform should have one or more `QueryProcessor`s where it will distribute committed
 /// events, it is the responsibility of the `QueryProcessor` to update any interested
 /// queries.
-pub trait QueryProcessor<A, E>
+pub trait QueryProcessor<A, E>: Sync
     where E: DomainEvent<A>,
           A: Aggregate
 {
@@ -24,7 +24,7 @@ pub trait QueryProcessor<A, E>
 ///
 /// Queries are generally serialized for persistence, usually in a standard database, but a query
 /// could also utilize messaging platform or other asynchronous, eventually-consistent systems.
-pub trait Query<A, E>: Debug + Default + Serialize + DeserializeOwned + Default
+pub trait Query<A, E>: Debug + Default + Serialize + DeserializeOwned
     where E: DomainEvent<A>,
           A: Aggregate
 {

@@ -69,7 +69,7 @@ impl<A, E> EventStore<A, E> for MemStore<A, E>
     fn load(&self, aggregate_id: &str) -> Vec<MessageEnvelope<A, E>>
     {
         let events = self.load_commited_events(aggregate_id.to_string());
-        println!("loading: {} events", &events.len());
+        println!("loading: {} events for aggregate ID '{}'", &events.len(), &aggregate_id);
         events
     }
 
@@ -79,7 +79,7 @@ impl<A, E> EventStore<A, E> for MemStore<A, E>
         for event in events {
             new_events.push(event.clone());
         }
-        println!("storing: {} events", &new_events.len());
+        println!("storing: {} events for aggregate ID '{}'", &new_events.len(), &aggregate_id);
         // uninteresting unwrap: this is not a struct for production use
         let mut event_map = self.events.write().unwrap();
         event_map.insert(aggregate_id, new_events);
