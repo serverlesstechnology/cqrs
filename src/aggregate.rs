@@ -49,7 +49,7 @@ pub enum AggregateError {
 }
 
 /// Payload for an `AggregateError::UserError`, somewhat modeled on the errors produced by the
-/// (`validator`)[https://github.com/Keats/validator] package. This payload implements `Serialize`
+/// [`validator`](https://github.com/Keats/validator) package. This payload implements `Serialize`
 /// with the intention of allowing the user to return this object as the response payload.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct UserErrorPayload {

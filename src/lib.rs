@@ -1,7 +1,8 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![deny(clippy::all)]
-// #![warn(clippy::pedantic)]
+#![warn(rust_2018_idioms)]
+// #![warn(clippy::pedantic,missing_debug_implementations)]
 //! # cqrs
 //! 
 //! **A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures.**

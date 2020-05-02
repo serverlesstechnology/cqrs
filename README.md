@@ -16,14 +16,13 @@ cqrs-es is available from Crates.io or Github.
 cqrs-es = "0.0.17"
 ```
 
-## Opinions
+## Usage
 
-- Aggregate persistence is via event sourcing only.
-- Support for JSON serialization only.
-- Generics are preferred over boxed traits.
-- Persistence is implemented through a Postgres database.
+A demo application [is available here](https://github.com/serverlesstechnology/cqrs-demo).
 
-## Todos/research
+Documentation [is available here](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
+
+## Todos
 
 - Event upcasters.
 - Event serialization uses the event type as the root node of the JSON tree. This simplifies
@@ -31,6 +30,3 @@ deserialization but is non-standard.
 - A persistence implementation for DynamoDb.
 - A persistence implementation for MySql.
 - Support for snapshots.
-
-## Demo
-A demo application [is available here](https://github.com/serverlesstechnology/cqrs-demo).
