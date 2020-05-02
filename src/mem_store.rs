@@ -72,12 +72,16 @@ impl<A, E> EventStore<A, E> for MemStore<A, E>
     }
 
     fn commit(&self, events: Vec<EventEnvelope<A, E>>) -> Result<(), AggregateError> {
+        let new_events_qty = events.len();
+        if new_events_qty == 0 {
+            return Ok(())
+        }
         let aggregate_id = self.aggregate_id(&events);
         let mut new_events = self.load_commited_events(aggregate_id.to_string());
         for event in events {
             new_events.push(event.clone());
         }
-        println!("storing: {} events for aggregate ID '{}'", &new_events.len(), &aggregate_id);
+        println!("storing: {} new events for aggregate ID '{}'", new_events_qty, &aggregate_id);
         // uninteresting unwrap: this is not a struct for production use
         let mut event_map = self.events.write().unwrap();
         event_map.insert(aggregate_id, new_events);
