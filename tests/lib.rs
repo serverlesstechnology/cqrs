@@ -12,7 +12,7 @@ use cqrs_es::{Aggregate,
               CqrsFramework,
               DomainEvent,
               EventStore,
-              MessageEnvelope,
+              EventEnvelope,
 };
 use cqrs_es::mem_store::MemStore;
 use cqrs_es::QueryProcessor;
@@ -132,15 +132,15 @@ impl Command<TestAggregate, TestEvent> for TestCommand {
 }
 
 struct TestView {
-    events: Arc<RwLock<Vec<MessageEnvelope<TestAggregate, TestEvent>>>>
+    events: Arc<RwLock<Vec<EventEnvelope<TestAggregate, TestEvent>>>>
 }
 
 impl TestView {
-    fn new(events: Arc<RwLock<Vec<MessageEnvelope<TestAggregate, TestEvent>>>>) -> Self { TestView { events } }
+    fn new(events: Arc<RwLock<Vec<EventEnvelope<TestAggregate, TestEvent>>>>) -> Self { TestView { events } }
 }
 
 impl QueryProcessor<TestAggregate, TestEvent> for TestView {
-    fn dispatch(&self, _aggregate_id: &str, events: &[MessageEnvelope<TestAggregate, TestEvent>]) {
+    fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<TestAggregate, TestEvent>]) {
         for event in events {
             let mut event_list = self.events.write().unwrap();
             event_list.push(event.clone());
@@ -148,7 +148,7 @@ impl QueryProcessor<TestAggregate, TestEvent> for TestView {
     }
 }
 
-pub type TestMessageEnvelope = MessageEnvelope<TestAggregate, TestEvent>;
+pub type TestEventEnvelope = EventEnvelope<TestAggregate, TestEvent>;
 
 assert_impl_all!(aggregate; TestAggregate,Aggregate);
 assert_impl_all!(event; TestEvent,DomainEvent<TestAggregate>);
@@ -173,7 +173,7 @@ fn test_mem_store() {
     let aggregate_type = "TestAggregate".to_string();
 
     event_store.commit(vec![
-        TestMessageEnvelope::new_with_metadata(
+        TestEventEnvelope::new_with_metadata(
             id.to_string(),
             0,
             aggregate_type.clone(),
@@ -185,19 +185,19 @@ fn test_mem_store() {
     assert_eq!(1, stored_events.len());
 
     event_store.commit(vec![
-        TestMessageEnvelope::new_with_metadata(
+        TestEventEnvelope::new_with_metadata(
             id.to_string(),
             1,
             aggregate_type.clone(),
             TestEvent::Tested(Tested { test_name: "test A".to_string() }),
             metadata()),
-        TestMessageEnvelope::new_with_metadata(
+        TestEventEnvelope::new_with_metadata(
             id.to_string(),
             2,
             aggregate_type.clone(),
             TestEvent::Tested(Tested { test_name: "test B".to_string() }),
             metadata()),
-        TestMessageEnvelope::new_with_metadata(
+        TestEventEnvelope::new_with_metadata(
             id.to_string(),
             3,
             aggregate_type.clone(),

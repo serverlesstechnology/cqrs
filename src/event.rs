@@ -80,13 +80,13 @@ pub trait DomainEvent<A: Aggregate>: Serialize + DeserializeOwned + Clone + Part
     fn apply(self, aggregate: &mut A);
 }
 
-/// `MessageEnvelope` is a data structure that encapsulates an event with along with it's pertinent
+/// `EventEnvelope` is a data structure that encapsulates an event with along with it's pertinent
 /// information. All of the associated data will be transported and persisted together.
 ///
 /// Within any system an event must be unique based on its' `aggregate_type`, `aggregate_id` and
 /// `sequence`.
 #[derive(Debug)]
-pub struct MessageEnvelope<A, E>
+pub struct EventEnvelope<A, E>
     where
         A: Aggregate,
         E: DomainEvent<A>
@@ -104,13 +104,13 @@ pub struct MessageEnvelope<A, E>
     pub(crate) _phantom: PhantomData<A>,
 }
 
-impl<A,E> Clone for MessageEnvelope<A, E>
+impl<A,E> Clone for EventEnvelope<A, E>
     where
         A: Aggregate,
         E: DomainEvent<A>
 {
     fn clone(&self) -> Self {
-        MessageEnvelope {
+        EventEnvelope {
             aggregate_id: self.aggregate_id.clone(),
             sequence: self.sequence,
             aggregate_type: self.aggregate_type.clone(),
@@ -121,17 +121,17 @@ impl<A,E> Clone for MessageEnvelope<A, E>
     }
 }
 
-impl<A, E> MessageEnvelope<A, E>
+impl<A, E> EventEnvelope<A, E>
     where
         A: Aggregate,
         E: DomainEvent<A>
 {
 
-    /// A convenience function for packaging an event in a `MessageEnvelope`, used for
+    /// A convenience function for packaging an event in a `EventEnvelope`, used for
     /// testing `QueryProcessor`s.
     pub fn new(aggregate_id: String, sequence: usize, aggregate_type: String, payload: E) -> Self
     {
-        MessageEnvelope {
+        EventEnvelope {
             aggregate_id,
             sequence,
             aggregate_type,
@@ -140,11 +140,11 @@ impl<A, E> MessageEnvelope<A, E>
             _phantom: PhantomData,
         }
     }
-    /// A convenience function for packaging an event in a `MessageEnvelope`, used for
+    /// A convenience function for packaging an event in a `EventEnvelope`, used for
     /// testing `QueryProcessor`s. This version allows custom metadata to also be processed.
     pub fn new_with_metadata(aggregate_id: String, sequence: usize, aggregate_type: String, payload: E, metadata: HashMap<String, String>) -> Self
     {
-        MessageEnvelope {
+        EventEnvelope {
             aggregate_id,
             sequence,
             aggregate_type,

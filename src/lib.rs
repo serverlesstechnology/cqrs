@@ -17,7 +17,7 @@
 //! 
 //! ```toml
 //! [dependencies]
-//! cqrs-es = "0.0.15"
+//! cqrs-es = "0.0.16"
 //! ```
 //! 
 //! ## Opinions

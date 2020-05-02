@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use crate::aggregate::{Aggregate, AggregateError};
 use crate::command::Command;
-use crate::event::{DomainEvent, MessageEnvelope};
+use crate::event::{DomainEvent, EventEnvelope};
 use crate::query::QueryProcessor;
 use crate::store::EventStore;
 
@@ -90,7 +90,7 @@ impl<A, E, ES> CqrsFramework<A, E, ES>
         Ok(())
     }
 
-    fn duplicate(wrapped_events: &[MessageEnvelope<A, E>]) -> Vec<MessageEnvelope<A, E>> {
+    fn duplicate(wrapped_events: &[EventEnvelope<A, E>]) -> Vec<EventEnvelope<A, E>> {
         let mut committed_events = Vec::new();
         for wrapped_event in wrapped_events {
             committed_events.push((*wrapped_event).clone());
@@ -98,16 +98,16 @@ impl<A, E, ES> CqrsFramework<A, E, ES>
         committed_events
     }
 
-    fn wrap_events(&self, aggregate_id: &str, current_sequence: usize, resultant_events: Vec<E>, base_metadata: HashMap<String, String>) -> Vec<MessageEnvelope<A, E>> {
+    fn wrap_events(&self, aggregate_id: &str, current_sequence: usize, resultant_events: Vec<E>, base_metadata: HashMap<String, String>) -> Vec<EventEnvelope<A, E>> {
         let mut sequence = current_sequence;
-        let mut wrapped_events: Vec<MessageEnvelope<A, E>> = Vec::new();
+        let mut wrapped_events: Vec<EventEnvelope<A, E>> = Vec::new();
         for payload in resultant_events {
             sequence += 1;
             let aggregate_type = A::aggregate_type().to_string();
             let aggregate_id: String = aggregate_id.to_string();
             let sequence = sequence;
             let metadata = base_metadata.clone();
-            wrapped_events.push(MessageEnvelope {
+            wrapped_events.push(EventEnvelope {
                 aggregate_id,
                 sequence,
                 aggregate_type,
