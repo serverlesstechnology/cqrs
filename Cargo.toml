@@ -1,6 +1,6 @@
 [package]
 name = "cqrs-es"
-version = "0.0.16"
+version = "0.0.17"
 authors = ["Dave Garred <dave.garred@serverlesstechnology.com>"]
 edition = "2018"
 license-file = "LICENSE"

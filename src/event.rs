@@ -127,7 +127,7 @@ impl<A, E> EventEnvelope<A, E>
         E: DomainEvent<A>
 {
 
-    /// A convenience function for packaging an event in a `EventEnvelope`, used for
+    /// A convenience function for packaging an event in an `EventEnvelope`, used for
     /// testing `QueryProcessor`s.
     pub fn new(aggregate_id: String, sequence: usize, aggregate_type: String, payload: E) -> Self
     {
@@ -140,7 +140,7 @@ impl<A, E> EventEnvelope<A, E>
             _phantom: PhantomData,
         }
     }
-    /// A convenience function for packaging an event in a `EventEnvelope`, used for
+    /// A convenience function for packaging an event in an `EventEnvelope`, used for
     /// testing `QueryProcessor`s. This version allows custom metadata to also be processed.
     pub fn new_with_metadata(aggregate_id: String, sequence: usize, aggregate_type: String, payload: E, metadata: HashMap<String, String>) -> Self
     {

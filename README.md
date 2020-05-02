@@ -13,7 +13,7 @@ cqrs-es is available from Crates.io or Github.
 
 ```toml
 [dependencies]
-cqrs-es = "0.0.16"
+cqrs-es = "0.0.17"
 ```
 
 ## Opinions
@@ -29,4 +29,8 @@ cqrs-es = "0.0.16"
 - Event serialization uses the event type as the root node of the JSON tree. This simplifies
 deserialization but is non-standard.
 - A persistence implementation for DynamoDb.
+- A persistence implementation for MySql.
 - Support for snapshots.
+
+## Demo
+A demo application [is available here](https://github.com/serverlesstechnology/cqrs-demo).

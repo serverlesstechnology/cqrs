@@ -17,7 +17,7 @@
 //! 
 //! ```toml
 //! [dependencies]
-//! cqrs-es = "0.0.16"
+//! cqrs-es = "0.0.17"
 //! ```
 //! 
 //! ## Opinions
@@ -33,6 +33,7 @@
 //! - Event serialization uses the event type as the root node of the JSON tree. This simplifies
 //! deserialization but is non-standard.
 //! - Persistence implementation for DynamoDb.
+//! - Persistence implementation for MySql.
 //! - Support for snapshots.
 
 #[cfg(test)]
