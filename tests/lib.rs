@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use chrono::Utc;
@@ -180,7 +179,7 @@ fn test_mem_store() {
             TestEvent::Created(Created { id: "test_event_A".to_string() }),
             metadata(),
         )
-    ]);
+    ]).unwrap();
     let stored_events = event_store.load(&id);
     assert_eq!(1, stored_events.len());
 
@@ -203,7 +202,7 @@ fn test_mem_store() {
             aggregate_type.clone(),
             TestEvent::SomethingElse(SomethingElse { description: "something else happening here".to_string() }),
             metadata())
-    ]);
+    ]).unwrap();
     let stored_envelopes = event_store.load(&id);
 
     let mut agg = TestAggregate::default();

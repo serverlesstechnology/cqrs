@@ -37,9 +37,6 @@
 //! - Persistence implementation for MySql.
 //! - Support for snapshots.
 
-#[cfg(test)]
-extern crate static_assertions;
-
 pub use crate::aggregate::*;
 pub use crate::command::*;
 pub use crate::cqrs::*;
