@@ -18,9 +18,9 @@ cqrs-es = "0.0.17"
 
 ## Usage
 
-A demo application [is available here](https://github.com/serverlesstechnology/cqrs-demo).
-
 Documentation [is available here](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
+
+A demo application [is available here](https://github.com/serverlesstechnology/cqrs-demo).
 
 ## Todos
 
