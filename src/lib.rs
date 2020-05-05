@@ -4,37 +4,36 @@
 #![warn(rust_2018_idioms)]
 // #![warn(clippy::pedantic,missing_debug_implementations)]
 //! # cqrs
-//! 
+//!
 //! **A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures.**
-//! 
+//!
 //! ![Build tag](https://codebuild.us-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoia3ZYcXozMjVZaFhoTldlUmhHemlWVm9LUjVaTC9LN3dSTFZpMkVTTmRycElkcGhJT3g2TUdtajZyRWZMd01xNktvUkNwLzdZYW15bzJkZldQMjJWZ1dNPSIsIml2UGFyYW1ldGVyU3BlYyI6InFORDNyaFFEQUNFQkE1NlUiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 //! [![Crates.io](https://img.shields.io/crates/v/cqrs-es)](https://crates.io/crates/cqrs-es)
 //! [![docs](https://img.shields.io/badge/API-docs-blue.svg)](https://docs.rs/cqrs-es)
 //! ---
-//! 
+//!
 //! ## Installation
-//! 
+//!
 //! cqrs-es is available from Crates.io or Github.
-//! 
+//!
 //! ```toml
 //! [dependencies]
-//! cqrs-es = "0.0.17"
+//! cqrs-es = "0.0.18"
 //! ```
-//! 
-//! ## Opinions
-//! 
-//! - Aggregate persistence is via event sourcing only.
-//! - JSON serialization only.
-//! - Generics are preferred over boxed traits.
-//! - Persistence is implemented through a Postgres database.
-//! 
-//! ## Todos/research
-//! 
+//!
+//! ## Usage
+//!
+//! Documentation [is available here](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
+//!
+//! A demo application [is available here](https://github.com/serverlesstechnology/cqrs-demo).
+//!
+//! ## Todos
+//!
 //! - Event upcasters.
 //! - Event serialization uses the event type as the root node of the JSON tree. This simplifies
 //! deserialization but is non-standard.
-//! - Persistence implementation for DynamoDb.
-//! - Persistence implementation for MySql.
+//! - A persistence implementation for DynamoDb.
+//! - A persistence implementation for MySql.
 //! - Support for snapshots.
 
 pub use crate::aggregate::*;
