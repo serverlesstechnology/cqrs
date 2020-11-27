@@ -101,7 +101,7 @@ pub struct EventEnvelope<A, E>
     pub payload: E,
     /// Additional metadata for use in auditing, logging or debugging purposes.
     pub metadata: HashMap<String, String>,
-    pub(crate) _phantom: PhantomData<A>,
+    _phantom: PhantomData<A>,
 }
 
 impl<A,E> Clone for EventEnvelope<A, E>

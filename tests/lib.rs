@@ -10,10 +10,10 @@ use cqrs_es::{Aggregate,
               Command,
               CqrsFramework,
               DomainEvent,
-              EventStore,
               EventEnvelope,
+              EventStore,
 };
-use cqrs_es::mem_store::MemStore;
+use cqrs_es::mem_store::{MemStore, MemStoreAggregateContext};
 use cqrs_es::QueryProcessor;
 use cqrs_es::test::TestFramework;
 
@@ -154,7 +154,7 @@ assert_impl_all!(event; TestEvent,DomainEvent<TestAggregate>);
 
 assert_impl_all!(command; TestCommand,Command<TestAggregate,TestEvent>);
 
-assert_impl_all!(memstore; MemStore::<TestAggregate,TestEvent>, EventStore::<TestAggregate,TestEvent>);
+assert_impl_all!(memstore; MemStore::<TestAggregate,TestEvent>, EventStore::<TestAggregate,TestEvent,MemStoreAggregateContext<TestAggregate>>);
 
 fn metadata() -> HashMap<String, String> {
     let now = Utc::now();
@@ -169,40 +169,18 @@ fn test_mem_store() {
     let id = "test_id_A";
     let initial_events = event_store.load(&id);
     assert_eq!(0, initial_events.len());
-    let aggregate_type = "TestAggregate".to_string();
+    let agg_context = event_store.load_aggregate(&id);
 
-    event_store.commit(vec![
-        TestEventEnvelope::new_with_metadata(
-            id.to_string(),
-            0,
-            aggregate_type.clone(),
-            TestEvent::Created(Created { id: "test_event_A".to_string() }),
-            metadata(),
-        )
-    ]).unwrap();
+    event_store.commit(vec![TestEvent::Created(Created { id: "test_event_A".to_string() })], agg_context, metadata()).unwrap();
     let stored_events = event_store.load(&id);
     assert_eq!(1, stored_events.len());
+    let agg_context = event_store.load_aggregate(&id);
 
     event_store.commit(vec![
-        TestEventEnvelope::new_with_metadata(
-            id.to_string(),
-            1,
-            aggregate_type.clone(),
-            TestEvent::Tested(Tested { test_name: "test A".to_string() }),
-            metadata()),
-        TestEventEnvelope::new_with_metadata(
-            id.to_string(),
-            2,
-            aggregate_type.clone(),
-            TestEvent::Tested(Tested { test_name: "test B".to_string() }),
-            metadata()),
-        TestEventEnvelope::new_with_metadata(
-            id.to_string(),
-            3,
-            aggregate_type.clone(),
-            TestEvent::SomethingElse(SomethingElse { description: "something else happening here".to_string() }),
-            metadata())
-    ]).unwrap();
+        TestEvent::Tested(Tested { test_name: "test A".to_string() }),
+        TestEvent::Tested(Tested { test_name: "test B".to_string() }),
+        TestEvent::SomethingElse(SomethingElse { description: "something else happening here".to_string() }),
+    ], agg_context, metadata()).unwrap();
     let stored_envelopes = event_store.load(&id);
 
     let mut agg = TestAggregate::default();

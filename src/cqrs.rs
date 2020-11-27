@@ -2,8 +2,9 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 
 use crate::aggregate::{Aggregate, AggregateError};
+use crate::AggregateContext;
 use crate::command::Command;
-use crate::event::{DomainEvent, EventEnvelope};
+use crate::event::DomainEvent;
 use crate::query::QueryProcessor;
 use crate::store::EventStore;
 
@@ -20,32 +21,37 @@ use crate::store::EventStore;
 ///
 /// To manage these tasks we use a `CqrsFramework`.
 ///
-pub struct CqrsFramework<A, E, ES>
+pub struct CqrsFramework<A, E, ES, AC>
     where
         A: Aggregate,
         E: DomainEvent<A>,
-        ES: EventStore<A, E>,
+        ES: EventStore<A, E, AC>,
+        AC: AggregateContext<A>
 {
     store: ES,
     query_processors: Vec<Box<dyn QueryProcessor<A, E>>>,
+    _phantom: PhantomData<AC>,
 }
 
-impl<A, E, ES> CqrsFramework<A, E, ES>
+impl<A, E, ES, AC> CqrsFramework<A, E, ES, AC>
     where
         A: Aggregate,
         E: DomainEvent<A>,
-        ES: EventStore<A, E>
+        ES: EventStore<A, E, AC>,
+        AC: AggregateContext<A>
 {
     /// Creates new framework for dispatching commands using the provided elements.
-    pub fn new(store: ES, query_processors: Vec<Box<dyn QueryProcessor<A, E>>>) -> CqrsFramework<A, E, ES>
+    pub fn new(store: ES, query_processors: Vec<Box<dyn QueryProcessor<A, E>>>) -> CqrsFramework<A, E, ES, AC>
         where
             A: Aggregate,
             E: DomainEvent<A>,
-            ES: EventStore<A, E>
+            ES: EventStore<A, E, AC>,
+            AC: AggregateContext<A>
     {
         CqrsFramework {
             store,
             query_processors,
+            _phantom: PhantomData,
         }
     }
     /// This applies a command to an aggregate. Executing a command
@@ -78,56 +84,13 @@ impl<A, E, ES> CqrsFramework<A, E, ES>
     ///
     /// If successful the events produced will be applied to the configured `QueryProcessor`s.
     pub fn execute_with_metadata<C: Command<A, E>>(&self, aggregate_id: &str, command: C, metadata: HashMap<String, String>) -> Result<(), AggregateError> {
-        let (aggregate, current_sequence) = self.load_aggregate(aggregate_id);
-        let resultant_events = command.handle(&aggregate)?;
-        let wrapped_events = self.wrap_events(aggregate_id, current_sequence, resultant_events, metadata);
-
-        let committed_events = <CqrsFramework<A, E, ES>>::duplicate(&wrapped_events);
-        self.store.commit(wrapped_events)?;
+        let aggregate_context = self.store.load_aggregate(aggregate_id);
+        let resultant_events = command.handle(&aggregate_context.aggregate())?;
+        let committed_events = self.store.commit(resultant_events, aggregate_context, metadata)?;
         for processor in &self.query_processors {
-            processor.dispatch(&aggregate_id, &committed_events);
+            let dispatch_events = committed_events.as_slice();
+            processor.dispatch(&aggregate_id, dispatch_events);
         }
         Ok(())
-    }
-
-    fn duplicate(wrapped_events: &[EventEnvelope<A, E>]) -> Vec<EventEnvelope<A, E>> {
-        let mut committed_events = Vec::new();
-        for wrapped_event in wrapped_events {
-            committed_events.push((*wrapped_event).clone());
-        }
-        committed_events
-    }
-
-    fn wrap_events(&self, aggregate_id: &str, current_sequence: usize, resultant_events: Vec<E>, base_metadata: HashMap<String, String>) -> Vec<EventEnvelope<A, E>> {
-        let mut sequence = current_sequence;
-        let mut wrapped_events: Vec<EventEnvelope<A, E>> = Vec::new();
-        for payload in resultant_events {
-            sequence += 1;
-            let aggregate_type = A::aggregate_type().to_string();
-            let aggregate_id: String = aggregate_id.to_string();
-            let sequence = sequence;
-            let metadata = base_metadata.clone();
-            wrapped_events.push(EventEnvelope {
-                aggregate_id,
-                sequence,
-                aggregate_type,
-                payload,
-                metadata,
-                _phantom: PhantomData,
-            });
-        }
-        wrapped_events
-    }
-
-    fn load_aggregate(&self, aggregate_id: &str) -> (A, usize) {
-        let committed_events = self.store.load(aggregate_id);
-        let mut aggregate = A::default();
-        let mut current_sequence = 0;
-        for envelope in committed_events {
-            current_sequence = envelope.sequence;
-            let event = envelope.payload;
-            event.apply(&mut aggregate);
-        }
-        (aggregate, current_sequence)
     }
 }
