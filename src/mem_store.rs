@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
+use crate::{AggregateContext, EventStore};
 use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::{DomainEvent, EventEnvelope};
-use crate::EventStore;
 
 ///  Simple memory store only useful for testing purposes
 pub struct MemStore<A, E>
@@ -11,7 +11,7 @@ pub struct MemStore<A, E>
         A: Aggregate,
         E: DomainEvent<A>
 {
-    events: Arc<LockedEventEnvelopeMap<A, E>>,
+    events: Arc<LockedEventEnvelopeMap<A, E>>
 }
 
 impl<A, E> Default for MemStore<A, E>
@@ -22,7 +22,7 @@ impl<A, E> Default for MemStore<A, E>
     fn default() -> Self {
         let events = Default::default();
         MemStore {
-            events,
+            events
         }
     }
 }
@@ -59,7 +59,7 @@ impl<A, E> MemStore<A, E>
     }
 }
 
-impl<A, E> EventStore<A, E> for MemStore<A, E>
+impl<A, E> EventStore<A, E, MemStoreAggregateContext<A>> for MemStore<A, E>
     where
         A: Aggregate,
         E: DomainEvent<A>
@@ -71,20 +71,62 @@ impl<A, E> EventStore<A, E> for MemStore<A, E>
         events
     }
 
-    fn commit(&self, events: Vec<EventEnvelope<A, E>>) -> Result<(), AggregateError> {
-        let new_events_qty = events.len();
-        if new_events_qty == 0 {
-            return Ok(())
+    fn load_aggregate(&self, aggregate_id: &str) -> MemStoreAggregateContext<A> {
+        let committed_events = self.load(aggregate_id);
+        let mut aggregate = A::default();
+        let mut current_sequence = 0;
+        for envelope in committed_events {
+            current_sequence = envelope.sequence;
+            let event = envelope.payload;
+            event.apply(&mut aggregate);
+        };
+        MemStoreAggregateContext {
+            aggregate_id: aggregate_id.to_string(),
+            aggregate,
+            current_sequence,
         }
-        let aggregate_id = self.aggregate_id(&events);
+    }
+
+
+    fn commit(&self, events: Vec<E>, context: MemStoreAggregateContext<A>, metadata: HashMap<String, String>) -> Result<Vec<EventEnvelope<A, E>>, AggregateError> {
+        let aggregate_id = context.aggregate_id.as_str();
+        let current_sequence = context.current_sequence;
+        let wrapped_events = self.wrap_events(aggregate_id, current_sequence, events, metadata);
+        let new_events_qty = wrapped_events.len();
+        if new_events_qty == 0 {
+            return Ok(Vec::default());
+        }
+        let aggregate_id = self.aggregate_id(&wrapped_events);
         let mut new_events = self.load_commited_events(aggregate_id.to_string());
-        for event in events {
+        for event in wrapped_events.clone() {
             new_events.push(event.clone());
         }
         println!("storing: {} new events for aggregate ID '{}'", new_events_qty, &aggregate_id);
         // uninteresting unwrap: this is not a struct for production use
-        let mut event_map = self.events.write().unwrap();
+        let mut event_map =
+            self.events.write().unwrap();
         event_map.insert(aggregate_id, new_events);
-        Ok(())
+        Ok(wrapped_events)
+    }
+}
+
+/// Holds context for a pure event store implementation for MemStore
+pub struct MemStoreAggregateContext<A>
+    where A: Aggregate
+{
+    /// The aggregate ID of the aggregate instance that has been loaded.
+    pub aggregate_id: String,
+    /// The current state of the aggregate instance.
+    pub aggregate: A,
+    /// The last committed event sequence number for this aggregate instance.
+    pub current_sequence: usize,
+}
+
+
+impl<A> AggregateContext<A> for MemStoreAggregateContext<A>
+    where A: Aggregate
+{
+    fn aggregate(&self) -> &A {
+        &self.aggregate
     }
 }
