@@ -13,7 +13,7 @@ cqrs-es is available from Crates.io or Github.
 
 ```toml
 [dependencies]
-cqrs-es = "0.0.18"
+cqrs-es = "0.1.0"
 ```
 
 ## Usage
@@ -22,6 +22,11 @@ Documentation [is available here](https://doc.rust-cqrs.org) along with an intro
 
 A demo application [is available here](https://github.com/serverlesstechnology/cqrs-demo).
 
+## Change log
+
+#### `v0.1.0` 
+Corrected to move all command and event logic into the aggregate. 
+
 ## Todos
 
 - Event upcasters.
@@ -29,4 +34,3 @@ A demo application [is available here](https://github.com/serverlesstechnology/c
 deserialization but is non-standard.
 - A persistence implementation for DynamoDb.
 - A persistence implementation for MySql.
-- Support for snapshots.

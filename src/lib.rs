@@ -18,7 +18,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cqrs-es = "0.0.20"
+//! cqrs-es = "0.1.0"
 //! ```
 //!
 //! ## Usage
@@ -34,7 +34,6 @@
 //! deserialization but is non-standard.
 //! - A persistence implementation for DynamoDb.
 //! - A persistence implementation for MySql.
-//! - Support for snapshots.
 
 pub use crate::aggregate::*;
 pub use crate::cqrs::*;

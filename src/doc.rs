@@ -70,18 +70,7 @@ pub struct EmailUpdated {
     pub new_email: String
 }
 
-impl DomainEvent for CustomerEvent {
-//     fn apply(self, customer: &mut Customer) {
-//         match self {
-//             CustomerEvent::NameAdded(payload) => {
-//                 customer.name = payload.changed_name;
-//             }
-//             CustomerEvent::EmailUpdated(payload) => {
-//                 customer.email = payload.new_email;
-//             }
-//         }
-//     }
-}
+impl DomainEvent for CustomerEvent {}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum CustomerCommand {
@@ -98,18 +87,6 @@ pub struct AddCustomerName {
 pub struct UpdateEmail {
     pub new_email: String
 }
-
-// impl Command<Customer, CustomerEvent> for AddCustomerName {
-//     fn handle(self, customer: &Customer) -> Result<Vec<CustomerEvent>, AggregateError> {
-//         if customer.name.as_str() != "" {
-//             return Err(AggregateError::new("a name has already been added for this customer"));
-//         }
-//         let payload = NameAdded {
-//             changed_name: self.changed_name
-//         };
-//         Ok(vec![CustomerEvent::NameAdded(payload)])
-//     }
-// }
 
 #[cfg(test)]
 mod doc_tests {

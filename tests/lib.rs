@@ -96,19 +96,12 @@ pub struct Tested {
     pub test_name: String
 }
 
-// impl DomainEvent<TestAggregate> for Tested {
-//     fn apply(self, aggregate: &mut TestAggregate) {
-//         aggregate.tests.push(self.test_name);
-//     }
-// }
-
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct SomethingElse {
     pub description: String
 }
 
 impl DomainEvent for TestEvent {}
-
 
 pub enum TestCommand {
     CreateTest(CreateTest),
@@ -127,13 +120,6 @@ pub struct ConfirmTest {
 pub struct DoSomethingElse {
     pub description: String,
 }
-
-
-// impl Command<TestAggregate, TestEvent> for TestCommand {
-//     fn handle(self, aggregate: &TestAggregate) -> Result<Vec<TestEvent>, AggregateError> {
-//         aggregate.handle(self)
-//     }
-// }
 
 struct TestView {
     events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>
