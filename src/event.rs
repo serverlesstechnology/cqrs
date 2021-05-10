@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::fmt;
-use std::marker::PhantomData;
 
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -47,37 +46,7 @@ use crate::aggregate::Aggregate;
 ///     new_email: String
 /// }
 /// ```
-pub trait DomainEvent<A: Aggregate>: Serialize + DeserializeOwned + Clone + PartialEq + fmt::Debug + Sync + Send {
-    /// This method encapsulates all of the logic that determines how an event modifies the state of an
-    /// `Aggregate`.
-    ///
-    /// Note the lack of return value. Events are records of past changes and so should never
-    /// result in an error.
-    ///
-    /// # Examples
-    /// ```
-    /// # use cqrs_es::doc::{Customer, NameAdded, EmailUpdated};
-    /// # use cqrs_es::{Aggregate,DomainEvent};
-    /// # use serde::{Serialize,Deserialize};
-    /// # #[derive(Clone,Debug,Serialize,Deserialize,PartialEq)]
-    /// # pub enum CustomerEvent {
-    /// #     NameAdded(NameAdded),
-    /// #     EmailUpdated(EmailUpdated)
-    /// # }
-    /// impl DomainEvent<Customer> for CustomerEvent {
-    ///     fn apply(self, customer: &mut Customer) {
-    ///         match self {
-    ///             CustomerEvent::NameAdded(payload) => {
-    ///                 customer.name = payload.changed_name;
-    ///             }
-    ///             CustomerEvent::EmailUpdated(payload) => {
-    ///                 customer.email = payload.new_email;
-    ///             }
-    ///         }
-    ///     }
-    /// }
-    /// ```
-    fn apply(self, aggregate: &mut A);
+pub trait DomainEvent: Serialize + DeserializeOwned + Clone + PartialEq + fmt::Debug + Sync + Send {
 }
 
 /// `EventEnvelope` is a data structure that encapsulates an event with along with it's pertinent
@@ -86,10 +55,9 @@ pub trait DomainEvent<A: Aggregate>: Serialize + DeserializeOwned + Clone + Part
 /// Within any system an event must be unique based on its' `aggregate_type`, `aggregate_id` and
 /// `sequence`.
 #[derive(Debug)]
-pub struct EventEnvelope<A, E>
+pub struct EventEnvelope<A>
     where
-        A: Aggregate,
-        E: DomainEvent<A>
+        A: Aggregate
 {
     /// The id of the aggregate instance.
     pub aggregate_id: String,
@@ -98,16 +66,12 @@ pub struct EventEnvelope<A, E>
     /// The type of aggregate the event applies to.
     pub aggregate_type: String,
     /// The event payload with all business information.
-    pub payload: E,
+    pub payload: A::Event,
     /// Additional metadata for use in auditing, logging or debugging purposes.
     pub metadata: HashMap<String, String>,
-    _phantom: PhantomData<A>,
 }
 
-impl<A,E> Clone for EventEnvelope<A, E>
-    where
-        A: Aggregate,
-        E: DomainEvent<A>
+impl<A: Aggregate> Clone for EventEnvelope<A>
 {
     fn clone(&self) -> Self {
         EventEnvelope {
@@ -116,20 +80,16 @@ impl<A,E> Clone for EventEnvelope<A, E>
             aggregate_type: self.aggregate_type.clone(),
             payload: self.payload.clone(),
             metadata: self.metadata.clone(),
-            _phantom: PhantomData
         }
     }
 }
 
-impl<A, E> EventEnvelope<A, E>
-    where
-        A: Aggregate,
-        E: DomainEvent<A>
+impl<A: Aggregate> EventEnvelope<A>
 {
 
     /// A convenience function for packaging an event in an `EventEnvelope`, used for
     /// testing `QueryProcessor`s.
-    pub fn new(aggregate_id: String, sequence: usize, aggregate_type: String, payload: E) -> Self
+    pub fn new(aggregate_id: String, sequence: usize, aggregate_type: String, payload: A::Event) -> Self
     {
         EventEnvelope {
             aggregate_id,
@@ -137,12 +97,11 @@ impl<A, E> EventEnvelope<A, E>
             aggregate_type,
             payload,
             metadata: Default::default(),
-            _phantom: PhantomData,
         }
     }
     /// A convenience function for packaging an event in an `EventEnvelope`, used for
     /// testing `QueryProcessor`s. This version allows custom metadata to also be processed.
-    pub fn new_with_metadata(aggregate_id: String, sequence: usize, aggregate_type: String, payload: E, metadata: HashMap<String, String>) -> Self
+    pub fn new_with_metadata(aggregate_id: String, sequence: usize, aggregate_type: String, payload: A::Event, metadata: HashMap<String, String>) -> Self
     {
         EventEnvelope {
             aggregate_id,
@@ -150,7 +109,6 @@ impl<A, E> EventEnvelope<A, E>
             aggregate_type,
             payload,
             metadata,
-            _phantom: PhantomData,
         }
     }
 }

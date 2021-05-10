@@ -3,8 +3,6 @@ use std::marker::PhantomData;
 
 use crate::aggregate::{Aggregate, AggregateError};
 use crate::AggregateContext;
-use crate::command::Command;
-use crate::event::DomainEvent;
 use crate::query::QueryProcessor;
 use crate::store::EventStore;
 
@@ -21,31 +19,28 @@ use crate::store::EventStore;
 ///
 /// To manage these tasks we use a `CqrsFramework`.
 ///
-pub struct CqrsFramework<A, E, ES, AC>
+pub struct CqrsFramework<A, ES, AC>
     where
         A: Aggregate,
-        E: DomainEvent<A>,
-        ES: EventStore<A, E, AC>,
+        ES: EventStore<A, AC>,
         AC: AggregateContext<A>
 {
     store: ES,
-    query_processors: Vec<Box<dyn QueryProcessor<A, E>>>,
+    query_processors: Vec<Box<dyn QueryProcessor<A>>>,
     _phantom: PhantomData<AC>,
 }
 
-impl<A, E, ES, AC> CqrsFramework<A, E, ES, AC>
+impl<A, ES, AC> CqrsFramework<A, ES, AC>
     where
         A: Aggregate,
-        E: DomainEvent<A>,
-        ES: EventStore<A, E, AC>,
+        ES: EventStore<A, AC>,
         AC: AggregateContext<A>
 {
     /// Creates new framework for dispatching commands using the provided elements.
-    pub fn new(store: ES, query_processors: Vec<Box<dyn QueryProcessor<A, E>>>) -> CqrsFramework<A, E, ES, AC>
+    pub fn new(store: ES, query_processors: Vec<Box<dyn QueryProcessor<A>>>) -> CqrsFramework<A, ES, AC>
         where
             A: Aggregate,
-            E: DomainEvent<A>,
-            ES: EventStore<A, E, AC>,
+            ES: EventStore<A, AC>,
             AC: AggregateContext<A>
     {
         CqrsFramework {
@@ -65,7 +60,7 @@ impl<A, E, ES, AC> CqrsFramework<A, E, ES, AC>
     ///
     /// # Error
     /// If an error is generated while processing the command this will be returned.
-    pub fn execute<C: Command<A, E>>(&self, aggregate_id: &str, command: C) -> Result<(), AggregateError> {
+    pub fn execute(&self, aggregate_id: &str, command: A::Command) -> Result<(), AggregateError> {
         self.execute_with_metadata(aggregate_id, command, HashMap::new())
     }
 
@@ -83,9 +78,10 @@ impl<A, E, ES, AC> CqrsFramework<A, E, ES, AC>
     /// an AggregateError being returned.
     ///
     /// If successful the events produced will be applied to the configured `QueryProcessor`s.
-    pub fn execute_with_metadata<C: Command<A, E>>(&self, aggregate_id: &str, command: C, metadata: HashMap<String, String>) -> Result<(), AggregateError> {
+    pub fn execute_with_metadata(&self, aggregate_id: &str, command: A::Command, metadata: HashMap<String, String>) -> Result<(), AggregateError> {
         let aggregate_context = self.store.load_aggregate(aggregate_id);
-        let resultant_events = command.handle(&aggregate_context.aggregate())?;
+        let aggregate = aggregate_context.aggregate();
+        let resultant_events = aggregate.handle(command)?;
         let committed_events = self.store.commit(resultant_events, aggregate_context, metadata)?;
         for processor in &self.query_processors {
             let dispatch_events = committed_events.as_slice();

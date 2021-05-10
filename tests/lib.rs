@@ -7,7 +7,6 @@ use static_assertions::assert_impl_all;
 
 use cqrs_es::{Aggregate,
               AggregateError,
-              Command,
               CqrsFramework,
               DomainEvent,
               EventEnvelope,
@@ -24,19 +23,12 @@ pub struct TestAggregate {
     tests: Vec<String>,
 }
 
-impl Aggregate for TestAggregate { fn aggregate_type() -> &'static str { "TestAggregate" } }
+impl Aggregate for TestAggregate {
+    type Command = TestCommand;
+    type Event = TestEvent;
 
-impl Default for TestAggregate {
-    fn default() -> Self {
-        TestAggregate {
-            id: "".to_string(),
-            description: "".to_string(),
-            tests: Vec::new(),
-        }
-    }
-}
+    fn aggregate_type() -> &'static str { "TestAggregate" }
 
-impl TestAggregate {
     fn handle(&self, command: TestCommand) -> Result<Vec<TestEvent>, AggregateError> {
         match &command {
             TestCommand::CreateTest(command) => {
@@ -60,7 +52,32 @@ impl TestAggregate {
             }
         }
     }
+
+    fn apply(&mut self, event: &Self::Event) {
+        match event {
+            TestEvent::Created(e) => {
+                self.id = e.id.clone();
+            }
+            TestEvent::Tested(e) => {
+                self.tests.push(e.test_name.clone());
+            }
+            TestEvent::SomethingElse(e) => {
+                self.description = e.description.clone();
+            }
+        }
+    }
 }
+
+impl Default for TestAggregate {
+    fn default() -> Self {
+        TestAggregate {
+            id: "".to_string(),
+            description: "".to_string(),
+            tests: Vec::new(),
+        }
+    }
+}
+
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum TestEvent {
@@ -79,30 +96,18 @@ pub struct Tested {
     pub test_name: String
 }
 
-impl DomainEvent<TestAggregate> for Tested {
-    fn apply(self, aggregate: &mut TestAggregate) {
-        aggregate.tests.push(self.test_name);
-    }
-}
+// impl DomainEvent<TestAggregate> for Tested {
+//     fn apply(self, aggregate: &mut TestAggregate) {
+//         aggregate.tests.push(self.test_name);
+//     }
+// }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct SomethingElse {
     pub description: String
 }
 
-impl DomainEvent<TestAggregate> for TestEvent {
-    fn apply(self, aggregate: &mut TestAggregate) {
-        match self {
-            TestEvent::Created(e) => {
-                aggregate.id = e.id;
-            }
-            TestEvent::Tested(e) => { e.apply(aggregate) }
-            TestEvent::SomethingElse(e) => {
-                aggregate.description = e.description;
-            }
-        }
-    }
-}
+impl DomainEvent for TestEvent {}
 
 
 pub enum TestCommand {
@@ -124,22 +129,22 @@ pub struct DoSomethingElse {
 }
 
 
-impl Command<TestAggregate, TestEvent> for TestCommand {
-    fn handle(self, aggregate: &TestAggregate) -> Result<Vec<TestEvent>, AggregateError> {
-        aggregate.handle(self)
-    }
-}
+// impl Command<TestAggregate, TestEvent> for TestCommand {
+//     fn handle(self, aggregate: &TestAggregate) -> Result<Vec<TestEvent>, AggregateError> {
+//         aggregate.handle(self)
+//     }
+// }
 
 struct TestView {
-    events: Arc<RwLock<Vec<EventEnvelope<TestAggregate, TestEvent>>>>
+    events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>
 }
 
 impl TestView {
-    fn new(events: Arc<RwLock<Vec<EventEnvelope<TestAggregate, TestEvent>>>>) -> Self { TestView { events } }
+    fn new(events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>) -> Self { TestView { events } }
 }
 
-impl QueryProcessor<TestAggregate, TestEvent> for TestView {
-    fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<TestAggregate, TestEvent>]) {
+impl QueryProcessor<TestAggregate> for TestView {
+    fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<TestAggregate>]) {
         for event in events {
             let mut event_list = self.events.write().unwrap();
             event_list.push(event.clone());
@@ -147,14 +152,12 @@ impl QueryProcessor<TestAggregate, TestEvent> for TestView {
     }
 }
 
-pub type TestEventEnvelope = EventEnvelope<TestAggregate, TestEvent>;
+pub type TestEventEnvelope = EventEnvelope<TestAggregate>;
 
 assert_impl_all!(aggregate; TestAggregate,Aggregate);
-assert_impl_all!(event; TestEvent,DomainEvent<TestAggregate>);
+// assert_impl_all!(event; TestEvent);
 
-assert_impl_all!(command; TestCommand,Command<TestAggregate,TestEvent>);
-
-assert_impl_all!(memstore; MemStore::<TestAggregate,TestEvent>, EventStore::<TestAggregate,TestEvent,MemStoreAggregateContext<TestAggregate>>);
+assert_impl_all!(memstore; MemStore::<TestAggregate>, EventStore::<TestAggregate,MemStoreAggregateContext<TestAggregate>>);
 
 fn metadata() -> HashMap<String, String> {
     let now = Utc::now();
@@ -165,7 +168,7 @@ fn metadata() -> HashMap<String, String> {
 
 #[test]
 fn test_mem_store() {
-    let event_store = MemStore::<TestAggregate, TestEvent>::default();
+    let event_store = MemStore::<TestAggregate>::default();
     let id = "test_id_A";
     let initial_events = event_store.load(&id);
     assert_eq!(0, initial_events.len());
@@ -186,12 +189,12 @@ fn test_mem_store() {
     let mut agg = TestAggregate::default();
     for stored_envelope in stored_envelopes {
         let event = stored_envelope.payload;
-        event.apply(&mut agg);
+        agg.apply(&event);
     }
     println!("{:#?}", agg);
 }
 
-type ThisTestFramework = TestFramework<TestAggregate, TestEvent>;
+type ThisTestFramework = TestFramework<TestAggregate>;
 
 #[test]
 fn test_framework_test() {

@@ -3,21 +3,15 @@ use std::sync::{Arc, RwLock};
 
 use crate::{AggregateContext, EventStore};
 use crate::aggregate::{Aggregate, AggregateError};
-use crate::event::{DomainEvent, EventEnvelope};
+use crate::event::{EventEnvelope};
 
 ///  Simple memory store only useful for testing purposes
-pub struct MemStore<A, E>
-    where
-        A: Aggregate,
-        E: DomainEvent<A>
+pub struct MemStore<A: Aggregate>
 {
-    events: Arc<LockedEventEnvelopeMap<A, E>>
+    events: Arc<LockedEventEnvelopeMap<A>>
 }
 
-impl<A, E> Default for MemStore<A, E>
-    where
-        A: Aggregate,
-        E: DomainEvent<A>
+impl<A: Aggregate> Default for MemStore<A>
 {
     fn default() -> Self {
         let events = Default::default();
@@ -27,21 +21,18 @@ impl<A, E> Default for MemStore<A, E>
     }
 }
 
-type LockedEventEnvelopeMap<A, E> = RwLock<HashMap<String, Vec<EventEnvelope<A, E>>>>;
+type LockedEventEnvelopeMap<A> = RwLock<HashMap<String, Vec<EventEnvelope<A>>>>;
 
-impl<A, E> MemStore<A, E>
-    where
-        A: Aggregate,
-        E: DomainEvent<A>
+impl<A: Aggregate> MemStore<A>
 {
     /// Get a shared copy of the events stored within the event store.
-    pub fn get_events(&self) -> Arc<LockedEventEnvelopeMap<A, E>> {
+    pub fn get_events(&self) -> Arc<LockedEventEnvelopeMap<A>> {
         Arc::clone(&self.events)
     }
-    fn load_commited_events(&self, aggregate_id: String) -> Vec<EventEnvelope<A, E>> {
+    fn load_commited_events(&self, aggregate_id: String) -> Vec<EventEnvelope<A>> {
         // uninteresting unwrap: this will not be used in production, for tests only
         let event_map = self.events.read().unwrap();
-        let mut committed_events: Vec<EventEnvelope<A, E>> = Vec::new();
+        let mut committed_events: Vec<EventEnvelope<A>> = Vec::new();
         match event_map.get(aggregate_id.as_str()) {
             None => {}
             Some(events) => {
@@ -52,19 +43,16 @@ impl<A, E> MemStore<A, E>
         };
         committed_events
     }
-    fn aggregate_id(&self, events: &[EventEnvelope<A, E>]) -> String {
+    fn aggregate_id(&self, events: &[EventEnvelope<A>]) -> String {
         // uninteresting unwrap: this is not a struct for production use
         let &first_event = events.iter().peekable().peek().unwrap();
         first_event.aggregate_id.to_string()
     }
 }
 
-impl<A, E> EventStore<A, E, MemStoreAggregateContext<A>> for MemStore<A, E>
-    where
-        A: Aggregate,
-        E: DomainEvent<A>
+impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A>
 {
-    fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A, E>>
+    fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>>
     {
         let events = self.load_commited_events(aggregate_id.to_string());
         println!("loading: {} events for aggregate ID '{}'", &events.len(), &aggregate_id);
@@ -78,7 +66,7 @@ impl<A, E> EventStore<A, E, MemStoreAggregateContext<A>> for MemStore<A, E>
         for envelope in committed_events {
             current_sequence = envelope.sequence;
             let event = envelope.payload;
-            event.apply(&mut aggregate);
+            aggregate.apply(&event);
         };
         MemStoreAggregateContext {
             aggregate_id: aggregate_id.to_string(),
@@ -88,7 +76,7 @@ impl<A, E> EventStore<A, E, MemStoreAggregateContext<A>> for MemStore<A, E>
     }
 
 
-    fn commit(&self, events: Vec<E>, context: MemStoreAggregateContext<A>, metadata: HashMap<String, String>) -> Result<Vec<EventEnvelope<A, E>>, AggregateError> {
+    fn commit(&self, events: Vec<A::Event>, context: MemStoreAggregateContext<A>, metadata: HashMap<String, String>) -> Result<Vec<EventEnvelope<A>>, AggregateError> {
         let aggregate_id = context.aggregate_id.as_str();
         let current_sequence = context.current_sequence;
         let wrapped_events = self.wrap_events(aggregate_id, current_sequence, events, metadata);

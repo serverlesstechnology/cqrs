@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
+use crate::DomainEvent;
 
 /// In CQRS (and Domain Driven Design) an `Aggregate` is the fundamental component that
 /// encapsulates the state and application logic (aka business rules) for the application.
@@ -33,8 +34,16 @@ use serde::de::DeserializeOwned;
 /// }
 /// ```
 pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
+    /// An inbound command used to make changes in the state of the Aggregate
+    type Command;
+    /// An event representing some change in state of the Aggregate
+    type Event: DomainEvent;
     /// aggregate_type is a unique identifier for this aggregate
     fn aggregate_type() -> &'static str;
+    /// handle inbound command and return a vector of events or an error
+    fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError>;
+    /// Update the aggregate's state with an event
+    fn apply(&mut self, event: &Self::Event);
 }
 
 /// The base error for the framework.
