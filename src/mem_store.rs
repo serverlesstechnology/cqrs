@@ -86,13 +86,12 @@ impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A>
         }
         let aggregate_id = self.aggregate_id(&wrapped_events);
         let mut new_events = self.load_commited_events(aggregate_id.to_string());
-        for event in wrapped_events.clone() {
+        for event in &wrapped_events {
             new_events.push(event.clone());
         }
         println!("storing: {} new events for aggregate ID '{}'", new_events_qty, &aggregate_id);
         // uninteresting unwrap: this is not a struct for production use
-        let mut event_map =
-            self.events.write().unwrap();
+        let mut event_map = self.events.write().unwrap();
         event_map.insert(aggregate_id, new_events);
         Ok(wrapped_events)
     }
