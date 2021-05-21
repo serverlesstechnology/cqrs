@@ -18,7 +18,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cqrs-es = "0.0.20"
+//! cqrs-es = "0.1.0"
 //! ```
 //!
 //! ## Usage
@@ -34,10 +34,8 @@
 //! deserialization but is non-standard.
 //! - A persistence implementation for DynamoDb.
 //! - A persistence implementation for MySql.
-//! - Support for snapshots.
 
 pub use crate::aggregate::*;
-pub use crate::command::*;
 pub use crate::cqrs::*;
 pub use crate::event::*;
 pub use crate::query::*;
@@ -51,10 +49,6 @@ mod event;
 
 // Store holds the abstact `EventStore` trait as well as an in-memory and Postgres implementation.
 mod store;
-
-// Command module holds the `Command` trait which defines the only object that can make any
-// modifications to the state of an aggregate.
-mod command;
 
 // Cqrs provides the base framework and associated logic for processing loading aggregates via an
 // event store and subsequently processing commands.

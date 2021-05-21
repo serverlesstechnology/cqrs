@@ -1,11 +1,12 @@
 [package]
 name = "cqrs-es"
-version = "0.0.20"
+version = "0.1.0"
 authors = ["Dave Garred <dave.garred@serverlesstechnology.com>"]
 edition = "2018"
 license-file = "LICENSE"
 keywords = ["cqrs", "event-sourcing", "serverless", "lambda"]
 description = "A lightweight, opinionated CQRS and event sourcing framework targetting serverless architectures."
+documentation = "https://docs.rs/cqrs-es"
 repository = "https://github.com/serverlesstechnology/cqrs"
 readme = "README.md"
 

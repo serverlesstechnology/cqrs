@@ -1,22 +1,20 @@
 use std::marker::PhantomData;
 
 use crate::aggregate::{Aggregate, AggregateError};
-use crate::command::Command;
-use crate::event::DomainEvent;
 
 /// A framework for rigorously testing the aggregate logic, one of the ***most important***
 /// parts of any CQRS system.
 ///
 /// ```
 /// # use cqrs_es::test::TestFramework;
-/// # use cqrs_es::doc::{Customer, CustomerEvent, AddCustomerName, NameAdded};
-/// type CustomerTestFramework = TestFramework<Customer, CustomerEvent>;
+/// # use cqrs_es::doc::{Customer, CustomerEvent, AddCustomerName, NameAdded, CustomerCommand};
+/// type CustomerTestFramework = TestFramework<Customer>;
 ///
 /// CustomerTestFramework::default()
 ///         .given_no_previous_events()
-///         .when(AddCustomerName{
+///         .when(CustomerCommand::AddCustomerName(AddCustomerName{
 ///                 changed_name: "John Doe".to_string()
-///             })
+///             }))
 ///         .then_expect_events(vec![
 ///             CustomerEvent::NameAdded(NameAdded{
 ///                 changed_name: "John Doe".to_string()
@@ -29,31 +27,29 @@ use crate::event::DomainEvent;
 ///                 changed_name: "John Doe".to_string()
 ///             })
 ///         ])
-///         .when(AddCustomerName { changed_name: "John Doe".to_string() })
+///         .when(CustomerCommand::AddCustomerName(AddCustomerName{ changed_name: "John Doe".to_string() }))
 ///         .then_expect_error("a name has already been added for this customer")
 /// ```
-pub struct TestFramework<A, E> {
-    _phantom: PhantomData<(A, E)>
+pub struct TestFramework<A> {
+    _phantom: PhantomData<A>
 }
 
-impl<A, E> TestFramework<A, E>
-    where A: Aggregate,
-          E: DomainEvent<A> {
+impl<A> TestFramework<A>
+    where A: Aggregate {
     /// Initiates an aggregate test with no previous events.
     #[must_use]
-    pub fn given_no_previous_events(&self) -> AggregateTestExecutor<A, E> {
-        AggregateTestExecutor { events: Vec::new(), _phantom: PhantomData }
+    pub fn given_no_previous_events(&self) -> AggregateTestExecutor<A> {
+        AggregateTestExecutor { events: Vec::new() }
     }
     /// Initiates an aggregate test with a collection of previous events.
     #[must_use]
-    pub fn given(&self, events: Vec<E>) -> AggregateTestExecutor<A, E> {
-        AggregateTestExecutor { events, _phantom: PhantomData }
+    pub fn given(&self, events: Vec<A::Event>) -> AggregateTestExecutor<A> {
+        AggregateTestExecutor { events }
     }
 }
 
-impl<A, E> Default for TestFramework<A, E>
-    where A: Aggregate,
-          E: DomainEvent<A>
+impl<A> Default for TestFramework<A>
+    where A: Aggregate
 {
     fn default() -> Self {
         TestFramework { _phantom: PhantomData }
@@ -61,44 +57,37 @@ impl<A, E> Default for TestFramework<A, E>
 }
 
 /// Holds the initial event state of an aggregate and accepts a command.
-pub struct AggregateTestExecutor<A, E>
+pub struct AggregateTestExecutor<A>
     where
-        A: Aggregate,
-        E: DomainEvent<A>
+        A: Aggregate
 {
-    events: Vec<E>,
-    _phantom: PhantomData<A>,
+    events: Vec<A::Event>,
 }
 
-impl<A, E> AggregateTestExecutor<A, E>
+impl<A> AggregateTestExecutor<A>
     where
-        A: Aggregate,
-        E: DomainEvent<A> {
+        A: Aggregate {
     /// Consumes a command and using the state details previously passed provides a validator object
     /// to test against.
-    pub fn when<C: Command<A, E>>(self, command: C) -> AggregateResultValidator<A, E> {
+    pub fn when(self, command: A::Command) -> AggregateResultValidator<A> {
         let mut aggregate = A::default();
         for event in self.events {
-            event.apply(&mut aggregate)
+            aggregate.apply(&event);
         }
-        let result = command.handle(&aggregate);
-        AggregateResultValidator { result, _phantom: PhantomData }
+        let result = aggregate.handle(command);
+        AggregateResultValidator { result }
     }
 }
 
 /// Validation object for the `TestFramework` package.
-pub struct AggregateResultValidator<A, E>
-    where A: Aggregate,
-          E: DomainEvent<A> {
-    result: Result<Vec<E>, AggregateError>,
-    _phantom: PhantomData<A>,
+pub struct AggregateResultValidator<A>
+    where A: Aggregate {
+    result: Result<Vec<A::Event>, AggregateError>,
 }
 
-impl<A, E> AggregateResultValidator<A, E>
-    where A: Aggregate,
-          E: DomainEvent<A> {
+impl<A: Aggregate> AggregateResultValidator<A> {
     /// Verifies that the expected events have been produced by the command.
-    pub fn then_expect_events(self, expected_events: Vec<E>) {
+    pub fn then_expect_events(self, expected_events: Vec<A::Event>) {
         let events = match self.result {
             Ok(expected_events) => { expected_events }
             Err(err) => { panic!("expected success, received aggregate error: '{}'", err); }
@@ -113,10 +102,10 @@ impl<A, E> AggregateResultValidator<A, E>
                 match err {
                     AggregateError::TechnicalError(err) => {
                         panic!("expected user error but found technical error: {}", err)
-                    },
+                    }
                     AggregateError::UserError(err) => {
                         assert_eq!(err.message, Some(error_message.to_string()));
-                    },
+                    }
                 }
             }
         };
@@ -124,6 +113,4 @@ impl<A, E> AggregateResultValidator<A, E>
 }
 
 #[cfg(test)]
-mod test_framework_tests {
-
-}
+mod test_framework_tests {}

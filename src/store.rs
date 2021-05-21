@@ -1,25 +1,24 @@
 use std::collections::HashMap;
 
 use crate::aggregate::{Aggregate, AggregateError};
-use crate::event::{DomainEvent, EventEnvelope};
+use crate::event::{EventEnvelope};
 
 /// The abstract central source for loading past events and committing new events.
-pub trait EventStore<A, E, AC>
+pub trait EventStore<A, AC>
     where A: Aggregate,
-          E: DomainEvent<A>,
           AC: AggregateContext<A>
 {
     /// Load all events for a particular `aggregate_id`
-    fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A, E>>;
+    fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>>;
     /// Load aggregate at current state
     fn load_aggregate(&self, aggregate_id: &str) -> AC;
     /// Commit new events
-    fn commit(&self, events: Vec<E>, context: AC, metadata: HashMap<String, String>) -> Result<Vec<EventEnvelope<A, E>>, AggregateError>;
+    fn commit(&self, events: Vec<A::Event>, context: AC, metadata: HashMap<String, String>) -> Result<Vec<EventEnvelope<A>>, AggregateError>;
 
     /// Method to wrap a set of events with the additional metadata needed for persistence and publishing
-    fn wrap_events(&self, aggregate_id: &str, current_sequence: usize, resultant_events: Vec<E>, base_metadata: HashMap<String, String>) -> Vec<EventEnvelope<A, E>> {
+    fn wrap_events(&self, aggregate_id: &str, current_sequence: usize, resultant_events: Vec<A::Event>, base_metadata: HashMap<String, String>) -> Vec<EventEnvelope<A>> {
         let mut sequence = current_sequence;
-        let mut wrapped_events: Vec<EventEnvelope<A, E>> = Vec::new();
+        let mut wrapped_events: Vec<EventEnvelope<A>> = Vec::new();
         for payload in resultant_events {
             sequence += 1;
             let aggregate_type = A::aggregate_type().to_string();
