@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use static_assertions::assert_impl_all;
 
@@ -146,9 +145,9 @@ assert_impl_all!(aggregate; TestAggregate,Aggregate);
 assert_impl_all!(memstore; MemStore::<TestAggregate>, EventStore::<TestAggregate,MemStoreAggregateContext<TestAggregate>>);
 
 fn metadata() -> HashMap<String, String> {
-    let now = Utc::now();
+    let now = "2021-03-18T12:32:45.930Z".to_string();
     let mut metadata = HashMap::new();
-    metadata.insert("time".to_string(), now.to_rfc3339());
+    metadata.insert("time".to_string(), now);
     metadata
 }
 
