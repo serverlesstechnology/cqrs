@@ -18,10 +18,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build
-        run: cargo build --verbose
+        run: make
       - name: Run tests
-        run: cargo test --verbose
+        run: make test
       - name: Deploy
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-        run: cargo publish --token ${CRATES_IO_TOKEN}
+        run: make deploy
