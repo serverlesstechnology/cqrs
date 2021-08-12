@@ -1,19 +1,31 @@
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+use std::{
+    collections::HashMap,
+    sync::{
+        Arc,
+        RwLock,
+    },
+};
 
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use static_assertions::assert_impl_all;
 
-use cqrs_es::{Aggregate,
-              AggregateError,
-              CqrsFramework,
-              DomainEvent,
-              EventEnvelope,
-              EventStore,
+use cqrs_es2::{
+    mem_store::{
+        MemStore,
+        MemStoreAggregateContext,
+    },
+    test::TestFramework,
+    Aggregate,
+    AggregateError,
+    CqrsFramework,
+    DomainEvent,
+    EventEnvelope,
+    EventStore,
+    QueryProcessor,
 };
-use cqrs_es::mem_store::{MemStore, MemStoreAggregateContext};
-use cqrs_es::QueryProcessor;
-use cqrs_es::test::TestFramework;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TestAggregate {
@@ -26,43 +38,59 @@ impl Aggregate for TestAggregate {
     type Command = TestCommand;
     type Event = TestEvent;
 
-    fn aggregate_type() -> &'static str { "TestAggregate" }
+    fn aggregate_type() -> &'static str {
+        "TestAggregate"
+    }
 
-    fn handle(&self, command: TestCommand) -> Result<Vec<TestEvent>, AggregateError> {
+    fn handle(
+        &self,
+        command: TestCommand,
+    ) -> Result<Vec<TestEvent>, AggregateError> {
         match &command {
             TestCommand::CreateTest(command) => {
-                let event = TestEvent::Created(Created { id: command.id.to_string() });
+                let event = TestEvent::Created(Created {
+                    id: command.id.to_string(),
+                });
                 Ok(vec![event])
-            }
+            },
 
             TestCommand::ConfirmTest(command) => {
                 for test in &self.tests {
                     if test == &command.test_name {
-                        return Err(AggregateError::new("test already performed"));
+                        return Err(AggregateError::new(
+                            "test already performed",
+                        ));
                     }
                 }
-                let event = TestEvent::Tested(Tested { test_name: command.test_name.to_string() });
+                let event = TestEvent::Tested(Tested {
+                    test_name: command.test_name.to_string(),
+                });
                 Ok(vec![event])
-            }
+            },
 
             TestCommand::DoSomethingElse(command) => {
-                let event = TestEvent::SomethingElse(SomethingElse { description: command.description.clone() });
+                let event = TestEvent::SomethingElse(SomethingElse {
+                    description: command.description.clone(),
+                });
                 Ok(vec![event])
-            }
+            },
         }
     }
 
-    fn apply(&mut self, event: &Self::Event) {
+    fn apply(
+        &mut self,
+        event: &Self::Event,
+    ) {
         match event {
             TestEvent::Created(e) => {
                 self.id = e.id.clone();
-            }
+            },
             TestEvent::Tested(e) => {
                 self.tests.push(e.test_name.clone());
-            }
+            },
             TestEvent::SomethingElse(e) => {
                 self.description = e.description.clone();
-            }
+            },
         }
     }
 }
@@ -77,27 +105,50 @@ impl Default for TestAggregate {
     }
 }
 
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    PartialEq
+)]
 pub enum TestEvent {
     Created(Created),
     Tested(Tested),
     SomethingElse(SomethingElse),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    PartialEq
+)]
 pub struct Created {
-    pub id: String
+    pub id: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    PartialEq
+)]
 pub struct Tested {
-    pub test_name: String
+    pub test_name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    PartialEq
+)]
 pub struct SomethingElse {
-    pub description: String
+    pub description: String,
 }
 
 impl DomainEvent for TestEvent {}
@@ -121,15 +172,23 @@ pub struct DoSomethingElse {
 }
 
 struct TestView {
-    events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>
+    events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>,
 }
 
 impl TestView {
-    fn new(events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>) -> Self { TestView { events } }
+    fn new(
+        events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>
+    ) -> Self {
+        TestView { events }
+    }
 }
 
 impl QueryProcessor<TestAggregate> for TestView {
-    fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<TestAggregate>]) {
+    fn dispatch(
+        &self,
+        _aggregate_id: &str,
+        events: &[EventEnvelope<TestAggregate>],
+    ) {
         for event in events {
             let mut event_list = self.events.write().unwrap();
             event_list.push(event.clone());
@@ -159,16 +218,37 @@ fn test_mem_store() {
     assert_eq!(0, initial_events.len());
     let agg_context = event_store.load_aggregate(&id);
 
-    event_store.commit(vec![TestEvent::Created(Created { id: "test_event_A".to_string() })], agg_context, metadata()).unwrap();
+    event_store
+        .commit(
+            vec![TestEvent::Created(Created {
+                id: "test_event_A".to_string(),
+            })],
+            agg_context,
+            metadata(),
+        )
+        .unwrap();
     let stored_events = event_store.load(&id);
     assert_eq!(1, stored_events.len());
     let agg_context = event_store.load_aggregate(&id);
 
-    event_store.commit(vec![
-        TestEvent::Tested(Tested { test_name: "test A".to_string() }),
-        TestEvent::Tested(Tested { test_name: "test B".to_string() }),
-        TestEvent::SomethingElse(SomethingElse { description: "something else happening here".to_string() }),
-    ], agg_context, metadata()).unwrap();
+    event_store
+        .commit(
+            vec![
+                TestEvent::Tested(Tested {
+                    test_name: "test A".to_string(),
+                }),
+                TestEvent::Tested(Tested {
+                    test_name: "test B".to_string(),
+                }),
+                TestEvent::SomethingElse(SomethingElse {
+                    description: "something else happening here"
+                        .to_string(),
+                }),
+            ],
+            agg_context,
+            metadata(),
+        )
+        .unwrap();
     let stored_envelopes = event_store.load(&id);
 
     let mut agg = TestAggregate::default();
@@ -186,12 +266,24 @@ fn test_framework_test() {
     let test_name = "test A";
     let test_framework = ThisTestFramework::default();
 
-    test_framework.given(vec![TestEvent::Created(Created { id: "test_id_A".to_string() })])
-        .when(TestCommand::ConfirmTest(ConfirmTest { test_name: test_name.to_string() }))
-        .then_expect_events(vec![TestEvent::Tested(Tested { test_name: test_name.to_string() })]);
+    test_framework
+        .given(vec![TestEvent::Created(Created {
+            id: "test_id_A".to_string(),
+        })])
+        .when(TestCommand::ConfirmTest(ConfirmTest {
+            test_name: test_name.to_string(),
+        }))
+        .then_expect_events(vec![TestEvent::Tested(Tested {
+            test_name: test_name.to_string(),
+        })]);
 
-    test_framework.given(vec![TestEvent::Tested(Tested { test_name: test_name.to_string() })])
-        .when(TestCommand::ConfirmTest(ConfirmTest { test_name: test_name.to_string() }))
+    test_framework
+        .given(vec![TestEvent::Tested(Tested {
+            test_name: test_name.to_string(),
+        })])
+        .when(TestCommand::ConfirmTest(ConfirmTest {
+            test_name: test_name.to_string(),
+        }))
         .then_expect_error("test already performed")
 }
 
@@ -201,9 +293,16 @@ fn test_framework_failure_test() {
     let test_name = "test A";
     let test_framework = ThisTestFramework::default();
 
-    test_framework.given(vec![TestEvent::Tested(Tested { test_name: test_name.to_string() })])
-        .when(TestCommand::ConfirmTest(ConfirmTest { test_name: test_name.to_string() }))
-        .then_expect_events(vec![TestEvent::Tested(Tested { test_name: test_name.to_string() })]);
+    test_framework
+        .given(vec![TestEvent::Tested(Tested {
+            test_name: test_name.to_string(),
+        })])
+        .when(TestCommand::ConfirmTest(ConfirmTest {
+            test_name: test_name.to_string(),
+        }))
+        .then_expect_events(vec![TestEvent::Tested(Tested {
+            test_name: test_name.to_string(),
+        })]);
 }
 
 #[test]
@@ -212,8 +311,13 @@ fn test_framework_failure_test_b() {
     let test_name = "test A";
     let test_framework = ThisTestFramework::default();
 
-    test_framework.given(vec![TestEvent::Created(Created { id: "test_id_A".to_string() })])
-        .when(TestCommand::ConfirmTest(ConfirmTest { test_name: test_name.to_string() }))
+    test_framework
+        .given(vec![TestEvent::Created(Created {
+            id: "test_id_A".to_string(),
+        })])
+        .when(TestCommand::ConfirmTest(ConfirmTest {
+            test_name: test_name.to_string(),
+        }))
         .then_expect_error("some error message")
 }
 
@@ -229,24 +333,66 @@ fn framework_test() {
     let uuid = uuid::Uuid::new_v4().to_string();
     let id = uuid.clone();
     let metadata = metadata();
-    cqrs.execute_with_metadata(&id, TestCommand::ConfirmTest(ConfirmTest { test_name: uuid.clone() }), metadata).unwrap_or_default();
+    cqrs.execute_with_metadata(
+        &id,
+        TestCommand::ConfirmTest(ConfirmTest {
+            test_name: uuid.clone(),
+        }),
+        metadata,
+    )
+    .unwrap_or_default();
 
     assert_eq!(1, stored_events.read().unwrap().len());
-    assert_eq!(1, delivered_events.read().unwrap().len());
+    assert_eq!(
+        1,
+        delivered_events.read().unwrap().len()
+    );
 
     let test = "TEST_A";
     let id = uuid.clone();
-    cqrs.execute(&id, TestCommand::ConfirmTest(ConfirmTest { test_name: test.to_string() })).unwrap_or_default();
+    cqrs.execute(
+        &id,
+        TestCommand::ConfirmTest(ConfirmTest {
+            test_name: test.to_string(),
+        }),
+    )
+    .unwrap_or_default();
 
-    assert_eq!(2, delivered_events.read().unwrap().len());
-    let stored_event_count = stored_events.read().unwrap().get(uuid.clone().as_str()).unwrap().len();
+    assert_eq!(
+        2,
+        delivered_events.read().unwrap().len()
+    );
+    let stored_event_count = stored_events
+        .read()
+        .unwrap()
+        .get(uuid.clone().as_str())
+        .unwrap()
+        .len();
     assert_eq!(2, stored_event_count);
 
     let id = uuid.clone();
-    let err = cqrs.execute(&id, TestCommand::ConfirmTest(ConfirmTest { test_name: test.to_string() })).unwrap_err();
-    assert_eq!(AggregateError::new("test already performed"), err);
+    let err = cqrs
+        .execute(
+            &id,
+            TestCommand::ConfirmTest(ConfirmTest {
+                test_name: test.to_string(),
+            }),
+        )
+        .unwrap_err();
+    assert_eq!(
+        AggregateError::new("test already performed"),
+        err
+    );
 
-    assert_eq!(2, delivered_events.read().unwrap().len());
-    let stored_event_count = stored_events.read().unwrap().get(uuid.clone().as_str()).unwrap().len();
+    assert_eq!(
+        2,
+        delivered_events.read().unwrap().len()
+    );
+    let stored_event_count = stored_events
+        .read()
+        .unwrap()
+        .get(uuid.clone().as_str())
+        .unwrap()
+        .len();
     assert_eq!(2, stored_event_count);
 }

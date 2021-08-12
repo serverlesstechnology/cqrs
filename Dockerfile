@@ -1,6 +1,4 @@
-FROM rust:1.40 as builder
+FROM rust:alpine as builder
 
-WORKDIR /home/build
-RUN git clone https://github.com/serverlesstechnology/cqrs.git
+Copy ./ /home/build/cqrs
 WORKDIR /home/build/cqrs
-
