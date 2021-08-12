@@ -26,6 +26,10 @@ A demo application [is available here](https://github.com/brgirgis/cqrs-es2-demo
 
 ## Change log
 
+### `v0.2.3`
+
+- Rename Github repo
+
 ### `v0.2.2`
 
 - Automate Github deployment
