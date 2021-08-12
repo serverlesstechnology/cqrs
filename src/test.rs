@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::aggregate::{
+use crate::aggregates::{
     Aggregate,
     AggregateError,
 };

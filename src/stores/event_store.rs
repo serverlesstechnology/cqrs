@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
 use crate::{
-    aggregate::{
+    aggregates::{
         Aggregate,
         AggregateError,
     },
-    event::EventEnvelope,
+    events::EventEnvelope,
 };
+
+use super::aggregate_context::AggregateContext;
 
 /// The abstract central source for loading past events and committing
 /// new events.
@@ -59,13 +61,4 @@ where
         }
         wrapped_events
     }
-}
-
-/// Returns the aggregate and context around it that is needed when
-/// committing events
-pub trait AggregateContext<A>
-where
-    A: Aggregate, {
-    /// The aggregate instance with all state loaded.
-    fn aggregate(&self) -> &A;
 }

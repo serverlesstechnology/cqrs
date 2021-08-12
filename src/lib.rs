@@ -38,43 +38,41 @@
 //! - A persistence implementation for MySql.
 
 pub use crate::{
-    aggregate::*,
-    cqrs::*,
-    event::*,
-    query::*,
-    store::*,
+    aggregates::*,
+    events::*,
+    framework::*,
+    queries::*,
+    stores::*,
 };
 
-// Aggregate module holds the central traits that define the
+// Aggregates module holds the central traits that define the
 // fundamental component of CQRS.
-mod aggregate;
+mod aggregates;
 
-// Event module provides the abstract domain events and associated
+// Events module provides the abstract domain events and associated
 // wrapper.
-mod event;
+mod events;
 
-// Store holds the abstact `EventStore` trait as well as an in-memory
-// and Postgres implementation.
-mod store;
+// Stores module holds the abstact `EventStore` trait as well as an
+// in-memory implementation.
+mod stores;
 
-// Cqrs provides the base framework and associated logic for
+// Queries module provides the basic downstream query objects needed
+// to render queries (or "views") that describe the state of the
+// system.
+mod queries;
+
+// Framework provides the base framework and associated logic for
 // processing loading aggregates via an event store and subsequently
 // processing commands.
-mod cqrs;
+mod framework;
 
 // Documentation items
 #[doc(hidden)]
 pub mod doc;
-
-/// An in-memory event store suitable for local testing.
-pub mod mem_store;
 
 /// Test provides a test framework for building a resilient test base
 /// around aggregates. A `TestFramework` should be used to build a
 /// comprehensive set of aggregate tests to verify your application
 /// logic (aka business rules).
 pub mod test;
-
-// Query provides the basic downstream query objects needed to render
-// queries (or "views") that describe the state of the system.
-mod query;

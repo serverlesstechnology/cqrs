@@ -30,7 +30,7 @@ A demo application [is available here](https://github.com/brgirgis/cqrs-demo).
 - Transfer of ownership
 - Upgrade dependencies
 - Add GitHub CI support
-- Convert
+- Convert to a modular structure
 
 #### `v0.1.0`
 

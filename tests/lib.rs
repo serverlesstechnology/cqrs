@@ -13,10 +13,6 @@ use serde::{
 use static_assertions::assert_impl_all;
 
 use cqrs_es2::{
-    mem_store::{
-        MemStore,
-        MemStoreAggregateContext,
-    },
     test::TestFramework,
     Aggregate,
     AggregateError,
@@ -24,6 +20,8 @@ use cqrs_es2::{
     DomainEvent,
     EventEnvelope,
     EventStore,
+    MemoryStore,
+    MemoryStoreAggregateContext,
     QueryProcessor,
 };
 
@@ -201,7 +199,7 @@ pub type TestEventEnvelope = EventEnvelope<TestAggregate>;
 assert_impl_all!(aggregate; TestAggregate,Aggregate);
 // assert_impl_all!(event; TestEvent);
 
-assert_impl_all!(memstore; MemStore::<TestAggregate>, EventStore::<TestAggregate,MemStoreAggregateContext<TestAggregate>>);
+assert_impl_all!(MemoryStore; MemoryStore::<TestAggregate>, EventStore::<TestAggregate,MemoryStoreAggregateContext<TestAggregate>>);
 
 fn metadata() -> HashMap<String, String> {
     let now = "2021-03-18T12:32:45.930Z".to_string();
@@ -212,7 +210,7 @@ fn metadata() -> HashMap<String, String> {
 
 #[test]
 fn test_mem_store() {
-    let event_store = MemStore::<TestAggregate>::default();
+    let event_store = MemoryStore::<TestAggregate>::default();
     let id = "test_id_A";
     let initial_events = event_store.load(&id);
     assert_eq!(0, initial_events.len());
@@ -323,7 +321,7 @@ fn test_framework_failure_test_b() {
 
 #[test]
 fn framework_test() {
-    let event_store = MemStore::default();
+    let event_store = MemoryStore::default();
     let stored_events = event_store.get_events();
 
     let delivered_events = Default::default();
