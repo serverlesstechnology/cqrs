@@ -1,5 +1,11 @@
 name: Publish
 
+on:
+  page_build:
+  release:
+    types:
+      - created
+
 env:
   CARGO_TERM_COLOR: always
 
