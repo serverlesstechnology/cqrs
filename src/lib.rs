@@ -8,8 +8,8 @@
 //! **A lightweight, opinionated CQRS and event sourcing framework
 //! targeting serverless architectures.**
 //!
-//! [![Publish](https://github.com/brgirgis/cqrs/actions/workflows/crates-io.yml/badge.svg)](https://github.com/brgirgis/cqrs/actions/workflows/crates-io.yml)
-//! [![Test](https://github.com/brgirgis/cqrs/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/brgirgis/cqrs/actions/workflows/rust-ci.yml)
+//! [![Publish](https://github.com/brgirgis/cqrs-es2/actions/workflows/crates-io.yml/badge.svg)](https://github.com/brgirgis/cqrs-es2/actions/workflows/crates-io.yml)
+//! [![Test](https://github.com/brgirgis/cqrs-es2/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/brgirgis/cqrs-es2/actions/workflows/rust-ci.yml)
 //! [![Crates.io](https://img.shields.io/crates/v/cqrs-es2)](https://crates.io/crates/cqrs-es2)
 //! [![docs](https://img.shields.io/badge/API-docs-blue.svg)](https://docs.rs/cqrs-es2)
 //! ---
@@ -20,14 +20,14 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cqrs-es2 = "0.2.2"
+//! cqrs-es2 = "0.2.3"
 //! ```
 //!
 //! ## Usage
 //!
 //! Documentation [is available here](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
 //!
-//! A demo application [is available here](https://github.com/brgirgis/cqrs-demo).
+//! A demo application [is available here](https://github.com/brgirgis/cqrs-es2-demo).
 //!
 //! ## Todos
 //!
