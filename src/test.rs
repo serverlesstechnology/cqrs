@@ -9,8 +9,8 @@ use crate::aggregate::{
 /// ***most important*** parts of any CQRS system.
 ///
 /// ```
-/// # use cqrs_es::test::TestFramework;
-/// # use cqrs_es::doc::{Customer, CustomerEvent, AddCustomerName, NameAdded, CustomerCommand};
+/// # use cqrs_es2::test::TestFramework;
+/// # use cqrs_es2::doc::{Customer, CustomerEvent, AddCustomerName, NameAdded, CustomerCommand};
 /// type CustomerTestFramework = TestFramework<Customer>;
 ///
 /// CustomerTestFramework::default()

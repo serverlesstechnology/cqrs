@@ -18,8 +18,8 @@ use serde::{
 ///
 /// # Examples
 /// ```rust
-/// # use cqrs_es::doc::{CustomerEvent, CustomerCommand, NameAdded};
-/// # use cqrs_es::{Aggregate, AggregateError};
+/// # use cqrs_es2::doc::{CustomerEvent, CustomerCommand, NameAdded};
+/// # use cqrs_es2::{Aggregate, AggregateError};
 /// # use serde::{Serialize,Deserialize};
 /// #[derive(Serialize,Deserialize)]
 /// struct Customer {

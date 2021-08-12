@@ -34,8 +34,8 @@ use crate::aggregate::Aggregate;
 ///
 /// # Examples
 /// ```
-/// # use cqrs_es::doc::Customer;
-/// # use cqrs_es::{Aggregate,DomainEvent};
+/// # use cqrs_es2::doc::Customer;
+/// # use cqrs_es2::{Aggregate,DomainEvent};
 /// # use serde::{Serialize,Deserialize};
 /// #[derive(
 ///     Clone,
