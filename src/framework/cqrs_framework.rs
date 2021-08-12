@@ -74,7 +74,7 @@ where
     /// If an error is generated while processing the command this
     /// will be returned.
     pub fn execute(
-        &self,
+        &mut self,
         aggregate_id: &str,
         command: A::Command,
     ) -> Result<(), AggregateError> {
@@ -104,7 +104,7 @@ where
     /// If successful the events produced will be applied to the
     /// configured `QueryProcessor`s.
     pub fn execute_with_metadata(
-        &self,
+        &mut self,
         aggregate_id: &str,
         command: A::Command,
         metadata: HashMap<String, String>,
@@ -118,7 +118,7 @@ where
             aggregate_context,
             metadata,
         )?;
-        for processor in &self.query_processors {
+        for processor in &mut self.query_processors {
             let dispatch_events = committed_events.as_slice();
             processor.dispatch(&aggregate_id, dispatch_events);
         }

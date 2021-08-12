@@ -18,17 +18,17 @@ where
     AC: AggregateContext<A>, {
     /// Load all events for a particular `aggregate_id`
     fn load(
-        &self,
+        &mut self,
         aggregate_id: &str,
     ) -> Vec<EventEnvelope<A>>;
     /// Load aggregate at current state
     fn load_aggregate(
-        &self,
+        &mut self,
         aggregate_id: &str,
     ) -> AC;
     /// Commit new events
     fn commit(
-        &self,
+        &mut self,
         events: Vec<A::Event>,
         context: AC,
         metadata: HashMap<String, String>,

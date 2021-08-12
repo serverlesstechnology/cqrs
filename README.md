@@ -31,6 +31,7 @@ A demo application [is available here](https://github.com/brgirgis/cqrs-demo).
 - Upgrade dependencies
 - Add GitHub CI support
 - Convert to a modular structure
+- Correct mutability to match recent PostgresSQL changes
 
 #### `v0.1.0`
 

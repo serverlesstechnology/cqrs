@@ -10,7 +10,7 @@ pub trait QueryProcessor<A: Aggregate> {
     /// Events will be dispatched here immediately after being
     /// committed for the downstream queries to be updated.
     fn dispatch(
-        &self,
+        &mut self,
         aggregate_id: &str,
         events: &[EventEnvelope<A>],
     );

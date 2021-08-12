@@ -183,7 +183,7 @@ impl TestView {
 
 impl QueryProcessor<TestAggregate> for TestView {
     fn dispatch(
-        &self,
+        &mut self,
         _aggregate_id: &str,
         events: &[EventEnvelope<TestAggregate>],
     ) {
@@ -210,7 +210,7 @@ fn metadata() -> HashMap<String, String> {
 
 #[test]
 fn test_mem_store() {
-    let event_store = MemoryStore::<TestAggregate>::default();
+    let mut event_store = MemoryStore::<TestAggregate>::default();
     let id = "test_id_A";
     let initial_events = event_store.load(&id);
     assert_eq!(0, initial_events.len());
@@ -327,7 +327,8 @@ fn framework_test() {
     let delivered_events = Default::default();
     let view = TestView::new(Arc::clone(&delivered_events));
 
-    let cqrs = CqrsFramework::new(event_store, vec![Box::new(view)]);
+    let mut cqrs =
+        CqrsFramework::new(event_store, vec![Box::new(view)]);
     let uuid = uuid::Uuid::new_v4().to_string();
     let id = uuid.clone();
     let metadata = metadata();

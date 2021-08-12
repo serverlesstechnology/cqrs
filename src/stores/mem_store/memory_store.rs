@@ -70,7 +70,7 @@ impl<A: Aggregate> EventStore<A, MemoryStoreAggregateContext<A>>
     for MemoryStore<A>
 {
     fn load(
-        &self,
+        &mut self,
         aggregate_id: &str,
     ) -> Vec<EventEnvelope<A>> {
         let events =
@@ -84,7 +84,7 @@ impl<A: Aggregate> EventStore<A, MemoryStoreAggregateContext<A>>
     }
 
     fn load_aggregate(
-        &self,
+        &mut self,
         aggregate_id: &str,
     ) -> MemoryStoreAggregateContext<A> {
         let committed_events = self.load(aggregate_id);
@@ -103,7 +103,7 @@ impl<A: Aggregate> EventStore<A, MemoryStoreAggregateContext<A>>
     }
 
     fn commit(
-        &self,
+        &mut self,
         events: Vec<A::Event>,
         context: MemoryStoreAggregateContext<A>,
         metadata: HashMap<String, String>,
