@@ -3,7 +3,7 @@
 #![deny(clippy::all)]
 #![warn(rust_2018_idioms)]
 // #![warn(clippy::pedantic,missing_debug_implementations)]
-//! # cqrs
+//! # cqrs-es2
 //!
 //! **A lightweight, opinionated CQRS and event sourcing framework
 //! targeting serverless architectures.**
@@ -19,7 +19,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cqrs-es2 = "0.2.0"
+//! cqrs-es2 = "0.2.1"
 //! ```
 //!
 //! ## Usage

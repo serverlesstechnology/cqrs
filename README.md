@@ -1,4 +1,4 @@
-# cqrs
+# cqrs-es2
 
 **A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures.**
 
@@ -14,7 +14,7 @@ cqrs-es2 is available from Crates.io or Github.
 
 ```toml
 [dependencies]
-cqrs-es2 = "0.2.0"
+cqrs-es2 = "0.2.1"
 ```
 
 ## Usage
@@ -24,6 +24,10 @@ Documentation [is available here](https://doc.rust-cqrs.org) along with an intro
 A demo application [is available here](https://github.com/brgirgis/cqrs-demo).
 
 ## Change log
+
+### `v0.2.1`
+
+- Minor doc correction
 
 ### `v0.2.0`
 
