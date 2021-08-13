@@ -2,10 +2,12 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use std::fmt::Debug;
 
 use crate::{
     Aggregate,
     AggregateError,
+    DomainCommand,
     DomainEvent,
 };
 
@@ -26,7 +28,7 @@ impl Aggregate for Customer {
 
     fn handle(
         &self,
-        command: Self::Command,
+        command: &Self::Command,
     ) -> Result<Vec<Self::Event>, AggregateError> {
         match command {
             CustomerCommand::AddCustomerName(payload) => {
@@ -36,9 +38,11 @@ impl Aggregate for Customer {
                          customer",
                     ));
                 }
+
                 let payload = NameAdded {
-                    changed_name: payload.changed_name,
+                    changed_name: payload.changed_name.clone(),
                 };
+
                 Ok(vec![CustomerEvent::NameAdded(payload)])
             },
             CustomerCommand::UpdateEmail(_) => Ok(Default::default()),
@@ -106,39 +110,23 @@ pub struct EmailUpdated {
 
 impl DomainEvent for CustomerEvent {}
 
-#[derive(
-    Clone,
-    Debug,
-    Serialize,
-    Deserialize,
-    PartialEq
-)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum CustomerCommand {
     AddCustomerName(AddCustomerName),
     UpdateEmail(UpdateEmail),
 }
 
-#[derive(
-    Clone,
-    Debug,
-    Serialize,
-    Deserialize,
-    PartialEq
-)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct AddCustomerName {
     pub changed_name: String,
 }
 
-#[derive(
-    Clone,
-    Debug,
-    Serialize,
-    Deserialize,
-    PartialEq
-)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct UpdateEmail {
     pub new_email: String,
 }
+
+impl DomainCommand for CustomerCommand {}
 
 #[cfg(test)]
 mod doc_tests {

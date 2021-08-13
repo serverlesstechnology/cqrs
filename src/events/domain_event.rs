@@ -2,7 +2,7 @@ use serde::{
     de::DeserializeOwned,
     Serialize,
 };
-use std::fmt;
+use std::fmt::Debug;
 
 /// A `DomainEvent` represents any business change in the state of an
 /// `Aggregate`. `DomainEvent`s are immutable and with [event sourcing](https://martinfowler.com/eaaDev/EventSourcing.html)
@@ -28,9 +28,13 @@ use std::fmt;
 ///
 /// # Examples
 /// ```
-/// # use cqrs_es2::doc::Customer;
-/// # use cqrs_es2::{Aggregate,DomainEvent};
-/// # use serde::{Serialize,Deserialize};
+/// use cqrs_es2::DomainEvent;
+/// use serde::{
+///     Deserialize,
+///     Serialize,
+/// };
+/// use std::fmt::Debug;
+///
 /// #[derive(
 ///     Clone,
 ///     Debug,
@@ -66,11 +70,6 @@ use std::fmt;
 /// }
 /// ```
 pub trait DomainEvent:
-    Serialize
-    + DeserializeOwned
-    + Clone
-    + PartialEq
-    + fmt::Debug
-    + Sync
-    + Send {
+    Serialize + DeserializeOwned + Clone + PartialEq + Debug + Sync + Send
+{
 }

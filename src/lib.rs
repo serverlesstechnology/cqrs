@@ -19,7 +19,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cqrs-es2 = "0.2.5"
+//! cqrs-es2 = "0.3.0"
 //! serde = { version = "^1.0.127", features = ["derive"] }
 //! serde_json = "^1.0.66"
 //! ```
@@ -32,6 +32,7 @@
 
 pub use crate::{
     aggregates::*,
+    commands::*,
     events::*,
     framework::*,
     queries::*,
@@ -41,6 +42,9 @@ pub use crate::{
 // Aggregates module holds the central traits that define the
 // fundamental component of CQRS.
 mod aggregates;
+
+// Commands module provides the abstract domain commands.
+mod commands;
 
 // Events module provides the abstract domain events and associated
 // wrapper.

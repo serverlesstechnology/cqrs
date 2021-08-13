@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fmt::Debug,
     sync::{
         Arc,
         RwLock,
@@ -17,6 +18,7 @@ use cqrs_es2::{
     Aggregate,
     AggregateError,
     CqrsFramework,
+    DomainCommand,
     DomainEvent,
     EventEnvelope,
     EventStore,
@@ -42,7 +44,7 @@ impl Aggregate for TestAggregate {
 
     fn handle(
         &self,
-        command: TestCommand,
+        command: &TestCommand,
     ) -> Result<Vec<TestEvent>, AggregateError> {
         match &command {
             TestCommand::CreateTest(command) => {
@@ -151,23 +153,29 @@ pub struct SomethingElse {
 
 impl DomainEvent for TestEvent {}
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum TestCommand {
     CreateTest(CreateTest),
     ConfirmTest(ConfirmTest),
     DoSomethingElse(DoSomethingElse),
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct CreateTest {
     pub id: String,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct ConfirmTest {
     pub test_name: String,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct DoSomethingElse {
     pub description: String,
 }
+
+impl DomainCommand for TestCommand {}
 
 struct TestView {
     events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>,

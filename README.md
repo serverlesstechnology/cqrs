@@ -13,7 +13,7 @@
 
 ```toml
 [dependencies]
-cqrs-es2 = "0.2.5"
+cqrs-es2 = "0.3.0"
 serde = { version = "^1.0.127", features = ["derive"] }
 serde_json = "^1.0.66"
 ```
@@ -25,6 +25,10 @@ Documentation [is available here](https://doc.rust-cqrs.org) along with an intro
 A demo application [is available here](https://github.com/brgirgis/cqrs-es2-demo).
 
 ## Change log
+
+### `v0.3.0`
+
+- Add `DomainCommand` trait
 
 ### `v0.2.5`
 

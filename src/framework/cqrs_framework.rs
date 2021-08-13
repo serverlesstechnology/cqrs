@@ -18,14 +18,14 @@ use crate::{
 /// This is the base framework for applying commands to produce
 /// events.
 ///
-/// In [Domain Driven Design](https://en.wikipedia.org/wiki/Domain-driven_design) we require that
-/// changes are made only after loading the entire `Aggregate` in
-/// order to ensure that the full context is understood.
-/// With event-sourcing this means:
+/// In [Domain Driven Design](https://en.wikipedia.org/wiki/Domain-driven_design)
+/// we require that changes are made only after loading the entire
+/// `Aggregate` in order to ensure that the full context is
+/// understood. With event-sourcing this means:
 /// 1. loading all previous events for the aggregate instance
-/// 1. applying these events, in order, to a new `Aggregate`
-/// 1. using the recreated `Aggregate` to handle an inbound `Command`
-/// 1. persisting any generated events or rolling back on an error
+/// 2. applying these events, in order, to a new `Aggregate`
+/// 3. using the recreated `Aggregate` to handle an inbound `Command`
+/// 4. persisting any generated events or rolling back on an error
 ///
 /// To manage these tasks we use a `CqrsFramework`.
 pub struct CqrsFramework<A, ES, AC>
@@ -60,6 +60,7 @@ where
             _phantom: PhantomData,
         }
     }
+
     /// This applies a command to an aggregate. Executing a command
     /// in this way is the only way to make any change to
     /// the state of an aggregate.
@@ -112,7 +113,7 @@ where
         let aggregate_context =
             self.store.load_aggregate(aggregate_id);
         let aggregate = aggregate_context.aggregate();
-        let resultant_events = aggregate.handle(command)?;
+        let resultant_events = aggregate.handle(&command)?;
         let committed_events = self.store.commit(
             resultant_events,
             aggregate_context,

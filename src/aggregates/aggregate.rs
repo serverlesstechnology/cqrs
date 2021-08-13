@@ -3,7 +3,10 @@ use serde::{
     Serialize,
 };
 
-use crate::events::DomainEvent;
+use crate::{
+    commands::DomainCommand,
+    events::DomainEvent,
+};
 
 use super::errors::AggregateError;
 
@@ -30,14 +33,14 @@ use super::errors::AggregateError;
 ///
 ///     fn aggregate_type() -> &'static str { "customer" }
 ///
-///     fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
+///     fn handle(&self, command: &Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
 ///         match command {
 ///             CustomerCommand::AddCustomerName(payload) => {
 ///                 if self.name.as_str() != "" {
 ///                     return Err(AggregateError::new("a name has already been added for this customer"));
 ///                 }
 ///                 let payload = NameAdded {
-///                     changed_name: payload.changed_name
+///                     changed_name: payload.changed_name.clone()
 ///                 };
 ///                 Ok(vec![CustomerEvent::NameAdded(payload)])
 ///             }
@@ -72,17 +75,21 @@ pub trait Aggregate:
     Default + Serialize + DeserializeOwned + Sync + Send {
     /// An inbound command used to make changes in the state of the
     /// Aggregate
-    type Command;
+    type Command: DomainCommand;
+
     /// An event representing some change in state of the Aggregate
     type Event: DomainEvent;
+
     /// aggregate_type is a unique identifier for this aggregate
     fn aggregate_type() -> &'static str;
+
     /// handle inbound command and return a vector of events or an
     /// error
     fn handle(
         &self,
-        command: Self::Command,
+        command: &Self::Command,
     ) -> Result<Vec<Self::Event>, AggregateError>;
+
     /// Update the aggregate's state with an event
     fn apply(
         &mut self,

@@ -92,7 +92,7 @@ where
         for event in self.events {
             aggregate.apply(&event);
         }
-        let result = aggregate.handle(command);
+        let result = aggregate.handle(&command);
         AggregateResultValidator { result }
     }
 }
