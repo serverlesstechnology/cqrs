@@ -20,7 +20,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cqrs-es2 = "0.2.3"
+//! cqrs-es2 = "0.2.4"
 //! ```
 //!
 //! ## Usage
@@ -54,7 +54,7 @@ mod aggregates;
 // wrapper.
 mod events;
 
-// Stores module holds the abstact `EventStore` trait as well as an
+// Stores module holds the abstract `EventStore` trait as well as an
 // in-memory implementation.
 mod stores;
 

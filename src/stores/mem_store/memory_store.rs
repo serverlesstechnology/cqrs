@@ -37,7 +37,7 @@ impl<A: Aggregate> MemoryStore<A> {
     pub fn get_events(&self) -> Arc<LockedEventEnvelopeMap<A>> {
         Arc::clone(&self.events)
     }
-    fn load_commited_events(
+    fn load_committed_events(
         &self,
         aggregate_id: String,
     ) -> Vec<EventEnvelope<A>> {
@@ -74,7 +74,7 @@ impl<A: Aggregate> EventStore<A, MemoryStoreAggregateContext<A>>
         aggregate_id: &str,
     ) -> Vec<EventEnvelope<A>> {
         let events =
-            self.load_commited_events(aggregate_id.to_string());
+            self.load_committed_events(aggregate_id.to_string());
         println!(
             "loading: {} events for aggregate ID '{}'",
             &events.len(),
@@ -122,7 +122,7 @@ impl<A: Aggregate> EventStore<A, MemoryStoreAggregateContext<A>>
         }
         let aggregate_id = self.aggregate_id(&wrapped_events);
         let mut new_events =
-            self.load_commited_events(aggregate_id.to_string());
+            self.load_committed_events(aggregate_id.to_string());
         for event in &wrapped_events {
             new_events.push(event.clone());
         }

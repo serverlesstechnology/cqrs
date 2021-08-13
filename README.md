@@ -15,7 +15,7 @@ cqrs-es2 is available from Crates.io or Github.
 
 ```toml
 [dependencies]
-cqrs-es2 = "0.2.3"
+cqrs-es2 = "0.2.4"
 ```
 
 ## Usage
@@ -25,6 +25,11 @@ Documentation [is available here](https://doc.rust-cqrs.org) along with an intro
 A demo application [is available here](https://github.com/brgirgis/cqrs-es2-demo).
 
 ## Change log
+
+### `v0.2.4`
+
+- Fix license documentation
+- Upgrade dev dependencies
 
 ### `v0.2.3`
 

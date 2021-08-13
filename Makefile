@@ -1,5 +1,14 @@
 
 all:
+	make clean
+	make build
+	make test
+	make doc
+
+clean:
+	rm -rf target
+
+build:
 	cargo build
 
 test:
