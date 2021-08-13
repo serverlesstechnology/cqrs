@@ -26,9 +26,13 @@
 //!
 //! ## Usage
 //!
-//! Documentation [is available here](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
+//! Documentation [is available here](https://doc.rust-cqrs.org)
+//! along with an introduction to CQRS and event sourcing.
 //!
-//! A demo application [is available here](https://github.com/brgirgis/cqrs-es2-demo).
+//! Demo applications:
+//!
+//! - [RESTful](https://github.com/brgirgis/cqrs-restful-demo).
+//! - [gRPC](https://github.com/brgirgis/cqrs-grpc-demo).
 
 pub use crate::{
     aggregates::*,
