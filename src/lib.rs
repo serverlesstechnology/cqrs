@@ -20,7 +20,9 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cqrs-es2 = "0.2.4"
+//! cqrs-es2 = "0.2.5"
+//! serde = { version = "^1.0.127", features = ["derive"] }
+//! serde_json = "^1.0.66"
 //! ```
 //!
 //! ## Usage
@@ -29,7 +31,7 @@
 //!
 //! A demo application [is available here](https://github.com/brgirgis/cqrs-es2-demo).
 //!
-//! ## Todos
+//! ## TODO
 //!
 //! - Event upcasters.
 //! - Event serialization uses the event type as the root node of the

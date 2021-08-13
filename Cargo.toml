@@ -1,6 +1,6 @@
 [package]
 name = "cqrs-es2"
-version = "0.2.4"
+version = "0.2.5"
 authors = [
   "Dave Garred <dave.garred@serverlesstechnology.com>",
   "Bassem Girgis <brgirgis@gmail.com>",

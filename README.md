@@ -15,7 +15,9 @@ cqrs-es2 is available from Crates.io or Github.
 
 ```toml
 [dependencies]
-cqrs-es2 = "0.2.4"
+cqrs-es2 = "0.2.5"
+serde = { version = "^1.0.127", features = ["derive"] }
+serde_json = "^1.0.66"
 ```
 
 ## Usage
@@ -25,6 +27,10 @@ Documentation [is available here](https://doc.rust-cqrs.org) along with an intro
 A demo application [is available here](https://github.com/brgirgis/cqrs-es2-demo).
 
 ## Change log
+
+### `v0.2.5`
+
+- Minor doc fixes
 
 ### `v0.2.4`
 
@@ -55,7 +61,7 @@ A demo application [is available here](https://github.com/brgirgis/cqrs-es2-demo
 
 - Corrected to move all command and event logic into the aggregate.
 
-## Todos
+## TODO
 
 - Event upcasters.
 - Event serialization uses the event type as the root node of the JSON tree. This simplifies
