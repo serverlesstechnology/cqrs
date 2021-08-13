@@ -27,7 +27,7 @@ use std::fmt::Debug;
 /// - `PartialEq` and `Debug` - needed for effective testing
 ///
 /// # Examples
-/// ```
+/// ```rust
 /// use cqrs_es2::DomainEvent;
 /// use serde::{
 ///     Deserialize,
@@ -36,11 +36,11 @@ use std::fmt::Debug;
 /// use std::fmt::Debug;
 ///
 /// #[derive(
-///     Clone,
 ///     Debug,
+///     PartialEq,
+///     Clone,
 ///     Serialize,
-///     Deserialize,
-///     PartialEq
+///     Deserialize
 /// )]
 /// pub enum CustomerEvent {
 ///     NameChanged(NameChanged),
@@ -48,28 +48,28 @@ use std::fmt::Debug;
 /// }
 ///
 /// #[derive(
-///     Clone,
 ///     Debug,
+///     PartialEq,
+///     Clone,
 ///     Serialize,
-///     Deserialize,
-///     PartialEq
+///     Deserialize
 /// )]
 /// pub struct NameChanged {
 ///     changed_name: String,
 /// }
 ///
 /// #[derive(
-///     Clone,
 ///     Debug,
+///     PartialEq,
+///     Clone,
 ///     Serialize,
-///     Deserialize,
-///     PartialEq
+///     Deserialize
 /// )]
 /// pub struct EmailUpdated {
 ///     new_email: String,
 /// }
 /// ```
 pub trait DomainEvent:
-    Serialize + DeserializeOwned + Clone + PartialEq + Debug + Sync + Send
+    Debug + PartialEq + Clone + Serialize + DeserializeOwned + Sync + Send
 {
 }

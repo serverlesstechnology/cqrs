@@ -44,7 +44,7 @@ impl Aggregate for TestAggregate {
 
     fn handle(
         &self,
-        command: &TestCommand,
+        command: TestCommand,
     ) -> Result<Vec<TestEvent>, AggregateError> {
         match &command {
             TestCommand::CreateTest(command) => {
@@ -107,10 +107,10 @@ impl Default for TestAggregate {
 
 #[derive(
     Debug,
-    Serialize,
-    Deserialize,
+    PartialEq,
     Clone,
-    PartialEq
+    Serialize,
+    Deserialize
 )]
 pub enum TestEvent {
     Created(Created),
@@ -120,10 +120,10 @@ pub enum TestEvent {
 
 #[derive(
     Debug,
-    Serialize,
-    Deserialize,
+    PartialEq,
     Clone,
-    PartialEq
+    Serialize,
+    Deserialize
 )]
 pub struct Created {
     pub id: String,
@@ -131,10 +131,10 @@ pub struct Created {
 
 #[derive(
     Debug,
-    Serialize,
-    Deserialize,
+    PartialEq,
     Clone,
-    PartialEq
+    Serialize,
+    Deserialize
 )]
 pub struct Tested {
     pub test_name: String,
@@ -142,10 +142,10 @@ pub struct Tested {
 
 #[derive(
     Debug,
-    Serialize,
-    Deserialize,
+    PartialEq,
     Clone,
-    PartialEq
+    Serialize,
+    Deserialize
 )]
 pub struct SomethingElse {
     pub description: String,
@@ -153,24 +153,24 @@ pub struct SomethingElse {
 
 impl DomainEvent for TestEvent {}
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum TestCommand {
     CreateTest(CreateTest),
     ConfirmTest(ConfirmTest),
     DoSomethingElse(DoSomethingElse),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct CreateTest {
     pub id: String,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct ConfirmTest {
     pub test_name: String,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct DoSomethingElse {
     pub description: String,
 }

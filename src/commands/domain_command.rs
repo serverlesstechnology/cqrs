@@ -14,30 +14,27 @@ use std::fmt::Debug;
 ///
 /// Though the `DomainCommand` trait only has a single function, the
 /// commands must also derive a number of standard traits.
-/// - `Clone` - commands may be cloned throughout the framework
-/// - `PartialEq` and `Debug` - needed for effective testing
+/// - `Debug` and `PartialEq` - needed for effective testing
 ///
 /// # Examples
-/// ```
+/// ```rust
 /// use cqrs_es2::DomainCommand;
 /// use std::fmt::Debug;
 ///
-/// #[derive(Clone, Debug, PartialEq)]
+/// #[derive(Debug, PartialEq)]
 /// pub enum CustomerCommand {
 ///     ChangeName(ChangeName),
 ///     UpdateEmail(UpdateEmail),
 /// }
 ///
-/// #[derive(Clone, Debug, PartialEq)]
+/// #[derive(Debug, PartialEq)]
 /// pub struct ChangeName {
 ///     new_name: String,
 /// }
 ///
-/// #[derive(Clone, Debug, PartialEq)]
+/// #[derive(Debug, PartialEq)]
 /// pub struct UpdateEmail {
 ///     new_email: String,
 /// }
 /// ```
-pub trait DomainCommand:
-    Clone + PartialEq + Debug + Sync + Send {
-}
+pub trait DomainCommand: Debug + PartialEq + Sync + Send {}

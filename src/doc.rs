@@ -28,7 +28,7 @@ impl Aggregate for Customer {
 
     fn handle(
         &self,
-        command: &Self::Command,
+        command: Self::Command,
     ) -> Result<Vec<Self::Event>, AggregateError> {
         match command {
             CustomerCommand::AddCustomerName(payload) => {
@@ -40,7 +40,7 @@ impl Aggregate for Customer {
                 }
 
                 let payload = NameAdded {
-                    changed_name: payload.changed_name.clone(),
+                    changed_name: payload.changed_name,
                 };
 
                 Ok(vec![CustomerEvent::NameAdded(payload)])
@@ -75,11 +75,11 @@ impl Default for Customer {
 }
 
 #[derive(
-    Clone,
     Debug,
+    PartialEq,
+    Clone,
     Serialize,
-    Deserialize,
-    PartialEq
+    Deserialize
 )]
 pub enum CustomerEvent {
     NameAdded(NameAdded),
@@ -87,22 +87,22 @@ pub enum CustomerEvent {
 }
 
 #[derive(
-    Clone,
     Debug,
+    PartialEq,
+    Clone,
     Serialize,
-    Deserialize,
-    PartialEq
+    Deserialize
 )]
 pub struct NameAdded {
     pub changed_name: String,
 }
 
 #[derive(
-    Clone,
     Debug,
+    PartialEq,
+    Clone,
     Serialize,
-    Deserialize,
-    PartialEq
+    Deserialize
 )]
 pub struct EmailUpdated {
     pub new_email: String,
@@ -110,18 +110,18 @@ pub struct EmailUpdated {
 
 impl DomainEvent for CustomerEvent {}
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum CustomerCommand {
     AddCustomerName(AddCustomerName),
     UpdateEmail(UpdateEmail),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct AddCustomerName {
     pub changed_name: String,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct UpdateEmail {
     pub new_email: String,
 }

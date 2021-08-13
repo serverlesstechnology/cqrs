@@ -17,10 +17,21 @@ use super::errors::AggregateError;
 ///
 /// # Examples
 /// ```rust
-/// # use cqrs_es2::doc::{CustomerEvent, CustomerCommand, NameAdded};
-/// # use cqrs_es2::{Aggregate, AggregateError};
-/// # use serde::{Serialize,Deserialize};
-/// #[derive(Serialize,Deserialize)]
+/// use cqrs_es2::{
+///     doc::{
+///         CustomerCommand,
+///         CustomerEvent,
+///         NameAdded,
+///     },
+///     Aggregate,
+///     AggregateError,
+/// };
+/// use serde::{
+///     Deserialize,
+///     Serialize,
+/// };
+///
+/// #[derive(Serialize, Deserialize)]
 /// struct Customer {
 ///     customer_id: String,
 ///     name: String,
@@ -31,38 +42,50 @@ use super::errors::AggregateError;
 ///     type Command = CustomerCommand;
 ///     type Event = CustomerEvent;
 ///
-///     fn aggregate_type() -> &'static str { "customer" }
+///     fn aggregate_type() -> &'static str {
+///         "customer"
+///     }
 ///
-///     fn handle(&self, command: &Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
+///     fn handle(
+///         &self,
+///         command: Self::Command,
+///     ) -> Result<Vec<Self::Event>, AggregateError> {
 ///         match command {
 ///             CustomerCommand::AddCustomerName(payload) => {
 ///                 if self.name.as_str() != "" {
-///                     return Err(AggregateError::new("a name has already been added for this customer"));
+///                     return Err(AggregateError::new(
+///                         "a name has already been added for this \
+///                              customer",
+///                     ));
 ///                 }
 ///                 let payload = NameAdded {
-///                     changed_name: payload.changed_name.clone()
+///                     changed_name: payload.changed_name,
 ///                 };
 ///                 Ok(vec![CustomerEvent::NameAdded(payload)])
-///             }
+///             },
 ///             CustomerCommand::UpdateEmail(_) => {
 ///                 Ok(Default::default())
-///             }
+///             },
 ///         }
 ///     }
 ///
-///     fn apply(&mut self, event: &Self::Event) {
+///     fn apply(
+///         &mut self,
+///         event: &Self::Event,
+///     ) {
 ///         match event {
 ///             CustomerEvent::NameAdded(payload) => {
 ///                 self.name = payload.changed_name.clone();
-///             }
+///             },
 ///             CustomerEvent::EmailUpdated(payload) => {
 ///                 self.email = payload.new_email.clone();
-///             }
+///             },
 ///         }
 ///     }
 /// }
 ///
-/// impl Default for Customer {fn default() -> Self {
+/// impl Default for Customer {
+///     fn default() -> Self {
 ///         Customer {
 ///             customer_id: "".to_string(),
 ///             name: "".to_string(),
@@ -87,7 +110,7 @@ pub trait Aggregate:
     /// error
     fn handle(
         &self,
-        command: &Self::Command,
+        command: Self::Command,
     ) -> Result<Vec<Self::Event>, AggregateError>;
 
     /// Update the aggregate's state with an event

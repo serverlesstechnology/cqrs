@@ -113,7 +113,7 @@ where
         let aggregate_context =
             self.store.load_aggregate(aggregate_id);
         let aggregate = aggregate_context.aggregate();
-        let resultant_events = aggregate.handle(&command)?;
+        let resultant_events = aggregate.handle(command)?;
         let committed_events = self.store.commit(
             resultant_events,
             aggregate_context,
