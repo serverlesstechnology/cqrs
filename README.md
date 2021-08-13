@@ -29,6 +29,7 @@ A demo application [is available here](https://github.com/brgirgis/cqrs-es2-demo
 ### `v0.3.0`
 
 - Add `DomainCommand` trait
+- Remove EventEnvelope::aggregate_type
 
 ### `v0.2.5`
 
