@@ -13,7 +13,7 @@
 
 ```toml
 [dependencies]
-cqrs-es2 = "0.3.0"
+cqrs-es2 = "0.3.1"
 serde = { version = "^1.0.127", features = ["derive"] }
 serde_json = "^1.0.66"
 ```
@@ -29,10 +29,14 @@ Demo applications:
 
 ## Change log
 
+### `v0.3.1`
+
+-
+
 ### `v0.3.0`
 
 - Add `DomainCommand` trait
-- Remove EventEnvelope::aggregate_type
+- Remove `EventEnvelope::aggregate_type` data member
 
 ### `v0.2.5`
 

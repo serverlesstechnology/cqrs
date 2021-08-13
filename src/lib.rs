@@ -19,7 +19,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cqrs-es2 = "0.3.0"
+//! cqrs-es2 = "0.3.1"
 //! serde = { version = "^1.0.127", features = ["derive"] }
 //! serde_json = "^1.0.66"
 //! ```
