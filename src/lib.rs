@@ -3,6 +3,7 @@
 #![deny(clippy::all)]
 #![warn(rust_2018_idioms)]
 // #![warn(clippy::pedantic,missing_debug_implementations)]
+
 //! # cqrs-es2
 //!
 //! **A lightweight, opinionated CQRS and event sourcing framework
@@ -16,8 +17,6 @@
 //!
 //! ## Installation
 //!
-//! cqrs-es2 is available from Crates.io or Github.
-//!
 //! ```toml
 //! [dependencies]
 //! cqrs-es2 = "0.2.5"
@@ -30,15 +29,6 @@
 //! Documentation [is available here](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
 //!
 //! A demo application [is available here](https://github.com/brgirgis/cqrs-es2-demo).
-//!
-//! ## TODO
-//!
-//! - Event upcasters.
-//! - Event serialization uses the event type as the root node of the
-//!   JSON tree. This simplifies
-//! deserialization but is non-standard.
-//! - A persistence implementation for DynamoDb.
-//! - A persistence implementation for MySql.
 
 pub use crate::{
     aggregates::*,

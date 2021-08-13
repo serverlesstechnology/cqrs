@@ -11,8 +11,6 @@
 
 ## Installation
 
-cqrs-es2 is available from Crates.io or Github.
-
 ```toml
 [dependencies]
 cqrs-es2 = "0.2.5"
