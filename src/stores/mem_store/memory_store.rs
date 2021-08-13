@@ -36,6 +36,7 @@ impl<A: Aggregate> MemoryStore<A> {
     pub fn get_events(&self) -> Arc<LockedEventEnvelopeMap<A>> {
         Arc::clone(&self.events)
     }
+
     fn load_committed_events(
         &self,
         aggregate_id: String,
@@ -54,6 +55,7 @@ impl<A: Aggregate> MemoryStore<A> {
         };
         committed_events
     }
+
     fn aggregate_id(
         &self,
         events: &[EventEnvelope<A>],
