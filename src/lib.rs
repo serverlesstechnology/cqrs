@@ -33,11 +33,15 @@
 pub use crate::{
     aggregates::*,
     commands::*,
+    errors::*,
     events::*,
     framework::*,
     queries::*,
     stores::*,
 };
+
+// Errors module holds the library error types.
+mod errors;
 
 // Aggregates module holds the central traits that define the
 // fundamental component of CQRS.

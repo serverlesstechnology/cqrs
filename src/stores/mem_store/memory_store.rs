@@ -7,13 +7,12 @@ use std::{
 };
 
 use crate::{
-    aggregates::{
-        Aggregate,
-        AggregateError,
-    },
+    aggregates::Aggregate,
+    errors::AggregateError,
     events::EventEnvelope,
-    EventStore,
 };
+
+use super::super::EventStore;
 
 use super::memory_store_aggregate_context::MemoryStoreAggregateContext;
 

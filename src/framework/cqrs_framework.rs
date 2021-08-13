@@ -4,10 +4,8 @@ use std::{
 };
 
 use crate::{
-    aggregates::{
-        Aggregate,
-        AggregateError,
-    },
+    aggregates::Aggregate,
+    errors::AggregateError,
     queries::QueryProcessor,
     stores::{
         AggregateContext,

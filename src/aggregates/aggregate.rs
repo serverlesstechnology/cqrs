@@ -5,10 +5,9 @@ use serde::{
 
 use crate::{
     commands::DomainCommand,
+    errors::AggregateError,
     events::DomainEvent,
 };
-
-use super::errors::AggregateError;
 
 /// In CQRS (and Domain Driven Design) an `Aggregate` is the
 /// fundamental component that encapsulates the state and application
@@ -26,6 +25,7 @@ use super::errors::AggregateError;
 ///     Aggregate,
 ///     AggregateError,
 /// };
+///
 /// use serde::{
 ///     Deserialize,
 ///     Serialize,

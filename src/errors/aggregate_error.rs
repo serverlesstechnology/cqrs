@@ -1,7 +1,11 @@
 use std::{
-    collections::HashMap,
     error,
-    fmt,
+    fmt::{
+        Debug,
+        Display,
+        Formatter,
+        Result as fmtResult,
+    },
 };
 
 use serde::{
@@ -9,12 +13,15 @@ use serde::{
     Serialize,
 };
 
+use super::user_error_payload::UserErrorPayload;
+
 /// The base error for the framework.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum AggregateError {
     /// The user has made an error, a String value contains a message
     /// to be delivered to the user.
     UserError(UserErrorPayload),
+
     /// A technical error was encountered that prevented the command
     /// from being applied to the aggregate. In general the
     /// accompanying message should be logged for investigation
@@ -22,29 +29,13 @@ pub enum AggregateError {
     TechnicalError(String),
 }
 
-/// Payload for an `AggregateError::UserError`, somewhat modeled on
-/// the errors produced by the [`validator`](https://github.com/Keats/validator) package. This payload implements `Serialize`
-/// with the intention of allowing the user to return this object as
-/// the response payload.
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct UserErrorPayload {
-    /// An optional code to indicate the a user-defined error.
-    pub code: Option<String>,
-    /// An optional message describing the error, meant to be
-    /// returned to the user.
-    pub message: Option<String>,
-    /// Optional additional parameters for adding additional context
-    /// to the error.
-    pub params: Option<HashMap<String, String>>,
-}
-
 impl error::Error for AggregateError {}
 
-impl fmt::Display for AggregateError {
+impl Display for AggregateError {
     fn fmt(
         &self,
-        f: &mut fmt::Formatter<'_>,
-    ) -> fmt::Result {
+        f: &mut Formatter<'_>,
+    ) -> fmtResult {
         match self {
             AggregateError::TechnicalError(message) => {
                 write!(f, "{}", message)
@@ -53,19 +44,6 @@ impl fmt::Display for AggregateError {
                 write!(f, "{}", message)
             },
         }
-    }
-}
-
-impl fmt::Display for UserErrorPayload {
-    fn fmt(
-        &self,
-        f: &mut fmt::Formatter<'_>,
-    ) -> fmt::Result {
-        write!(
-            f,
-            "UserError - code: {:?}\n  message: {:?}\n params: {:?}",
-            &self.code, &self.message, &self.params
-        )
     }
 }
 

@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 
 use crate::{
-    aggregates::{
-        Aggregate,
-        AggregateError,
-    },
+    aggregates::Aggregate,
+    errors::AggregateError,
     events::EventEnvelope,
 };
 
