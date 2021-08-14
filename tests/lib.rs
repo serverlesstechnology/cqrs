@@ -14,10 +14,7 @@ use serde::{
 use static_assertions::assert_impl_all;
 
 use cqrs_es2::{
-    memory_store::{
-        AggregateContext as MemoryAggregateContext,
-        EventStore as MemoryEventStore,
-    },
+    memory_store::EventStore as MemoryEventStore,
     test::TestFramework,
     AggregateError,
     CqrsFramework,
@@ -219,11 +216,7 @@ pub type TestEventEnvelope = EventEnvelope<TestAggregate>;
 assert_impl_all!(TestAggregate: IAggregate);
 
 assert_impl_all!(
-    MemoryEventStore::<TestAggregate>:
-        IEventStore::<
-            TestAggregate,
-            MemoryAggregateContext<TestAggregate>,
-        >
+    MemoryEventStore::<TestAggregate>: IEventStore::<TestAggregate>
 );
 
 fn metadata() -> HashMap<String, String> {

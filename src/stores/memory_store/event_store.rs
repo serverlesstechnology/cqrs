@@ -7,14 +7,15 @@ use std::{
 };
 
 use crate::{
-    aggregates::IAggregate,
+    aggregates::{
+        AggregateContext,
+        IAggregate,
+    },
     errors::AggregateError,
     events::EventEnvelope,
 };
 
 use super::super::IEventStore;
-
-use super::aggregate_context::AggregateContext;
 
 ///  Simple memory store only useful for testing purposes
 pub struct EventStore<A: IAggregate> {
@@ -69,9 +70,7 @@ impl<A: IAggregate> EventStore<A> {
     }
 }
 
-impl<A: IAggregate> IEventStore<A, AggregateContext<A>>
-    for EventStore<A>
-{
+impl<A: IAggregate> IEventStore<A> for EventStore<A> {
     fn load(
         &mut self,
         aggregate_id: &str,

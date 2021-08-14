@@ -5,8 +5,8 @@ use std::{
 
 use crate::{
     aggregates::{
+        AggregateContext,
         IAggregate,
-        IAggregateContext,
     },
     errors::AggregateError,
     queries::IQueryProcessor,
@@ -26,32 +26,26 @@ use crate::{
 /// 4. persisting any generated events or rolling back on an error
 ///
 /// To manage these tasks we use a `CqrsFramework`.
-pub struct CqrsFramework<A, ES, AC>
+pub struct CqrsFramework<A, ES>
 where
     A: IAggregate,
-    ES: IEventStore<A, AC>,
-    AC: IAggregateContext<A>, {
+    ES: IEventStore<A>, {
     store: ES,
     query_processors: Vec<Box<dyn IQueryProcessor<A>>>,
-    _phantom: PhantomData<AC>,
+    _phantom: PhantomData<AggregateContext<A>>,
 }
 
-impl<A, ES, AC> CqrsFramework<A, ES, AC>
+impl<A, ES> CqrsFramework<A, ES>
 where
     A: IAggregate,
-    ES: IEventStore<A, AC>,
-    AC: IAggregateContext<A>,
+    ES: IEventStore<A>,
 {
     /// Creates new framework for dispatching commands using the
     /// provided elements.
     pub fn new(
         store: ES,
         query_processors: Vec<Box<dyn IQueryProcessor<A>>>,
-    ) -> CqrsFramework<A, ES, AC>
-    where
-        A: IAggregate,
-        ES: IEventStore<A, AC>,
-        AC: IAggregateContext<A>, {
+    ) -> CqrsFramework<A, ES> {
         CqrsFramework {
             store,
             query_processors,
@@ -109,18 +103,24 @@ where
         metadata: HashMap<String, String>,
     ) -> Result<(), AggregateError> {
         let aggregate_context =
-            self.store.load_aggregate(aggregate_id);
-        let aggregate = aggregate_context.aggregate();
-        let resultant_events = aggregate.handle(command)?;
+            self.store.load_aggregate(&aggregate_id);
+
+        let resultant_events = aggregate_context
+            .aggregate
+            .handle(command)?;
+
         let committed_events = self.store.commit(
             resultant_events,
             aggregate_context,
             metadata,
         )?;
+
+        let dispatch_events = committed_events.as_slice();
+
         for processor in &mut self.query_processors {
-            let dispatch_events = committed_events.as_slice();
-            processor.dispatch(&aggregate_id, dispatch_events);
+            processor.dispatch(&aggregate_id, &dispatch_events);
         }
+
         Ok(())
     }
 }
