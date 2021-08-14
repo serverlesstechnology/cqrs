@@ -31,7 +31,7 @@ Demo applications:
 
 ### `v0.3.1`
 
--
+- Move `AggregateContext` to the `aggregates` module
 
 ### `v0.3.0`
 
