@@ -14,16 +14,18 @@ use serde::{
 use static_assertions::assert_impl_all;
 
 use cqrs_es2::{
+    memory_store::{
+        AggregateContext as MemoryAggregateContext,
+        EventStore as MemoryEventStore,
+    },
     test::TestFramework,
-    Aggregate,
     AggregateError,
     CqrsFramework,
-    DomainCommand,
-    DomainEvent,
     EventEnvelope,
-    EventStore,
-    MemoryStore,
-    MemoryStoreAggregateContext,
+    IAggregate,
+    IDomainCommand,
+    IDomainEvent,
+    IEventStore,
     QueryProcessor,
 };
 
@@ -34,7 +36,7 @@ pub struct TestAggregate {
     tests: Vec<String>,
 }
 
-impl Aggregate for TestAggregate {
+impl IAggregate for TestAggregate {
     type Command = TestCommand;
     type Event = TestEvent;
 
@@ -151,7 +153,7 @@ pub struct SomethingElse {
     pub description: String,
 }
 
-impl DomainEvent for TestEvent {}
+impl IDomainEvent for TestEvent {}
 
 #[derive(Debug, PartialEq)]
 pub enum TestCommand {
@@ -175,7 +177,7 @@ pub struct DoSomethingElse {
     pub description: String,
 }
 
-impl DomainCommand for TestCommand {}
+impl IDomainCommand for TestCommand {}
 
 struct TestView {
     events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>,
@@ -204,14 +206,13 @@ impl QueryProcessor<TestAggregate> for TestView {
 
 pub type TestEventEnvelope = EventEnvelope<TestAggregate>;
 
-assert_impl_all!(TestAggregate: Aggregate);
-// assert_impl_all!(event; TestEvent);
+assert_impl_all!(TestAggregate: IAggregate);
 
 assert_impl_all!(
-    MemoryStore::<TestAggregate>:
-        EventStore::<
+    MemoryEventStore::<TestAggregate>:
+        IEventStore::<
             TestAggregate,
-            MemoryStoreAggregateContext<TestAggregate>,
+            MemoryAggregateContext<TestAggregate>,
         >
 );
 
@@ -224,7 +225,8 @@ fn metadata() -> HashMap<String, String> {
 
 #[test]
 fn test_mem_store() {
-    let mut event_store = MemoryStore::<TestAggregate>::default();
+    let mut event_store =
+        MemoryEventStore::<TestAggregate>::default();
     let id = "test_id_A";
     let initial_events = event_store.load(&id);
     assert_eq!(0, initial_events.len());
@@ -335,7 +337,7 @@ fn test_framework_failure_test_b() {
 
 #[test]
 fn framework_test() {
-    let event_store = MemoryStore::default();
+    let event_store = MemoryEventStore::default();
     let stored_events = event_store.get_events();
 
     let delivered_events = Default::default();

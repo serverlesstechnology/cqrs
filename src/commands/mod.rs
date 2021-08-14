@@ -1,3 +1,3 @@
-pub use domain_command::DomainCommand;
+pub use i_domain_command::IDomainCommand;
 
-mod domain_command;
+mod i_domain_command;

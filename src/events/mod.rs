@@ -1,5 +1,5 @@
-pub use domain_event::DomainEvent;
 pub use event_envelope::EventEnvelope;
+pub use i_domain_event::IDomainEvent;
 
-mod domain_event;
 mod event_envelope;
+mod i_domain_event;

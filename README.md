@@ -32,6 +32,7 @@ Demo applications:
 ### `v0.3.1`
 
 - Move `AggregateContext` to the `aggregates` module
+- Rename public traits to have the `I` notation (`IAggregate`,`IDomainEvent`, etc.)
 
 ### `v0.3.0`
 

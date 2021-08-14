@@ -5,12 +5,12 @@ use std::{
 
 use crate::{
     aggregates::{
-        Aggregate,
-        AggregateContext,
+        IAggregate,
+        IAggregateContext,
     },
     errors::AggregateError,
     queries::QueryProcessor,
-    stores::EventStore,
+    stores::IEventStore,
 };
 
 /// This is the base framework for applying commands to produce
@@ -28,9 +28,9 @@ use crate::{
 /// To manage these tasks we use a `CqrsFramework`.
 pub struct CqrsFramework<A, ES, AC>
 where
-    A: Aggregate,
-    ES: EventStore<A, AC>,
-    AC: AggregateContext<A>, {
+    A: IAggregate,
+    ES: IEventStore<A, AC>,
+    AC: IAggregateContext<A>, {
     store: ES,
     query_processors: Vec<Box<dyn QueryProcessor<A>>>,
     _phantom: PhantomData<AC>,
@@ -38,9 +38,9 @@ where
 
 impl<A, ES, AC> CqrsFramework<A, ES, AC>
 where
-    A: Aggregate,
-    ES: EventStore<A, AC>,
-    AC: AggregateContext<A>,
+    A: IAggregate,
+    ES: IEventStore<A, AC>,
+    AC: IAggregateContext<A>,
 {
     /// Creates new framework for dispatching commands using the
     /// provided elements.
@@ -49,9 +49,9 @@ where
         query_processors: Vec<Box<dyn QueryProcessor<A>>>,
     ) -> CqrsFramework<A, ES, AC>
     where
-        A: Aggregate,
-        ES: EventStore<A, AC>,
-        AC: AggregateContext<A>, {
+        A: IAggregate,
+        ES: IEventStore<A, AC>,
+        AC: IAggregateContext<A>, {
         CqrsFramework {
             store,
             query_processors,

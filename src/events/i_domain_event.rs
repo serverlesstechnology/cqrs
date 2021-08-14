@@ -28,7 +28,7 @@ use std::fmt::Debug;
 ///
 /// # Examples
 /// ```rust
-/// use cqrs_es2::DomainEvent;
+/// use cqrs_es2::IDomainEvent;
 /// use serde::{
 ///     Deserialize,
 ///     Serialize,
@@ -68,8 +68,10 @@ use std::fmt::Debug;
 /// pub struct EmailUpdated {
 ///     new_email: String,
 /// }
+///
+/// impl IDomainEvent for CustomerEvent {};
 /// ```
-pub trait DomainEvent:
+pub trait IDomainEvent:
     Debug + PartialEq + Clone + Serialize + DeserializeOwned + Sync + Send
 {
 }

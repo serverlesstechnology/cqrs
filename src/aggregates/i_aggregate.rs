@@ -4,9 +4,9 @@ use serde::{
 };
 
 use crate::{
-    commands::DomainCommand,
+    commands::IDomainCommand,
     errors::AggregateError,
-    events::DomainEvent,
+    events::IDomainEvent,
 };
 
 /// In CQRS (and Domain Driven Design) an `Aggregate` is the
@@ -22,8 +22,8 @@ use crate::{
 ///         CustomerEvent,
 ///         NameAdded,
 ///     },
-///     Aggregate,
 ///     AggregateError,
+///     IAggregate,
 /// };
 ///
 /// use serde::{
@@ -38,7 +38,7 @@ use crate::{
 ///     email: String,
 /// }
 ///
-/// impl Aggregate for Customer {
+/// impl IAggregate for Customer {
 ///     type Command = CustomerCommand;
 ///     type Event = CustomerEvent;
 ///
@@ -94,14 +94,14 @@ use crate::{
 ///     }
 /// }
 /// ```
-pub trait Aggregate:
+pub trait IAggregate:
     Default + Serialize + DeserializeOwned + Sync + Send {
     /// An inbound command used to make changes in the state of the
     /// Aggregate
-    type Command: DomainCommand;
+    type Command: IDomainCommand;
 
     /// An event representing some change in state of the Aggregate
-    type Event: DomainEvent;
+    type Event: IDomainEvent;
 
     /// aggregate_type is a unique identifier for this aggregate
     fn aggregate_type() -> &'static str;

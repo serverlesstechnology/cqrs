@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::aggregates::Aggregate;
+use crate::aggregates::IAggregate;
 
 /// `EventEnvelope` is a data structure that encapsulates an event
 /// with along with it's pertinent information. All of the associated
@@ -11,7 +11,7 @@ use crate::aggregates::Aggregate;
 #[derive(Debug)]
 pub struct EventEnvelope<A>
 where
-    A: Aggregate, {
+    A: IAggregate, {
     /// The id of the aggregate instance.
     pub aggregate_id: String,
     /// The sequence number for an aggregate instance.
@@ -23,7 +23,7 @@ where
     pub metadata: HashMap<String, String>,
 }
 
-impl<A: Aggregate> Clone for EventEnvelope<A> {
+impl<A: IAggregate> Clone for EventEnvelope<A> {
     fn clone(&self) -> Self {
         EventEnvelope {
             aggregate_id: self.aggregate_id.clone(),
@@ -34,7 +34,7 @@ impl<A: Aggregate> Clone for EventEnvelope<A> {
     }
 }
 
-impl<A: Aggregate> EventEnvelope<A> {
+impl<A: IAggregate> EventEnvelope<A> {
     /// A convenience function for packaging an event in an
     /// `EventEnvelope`, used for testing `QueryProcessor`s.
     pub fn new(

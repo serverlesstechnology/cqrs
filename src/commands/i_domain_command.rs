@@ -18,7 +18,7 @@ use std::fmt::Debug;
 ///
 /// # Examples
 /// ```rust
-/// use cqrs_es2::DomainCommand;
+/// use cqrs_es2::IDomainCommand;
 /// use std::fmt::Debug;
 ///
 /// #[derive(Debug, PartialEq)]
@@ -36,5 +36,7 @@ use std::fmt::Debug;
 /// pub struct UpdateEmail {
 ///     new_email: String,
 /// }
+///
+/// impl IDomainCommand for CustomerCommand {};
 /// ```
-pub trait DomainCommand: Debug + PartialEq + Sync + Send {}
+pub trait IDomainCommand: Debug + PartialEq + Sync + Send {}

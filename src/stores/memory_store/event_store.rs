@@ -7,31 +7,31 @@ use std::{
 };
 
 use crate::{
-    aggregates::Aggregate,
+    aggregates::IAggregate,
     errors::AggregateError,
     events::EventEnvelope,
 };
 
-use super::super::EventStore;
+use super::super::IEventStore;
 
-use super::memory_store_aggregate_context::MemoryStoreAggregateContext;
+use super::aggregate_context::AggregateContext;
 
 ///  Simple memory store only useful for testing purposes
-pub struct MemoryStore<A: Aggregate> {
+pub struct EventStore<A: IAggregate> {
     events: Arc<LockedEventEnvelopeMap<A>>,
 }
 
-impl<A: Aggregate> Default for MemoryStore<A> {
+impl<A: IAggregate> Default for EventStore<A> {
     fn default() -> Self {
         let events = Default::default();
-        MemoryStore { events }
+        EventStore { events }
     }
 }
 
 type LockedEventEnvelopeMap<A> =
     RwLock<HashMap<String, Vec<EventEnvelope<A>>>>;
 
-impl<A: Aggregate> MemoryStore<A> {
+impl<A: IAggregate> EventStore<A> {
     /// Get a shared copy of the events stored within the event store.
     pub fn get_events(&self) -> Arc<LockedEventEnvelopeMap<A>> {
         Arc::clone(&self.events)
@@ -67,8 +67,8 @@ impl<A: Aggregate> MemoryStore<A> {
     }
 }
 
-impl<A: Aggregate> EventStore<A, MemoryStoreAggregateContext<A>>
-    for MemoryStore<A>
+impl<A: IAggregate> IEventStore<A, AggregateContext<A>>
+    for EventStore<A>
 {
     fn load(
         &mut self,
@@ -87,7 +87,7 @@ impl<A: Aggregate> EventStore<A, MemoryStoreAggregateContext<A>>
     fn load_aggregate(
         &mut self,
         aggregate_id: &str,
-    ) -> MemoryStoreAggregateContext<A> {
+    ) -> AggregateContext<A> {
         let committed_events = self.load(aggregate_id);
         let mut aggregate = A::default();
         let mut current_sequence = 0;
@@ -96,7 +96,7 @@ impl<A: Aggregate> EventStore<A, MemoryStoreAggregateContext<A>>
             let event = envelope.payload;
             aggregate.apply(&event);
         }
-        MemoryStoreAggregateContext {
+        AggregateContext {
             aggregate_id: aggregate_id.to_string(),
             aggregate,
             current_sequence,
@@ -106,7 +106,7 @@ impl<A: Aggregate> EventStore<A, MemoryStoreAggregateContext<A>>
     fn commit(
         &mut self,
         events: Vec<A::Event>,
-        context: MemoryStoreAggregateContext<A>,
+        context: AggregateContext<A>,
         metadata: HashMap<String, String>,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError> {
         let aggregate_id = context.aggregate_id.as_str();

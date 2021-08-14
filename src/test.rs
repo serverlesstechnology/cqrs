@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-    aggregates::Aggregate,
+    aggregates::IAggregate,
     errors::AggregateError,
 };
 
@@ -39,7 +39,7 @@ pub struct TestFramework<A> {
 
 impl<A> TestFramework<A>
 where
-    A: Aggregate,
+    A: IAggregate,
 {
     /// Initiates an aggregate test with no previous events.
     #[must_use]
@@ -61,7 +61,7 @@ where
 
 impl<A> Default for TestFramework<A>
 where
-    A: Aggregate,
+    A: IAggregate,
 {
     fn default() -> Self {
         TestFramework {
@@ -74,13 +74,13 @@ where
 /// command.
 pub struct AggregateTestExecutor<A>
 where
-    A: Aggregate, {
+    A: IAggregate, {
     events: Vec<A::Event>,
 }
 
 impl<A> AggregateTestExecutor<A>
 where
-    A: Aggregate,
+    A: IAggregate,
 {
     /// Consumes a command and using the state details previously
     /// passed provides a validator object to test against.
@@ -100,11 +100,11 @@ where
 /// Validation object for the `TestFramework` package.
 pub struct AggregateResultValidator<A>
 where
-    A: Aggregate, {
+    A: IAggregate, {
     result: Result<Vec<A::Event>, AggregateError>,
 }
 
-impl<A: Aggregate> AggregateResultValidator<A> {
+impl<A: IAggregate> AggregateResultValidator<A> {
     /// Verifies that the expected events have been produced by the
     /// command.
     pub fn then_expect_events(

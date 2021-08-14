@@ -1,7 +1,4 @@
-pub use event_store::EventStore;
+pub use i_event_store::IEventStore;
 
-pub use mem_store::*;
-
-mod event_store;
-
-mod mem_store;
+mod i_event_store;
+pub mod memory_store;

@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use crate::{
     aggregates::{
-        Aggregate,
-        AggregateContext,
+        IAggregate,
+        IAggregateContext,
     },
     errors::AggregateError,
     events::EventEnvelope,
@@ -11,10 +11,7 @@ use crate::{
 
 /// The abstract central source for loading past events and committing
 /// new events.
-pub trait EventStore<A, AC>
-where
-    A: Aggregate,
-    AC: AggregateContext<A>, {
+pub trait IEventStore<A: IAggregate, AC: IAggregateContext<A>> {
     /// Load all events for a particular `aggregate_id`
     fn load(
         &mut self,

@@ -5,10 +5,10 @@ use serde::{
 use std::fmt::Debug;
 
 use crate::{
-    Aggregate,
     AggregateError,
-    DomainCommand,
-    DomainEvent,
+    IAggregate,
+    IDomainCommand,
+    IDomainEvent,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -18,7 +18,7 @@ pub struct Customer {
     pub email: String,
 }
 
-impl Aggregate for Customer {
+impl IAggregate for Customer {
     type Command = CustomerCommand;
     type Event = CustomerEvent;
 
@@ -108,7 +108,7 @@ pub struct EmailUpdated {
     pub new_email: String,
 }
 
-impl DomainEvent for CustomerEvent {}
+impl IDomainEvent for CustomerEvent {}
 
 #[derive(Debug, PartialEq)]
 pub enum CustomerCommand {
@@ -126,7 +126,7 @@ pub struct UpdateEmail {
     pub new_email: String,
 }
 
-impl DomainCommand for CustomerCommand {}
+impl IDomainCommand for CustomerCommand {}
 
 #[cfg(test)]
 mod doc_tests {
