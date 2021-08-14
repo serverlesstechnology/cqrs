@@ -74,6 +74,16 @@ impl Default for Customer {
     }
 }
 
+impl Clone for Customer {
+    fn clone(&self) -> Self {
+        Customer {
+            customer_id: self.customer_id.clone(),
+            name: self.name.clone(),
+            email: self.email.clone(),
+        }
+    }
+}
+
 #[derive(
     Debug,
     PartialEq,

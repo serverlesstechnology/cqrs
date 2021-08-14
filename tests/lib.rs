@@ -107,6 +107,16 @@ impl Default for TestAggregate {
     }
 }
 
+impl Clone for TestAggregate {
+    fn clone(&self) -> Self {
+        TestAggregate {
+            id: self.id.clone(),
+            description: self.description.clone(),
+            tests: self.tests.clone(),
+        }
+    }
+}
+
 #[derive(
     Debug,
     PartialEq,

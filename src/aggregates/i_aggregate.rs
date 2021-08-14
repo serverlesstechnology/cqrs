@@ -93,9 +93,19 @@ use crate::{
 ///         }
 ///     }
 /// }
+///
+/// impl Clone for Customer {
+///     fn clone(&self) -> Self {
+///         Customer {
+///             customer_id: self.customer_id.clone(),
+///             name: self.name.clone(),
+///             email: self.email.clone(),
+///         }
+///     }
+/// }
 /// ```
 pub trait IAggregate:
-    Default + Serialize + DeserializeOwned + Sync + Send {
+    Default + Clone + Serialize + DeserializeOwned + Sync + Send {
     /// An inbound command used to make changes in the state of the
     /// Aggregate
     type Command: IDomainCommand;

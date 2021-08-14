@@ -38,6 +38,7 @@ Demo applications:
 
 - Add `DomainCommand` trait
 - Remove `EventEnvelope::aggregate_type` data member
+- Add `Clone` to `IAggregate`
 
 ### `v0.2.5`
 
