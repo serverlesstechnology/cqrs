@@ -18,7 +18,7 @@ use crate::{
 /// Queries are generally serialized for persistence, usually in a
 /// standard database, but a query could also utilize messaging
 /// platform or other asynchronous, eventually-consistent systems.
-pub trait Query<A: IAggregate>:
+pub trait IQuery<A: IAggregate>:
     Debug + Default + Serialize + DeserializeOwned {
     /// Each implemented query is responsible for updating its stated
     /// based on events passed via this method.

@@ -26,7 +26,7 @@ use cqrs_es2::{
     IDomainCommand,
     IDomainEvent,
     IEventStore,
-    QueryProcessor,
+    IQueryProcessor,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -191,7 +191,7 @@ impl TestView {
     }
 }
 
-impl QueryProcessor<TestAggregate> for TestView {
+impl IQueryProcessor<TestAggregate> for TestView {
     fn dispatch(
         &mut self,
         _aggregate_id: &str,

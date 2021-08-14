@@ -1,5 +1,5 @@
-pub use query::Query;
-pub use query_processor::QueryProcessor;
+pub use i_query::IQuery;
+pub use i_query_processor::IQueryProcessor;
 
-mod query;
-mod query_processor;
+mod i_query;
+mod i_query_processor;

@@ -9,7 +9,7 @@ use crate::{
         IAggregateContext,
     },
     errors::AggregateError,
-    queries::QueryProcessor,
+    queries::IQueryProcessor,
     stores::IEventStore,
 };
 
@@ -32,7 +32,7 @@ where
     ES: IEventStore<A, AC>,
     AC: IAggregateContext<A>, {
     store: ES,
-    query_processors: Vec<Box<dyn QueryProcessor<A>>>,
+    query_processors: Vec<Box<dyn IQueryProcessor<A>>>,
     _phantom: PhantomData<AC>,
 }
 
@@ -46,7 +46,7 @@ where
     /// provided elements.
     pub fn new(
         store: ES,
-        query_processors: Vec<Box<dyn QueryProcessor<A>>>,
+        query_processors: Vec<Box<dyn IQueryProcessor<A>>>,
     ) -> CqrsFramework<A, ES, AC>
     where
         A: IAggregate,
