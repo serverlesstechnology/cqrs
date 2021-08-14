@@ -4,13 +4,13 @@ use std::{
 };
 
 use crate::{
-    aggregates::Aggregate,
+    aggregates::{
+        Aggregate,
+        AggregateContext,
+    },
     errors::AggregateError,
     queries::QueryProcessor,
-    stores::{
-        AggregateContext,
-        EventStore,
-    },
+    stores::EventStore,
 };
 
 /// This is the base framework for applying commands to produce

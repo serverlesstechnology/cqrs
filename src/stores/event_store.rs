@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
 use crate::{
-    aggregates::Aggregate,
+    aggregates::{
+        Aggregate,
+        AggregateContext,
+    },
     errors::AggregateError,
     events::EventEnvelope,
 };
-
-use super::aggregate_context::AggregateContext;
 
 /// The abstract central source for loading past events and committing
 /// new events.

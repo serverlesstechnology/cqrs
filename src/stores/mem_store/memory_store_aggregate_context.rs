@@ -1,6 +1,7 @@
-use crate::aggregates::Aggregate;
-
-use super::super::AggregateContext;
+use crate::aggregates::{
+    Aggregate,
+    AggregateContext,
+};
 
 /// Holds context for a pure event store implementation for
 /// MemoryStore
