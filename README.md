@@ -13,7 +13,7 @@
 
 ```toml
 [dependencies]
-cqrs-es2 = "0.3.1"
+cqrs-es2 = "0.4.0"
 serde = { version = "^1.0.127", features = ["derive"] }
 serde_json = "^1.0.66"
 ```
@@ -29,7 +29,7 @@ Demo applications:
 
 ## Change log
 
-### `v0.3.1`
+### `v0.4.0`
 
 - Move `AggregateContext` to the `aggregates` module
 - Rename public traits to have the `I` notation (`IAggregate`,`IDomainEvent`, etc.)
