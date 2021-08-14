@@ -45,6 +45,7 @@ impl<A: IAggregate> EventStore<A> {
         // for tests only
         let event_map = self.events.read().unwrap();
         let mut committed_events: Vec<EventEnvelope<A>> = Vec::new();
+
         match event_map.get(aggregate_id.as_str()) {
             None => {},
             Some(events) => {
@@ -53,6 +54,7 @@ impl<A: IAggregate> EventStore<A> {
                 }
             },
         };
+
         committed_events
     }
 
@@ -76,11 +78,13 @@ impl<A: IAggregate> IEventStore<A, AggregateContext<A>>
     ) -> Vec<EventEnvelope<A>> {
         let events =
             self.load_committed_events(aggregate_id.to_string());
+
         println!(
             "loading: {} events for aggregate ID '{}'",
             &events.len(),
             &aggregate_id
         );
+
         events
     }
 
@@ -91,11 +95,13 @@ impl<A: IAggregate> IEventStore<A, AggregateContext<A>>
         let committed_events = self.load(aggregate_id);
         let mut aggregate = A::default();
         let mut current_sequence = 0;
+
         for envelope in committed_events {
             current_sequence = envelope.sequence;
             let event = envelope.payload;
             aggregate.apply(&event);
         }
+
         AggregateContext {
             aggregate_id: aggregate_id.to_string(),
             aggregate,
@@ -118,23 +124,29 @@ impl<A: IAggregate> IEventStore<A, AggregateContext<A>>
             metadata,
         );
         let new_events_qty = wrapped_events.len();
+
         if new_events_qty == 0 {
             return Ok(Vec::default());
         }
+
         let aggregate_id = self.aggregate_id(&wrapped_events);
         let mut new_events =
             self.load_committed_events(aggregate_id.to_string());
+
         for event in &wrapped_events {
             new_events.push(event.clone());
         }
+
         println!(
             "storing: {} new events for aggregate ID '{}'",
             new_events_qty, &aggregate_id
         );
+
         // uninteresting unwrap: this is not a struct for production
         // use
         let mut event_map = self.events.write().unwrap();
         event_map.insert(aggregate_id, new_events);
+
         Ok(wrapped_events)
     }
 }
