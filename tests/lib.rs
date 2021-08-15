@@ -218,7 +218,9 @@ fn test_mem_store() {
     let mut event_store =
         MemoryEventStore::<TestAggregate>::default();
     let id = "test_id_A";
-    let initial_events = event_store.load_events(&id).unwrap();
+    let initial_events = event_store
+        .load_events(&id, true)
+        .unwrap();
     assert_eq!(0, initial_events.len());
     let agg_context = event_store.load_aggregate(&id).unwrap();
 
@@ -231,7 +233,9 @@ fn test_mem_store() {
             metadata(),
         )
         .unwrap();
-    let stored_events = event_store.load_events(&id).unwrap();
+    let stored_events = event_store
+        .load_events(&id, true)
+        .unwrap();
     assert_eq!(1, stored_events.len());
     let agg_context = event_store.load_aggregate(&id).unwrap();
 
@@ -253,7 +257,9 @@ fn test_mem_store() {
             metadata(),
         )
         .unwrap();
-    let stored_envelopes = event_store.load_events(&id).unwrap();
+    let stored_envelopes = event_store
+        .load_events(&id, true)
+        .unwrap();
 
     let mut agg = TestAggregate::default();
     for stored_envelope in stored_envelopes {

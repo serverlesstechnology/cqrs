@@ -74,9 +74,26 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
     fn load_events(
         &mut self,
         aggregate_id: &str,
+        with_metadata: bool,
     ) -> Result<Vec<EventContext<A>>, AggregateError> {
-        let events =
+        let event_contexts =
             self.load_committed_events(aggregate_id.to_string());
+
+        if with_metadata {
+            return Ok(event_contexts);
+        }
+
+        // clear the metadata to simulate loading events only
+        let mut events = Vec::new();
+
+        for event_context in event_contexts {
+            events.push(EventContext {
+                aggregate_id: event_context.aggregate_id,
+                sequence: event_context.sequence,
+                payload: event_context.payload,
+                metadata: Default::default(),
+            });
+        }
 
         println!(
             "loading: {} events for aggregate ID '{}'",
@@ -91,25 +108,28 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
         &mut self,
         aggregate_id: &str,
     ) -> Result<AggregateContext<A>, AggregateError> {
-        match self.load_events(aggregate_id) {
-            Ok(committed_events) => {
-                let mut aggregate = A::default();
-                let mut current_sequence = 0;
+        let committed_events =
+            match self.load_events(aggregate_id, false) {
+                Ok(x) => x,
+                Err(e) => {
+                    return Err(e);
+                },
+            };
 
-                for envelope in committed_events {
-                    current_sequence = envelope.sequence;
-                    let event = envelope.payload;
-                    aggregate.apply(&event);
-                }
+        let mut aggregate = A::default();
+        let mut current_sequence = 0;
 
-                Ok(AggregateContext {
-                    aggregate_id: aggregate_id.to_string(),
-                    aggregate,
-                    current_sequence,
-                })
-            },
-            Err(e) => Err(e),
+        for envelope in committed_events {
+            current_sequence = envelope.sequence;
+            let event = envelope.payload;
+            aggregate.apply(&event);
         }
+
+        Ok(AggregateContext {
+            aggregate_id: aggregate_id.to_string(),
+            aggregate,
+            current_sequence,
+        })
     }
 
     fn commit(

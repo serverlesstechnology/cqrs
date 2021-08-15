@@ -16,6 +16,7 @@ pub trait IEventStore<A: IAggregate> {
     fn load_events(
         &mut self,
         aggregate_id: &str,
+        with_metadata: bool,
     ) -> Result<Vec<EventContext<A>>, AggregateError>;
 
     /// Load aggregate at current state
@@ -42,19 +43,20 @@ pub trait IEventStore<A: IAggregate> {
         base_metadata: HashMap<String, String>,
     ) -> Vec<EventContext<A>> {
         let mut sequence = current_sequence;
+
         let mut wrapped_events: Vec<EventContext<A>> = Vec::new();
+
         for payload in resultant_events {
             sequence += 1;
-            let aggregate_id: String = aggregate_id.to_string();
-            let sequence = sequence;
-            let metadata = base_metadata.clone();
+
             wrapped_events.push(EventContext {
-                aggregate_id,
+                aggregate_id: aggregate_id.to_string(),
                 sequence,
                 payload,
-                metadata,
+                metadata: base_metadata.clone(),
             });
         }
+
         wrapped_events
     }
 }
