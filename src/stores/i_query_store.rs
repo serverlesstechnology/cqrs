@@ -15,36 +15,50 @@ use crate::{
 /// # Examples
 /// ```rust
 /// ```
-pub trait IQueryStore<Q, A>: IQueryProcessor<A>
+pub trait IQueryStore<Q, A>
 where
     Q: IQuery<A>,
     A: IAggregate, {
     /// loads the query
     fn load(
         &mut self,
-        query_instance_id: String,
+        aggregate_id: &str,
     ) -> Result<QueryContext<Q, A>, AggregateError>;
 
     /// commits the query
     fn commit(
         &mut self,
-        query_context: QueryContext<Q, A>,
+        context: QueryContext<Q, A>,
     ) -> Result<(), AggregateError>;
 
     /// Used to apply committed events to a query.
     fn apply_events(
         &mut self,
-        query_instance_id: &str,
+        aggregate_id: &str,
         events: &[EventContext<A>],
     ) -> Result<(), AggregateError> {
-        match self.load(query_instance_id.to_string()) {
-            Ok(mut query_context) => {
+        match self.load(aggregate_id) {
+            Ok(mut context) => {
                 for event in events {
-                    query_context.payload.update(event);
+                    context.payload.update(event);
                 }
-                self.commit(query_context)
+                self.commit(context)
             },
             Err(e) => Err(e),
         }
+    }
+}
+
+impl<Q, A> IQueryProcessor<A> for dyn IQueryStore<Q, A>
+where
+    Q: IQuery<A>,
+    A: IAggregate,
+{
+    fn dispatch(
+        &mut self,
+        aggregate_id: &str,
+        events: &[EventContext<A>],
+    ) -> Result<(), AggregateError> {
+        self.apply_events(aggregate_id, &events)
     }
 }

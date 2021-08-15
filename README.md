@@ -38,6 +38,7 @@ Demo applications:
   - `IQuery::query_type()`
   - `IQueryStore`
   - `QueryContext`
+  - `memory_store::QueryStore`
 
 ### `v0.4.0`
 

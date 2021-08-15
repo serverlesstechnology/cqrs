@@ -39,21 +39,21 @@ pub trait IEventStore<A: IAggregate> {
         &self,
         aggregate_id: &str,
         current_sequence: usize,
-        resultant_events: Vec<A::Event>,
-        base_metadata: HashMap<String, String>,
+        events: Vec<A::Event>,
+        metadata: HashMap<String, String>,
     ) -> Vec<EventContext<A>> {
         let mut sequence = current_sequence;
 
         let mut wrapped_events: Vec<EventContext<A>> = Vec::new();
 
-        for payload in resultant_events {
+        for payload in events {
             sequence += 1;
 
             wrapped_events.push(EventContext {
                 aggregate_id: aggregate_id.to_string(),
                 sequence,
                 payload,
-                metadata: base_metadata.clone(),
+                metadata: metadata.clone(),
             });
         }
 

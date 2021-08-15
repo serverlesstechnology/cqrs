@@ -1,5 +1,6 @@
 use crate::{
     aggregates::IAggregate,
+    errors::AggregateError,
     events::EventContext,
 };
 
@@ -13,5 +14,5 @@ pub trait IQueryProcessor<A: IAggregate> {
         &mut self,
         aggregate_id: &str,
         events: &[EventContext<A>],
-    );
+    ) -> Result<(), AggregateError>;
 }
