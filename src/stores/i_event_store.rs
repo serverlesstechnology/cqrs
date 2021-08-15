@@ -13,7 +13,7 @@ use crate::{
 /// new events.
 pub trait IEventStore<A: IAggregate> {
     /// Load all events for a particular `aggregate_id`
-    fn load(
+    fn load_events(
         &mut self,
         aggregate_id: &str,
     ) -> Vec<EventEnvelope<A>>;

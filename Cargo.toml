@@ -1,13 +1,13 @@
 [package]
 name = "cqrs-es2"
-version = "0.4.1"
+version = "0.5.0"
 authors = [
   "Dave Garred <dave.garred@serverlesstechnology.com>",
   "Bassem Girgis <brgirgis@gmail.com>",
 ]
 edition = "2018"
 license = "MIT"
-description = "A lightweight, opinionated CQRS and event sourcing framework targetting serverless architectures."
+description = "A lightweight CQRS and event sourcing framework."
 readme = "README.md"
 documentation = "https://docs.rs/cqrs-es2"
 repository = "https://github.com/brgirgis/cqrs-es2"

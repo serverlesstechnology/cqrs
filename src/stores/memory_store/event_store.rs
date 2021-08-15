@@ -71,7 +71,7 @@ impl<A: IAggregate> EventStore<A> {
 }
 
 impl<A: IAggregate> IEventStore<A> for EventStore<A> {
-    fn load(
+    fn load_events(
         &mut self,
         aggregate_id: &str,
     ) -> Vec<EventEnvelope<A>> {
@@ -91,7 +91,7 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
         &mut self,
         aggregate_id: &str,
     ) -> AggregateContext<A> {
-        let committed_events = self.load(aggregate_id);
+        let committed_events = self.load_events(aggregate_id);
         let mut aggregate = A::default();
         let mut current_sequence = 0;
 

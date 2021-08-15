@@ -19,7 +19,7 @@ use crate::{
 /// standard database, but a query could also utilize messaging
 /// platform or other asynchronous, eventually-consistent systems.
 pub trait IQuery<A: IAggregate>:
-    Debug + Default + Serialize + DeserializeOwned {
+    Debug + Default + Clone + Serialize + DeserializeOwned {
     /// query_type is a unique identifier for this query
     fn query_type() -> &'static str;
 

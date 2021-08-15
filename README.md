@@ -1,6 +1,6 @@
 # cqrs-es2
 
-**A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures.**
+**A lightweight CQRS and event sourcing framework.**
 
 [![Publish](https://github.com/brgirgis/cqrs-es2/actions/workflows/crates-io.yml/badge.svg)](https://github.com/brgirgis/cqrs-es2/actions/workflows/crates-io.yml)
 [![Test](https://github.com/brgirgis/cqrs-es2/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/brgirgis/cqrs-es2/actions/workflows/rust-ci.yml)
@@ -13,7 +13,7 @@
 
 ```toml
 [dependencies]
-cqrs-es2 = "0.4.1"
+cqrs-es2 = "0.5.0"
 serde = { version = "^1.0.127", features = ["derive"] }
 serde_json = "^1.0.66"
 ```
@@ -29,10 +29,14 @@ Demo applications:
 
 ## Change log
 
-### `v0.4.1`
+### `v0.5.0`
 
 - Reorganize test framework module
-- Add `IQuery::query_type()`
+- Improve unittest coverage
+- Add
+  - `IQuery::query_type()`
+  - `IQueryStore`
+  - `QueryContext`
 
 ### `v0.4.0`
 
