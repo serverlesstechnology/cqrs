@@ -102,25 +102,28 @@ where
         command: A::Command,
         metadata: HashMap<String, String>,
     ) -> Result<(), AggregateError> {
-        let aggregate_context =
-            self.store.load_aggregate(&aggregate_id);
+        match self.store.load_aggregate(&aggregate_id) {
+            Ok(aggregate_context) => {
+                let resultant_events = aggregate_context
+                    .aggregate
+                    .handle(command)?;
 
-        let resultant_events = aggregate_context
-            .aggregate
-            .handle(command)?;
+                let committed_events = self.store.commit(
+                    resultant_events,
+                    aggregate_context,
+                    metadata,
+                )?;
 
-        let committed_events = self.store.commit(
-            resultant_events,
-            aggregate_context,
-            metadata,
-        )?;
+                let dispatch_events = committed_events.as_slice();
 
-        let dispatch_events = committed_events.as_slice();
+                for processor in &mut self.query_processors {
+                    processor
+                        .dispatch(&aggregate_id, &dispatch_events);
+                }
 
-        for processor in &mut self.query_processors {
-            processor.dispatch(&aggregate_id, &dispatch_events);
+                Ok(())
+            },
+            Err(e) => Err(e),
         }
-
-        Ok(())
     }
 }

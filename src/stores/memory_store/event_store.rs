@@ -74,7 +74,7 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
     fn load_events(
         &mut self,
         aggregate_id: &str,
-    ) -> Vec<EventContext<A>> {
+    ) -> Result<Vec<EventContext<A>>, AggregateError> {
         let events =
             self.load_committed_events(aggregate_id.to_string());
 
@@ -84,27 +84,31 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
             &aggregate_id
         );
 
-        events
+        Ok(events)
     }
 
     fn load_aggregate(
         &mut self,
         aggregate_id: &str,
-    ) -> AggregateContext<A> {
-        let committed_events = self.load_events(aggregate_id);
-        let mut aggregate = A::default();
-        let mut current_sequence = 0;
+    ) -> Result<AggregateContext<A>, AggregateError> {
+        match self.load_events(aggregate_id) {
+            Ok(committed_events) => {
+                let mut aggregate = A::default();
+                let mut current_sequence = 0;
 
-        for envelope in committed_events {
-            current_sequence = envelope.sequence;
-            let event = envelope.payload;
-            aggregate.apply(&event);
-        }
+                for envelope in committed_events {
+                    current_sequence = envelope.sequence;
+                    let event = envelope.payload;
+                    aggregate.apply(&event);
+                }
 
-        AggregateContext {
-            aggregate_id: aggregate_id.to_string(),
-            aggregate,
-            current_sequence,
+                Ok(AggregateContext {
+                    aggregate_id: aggregate_id.to_string(),
+                    aggregate,
+                    current_sequence,
+                })
+            },
+            Err(e) => Err(e),
         }
     }
 

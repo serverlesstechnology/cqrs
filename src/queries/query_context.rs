@@ -14,14 +14,15 @@ pub struct QueryContext<Q, A>
 where
     Q: IQuery<A>,
     A: IAggregate, {
-    /// The query ID of the query instance that has been loaded.
-    pub query_instance_id: String,
-
-    /// The current state of the query instance.
-    pub query: Q,
+    /// The id of the aggregate instance.
+    pub aggregate_id: String,
 
     /// The current version number for this query instance.
     pub version: i64,
 
-    _phantom: PhantomData<A>,
+    /// The current state of the query instance.
+    pub payload: Q,
+
+    /// phantom data for aggregate type
+    pub _phantom: PhantomData<A>,
 }

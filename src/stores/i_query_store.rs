@@ -11,6 +11,10 @@ use crate::{
 
 /// The abstract central source for loading and committing
 /// queries.
+///
+/// # Examples
+/// ```rust
+/// ```
 pub trait IQueryStore<Q, A>: IQueryProcessor<A>
 where
     Q: IQuery<A>,
@@ -34,11 +38,11 @@ where
         events: &[EventContext<A>],
     ) -> Result<(), AggregateError> {
         match self.load(query_instance_id.to_string()) {
-            Ok(mut view_context) => {
+            Ok(mut query_context) => {
                 for event in events {
-                    view_context.query.update(event);
+                    query_context.payload.update(event);
                 }
-                self.commit(view_context)
+                self.commit(query_context)
             },
             Err(e) => Err(e),
         }

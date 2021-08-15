@@ -16,13 +16,13 @@ pub trait IEventStore<A: IAggregate> {
     fn load_events(
         &mut self,
         aggregate_id: &str,
-    ) -> Vec<EventContext<A>>;
+    ) -> Result<Vec<EventContext<A>>, AggregateError>;
 
     /// Load aggregate at current state
     fn load_aggregate(
         &mut self,
         aggregate_id: &str,
-    ) -> AggregateContext<A>;
+    ) -> Result<AggregateContext<A>, AggregateError>;
 
     /// Commit new events
     fn commit(

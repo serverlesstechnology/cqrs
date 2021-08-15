@@ -33,6 +33,7 @@ Demo applications:
 
 - Reorganize test framework module
 - Improve unittest coverage
+- Improve error return
 - Add
   - `IQuery::query_type()`
   - `IQueryStore`
