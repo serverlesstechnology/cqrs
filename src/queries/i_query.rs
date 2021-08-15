@@ -18,6 +18,56 @@ use crate::{
 /// Queries are generally serialized for persistence, usually in a
 /// standard database, but a query could also utilize messaging
 /// platform or other asynchronous, eventually-consistent systems.
+/// # Examples
+/// ```rust
+/// use serde::{
+///     Deserialize,
+///     Serialize,
+/// };
+/// use std::fmt::Debug;
+///
+/// use cqrs_es2::{
+///     test::customers::{
+///         Customer,
+///         CustomerEvent,
+///     },
+///     EventContext,
+///     IQuery,
+/// };
+///
+/// #[derive(
+///     Debug,
+///     PartialEq,
+///     Default,
+///     Clone,
+///     Serialize,
+///     Deserialize
+/// )]
+/// pub struct CustomerContactQuery {
+///     pub name: String,
+///     pub email: String,
+/// }
+///
+/// impl IQuery<Customer> for CustomerContactQuery {
+///     fn query_type() -> &'static str {
+///         "customer_contact_query"
+///     }
+///
+///     fn update(
+///         &mut self,
+///         event: &EventContext<Customer>,
+///     ) {
+///         match &event.payload {
+///             CustomerEvent::NameAdded(payload) => {
+///                 self.name = payload.changed_name.clone();
+///             },
+///             CustomerEvent::EmailUpdated(payload) => {
+///                 self.email = payload.new_email.clone();
+///             },
+///         }
+///     }
+/// }
+/// ```
 pub trait IQuery<A: IAggregate>:
     Debug
     + PartialEq
