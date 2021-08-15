@@ -17,7 +17,7 @@ use crate::{
 /// # Examples
 /// ```rust
 /// use cqrs_es2::{
-///     doc::{
+///     test::customer::{
 ///         CustomerCommand,
 ///         CustomerEvent,
 ///         NameAdded,

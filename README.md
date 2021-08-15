@@ -13,7 +13,7 @@
 
 ```toml
 [dependencies]
-cqrs-es2 = "0.4.0"
+cqrs-es2 = "0.4.1"
 serde = { version = "^1.0.127", features = ["derive"] }
 serde_json = "^1.0.66"
 ```
@@ -28,6 +28,11 @@ Demo applications:
 - [gRPC](https://github.com/brgirgis/cqrs-grpc-demo).
 
 ## Change log
+
+### `v0.4.1`
+
+- Reorganize test framework module
+- Add `IQuery::query_type()`
 
 ### `v0.4.0`
 

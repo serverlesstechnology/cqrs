@@ -19,7 +19,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cqrs-es2 = "0.4.0"
+//! cqrs-es2 = "0.4.1"
 //! serde = { version = "^1.0.127", features = ["derive"] }
 //! serde_json = "^1.0.66"
 //! ```
@@ -71,10 +71,6 @@ mod queries;
 // processing loading aggregates via an event store and subsequently
 // processing commands.
 mod framework;
-
-// Documentation items
-#[doc(hidden)]
-pub mod doc;
 
 /// Test provides a test framework for building a resilient test base
 /// around aggregates. A `TestFramework` should be used to build a

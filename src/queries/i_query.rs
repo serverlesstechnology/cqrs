@@ -20,6 +20,9 @@ use crate::{
 /// platform or other asynchronous, eventually-consistent systems.
 pub trait IQuery<A: IAggregate>:
     Debug + Default + Serialize + DeserializeOwned {
+    /// query_type is a unique identifier for this query
+    fn query_type() -> &'static str;
+
     /// Each implemented query is responsible for updating its stated
     /// based on events passed via this method.
     fn update(
