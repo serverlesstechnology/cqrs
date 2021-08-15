@@ -2,6 +2,7 @@ use serde::{
     de::DeserializeOwned,
     Serialize,
 };
+use std::fmt::Debug;
 
 use crate::{
     commands::IDomainCommand,
@@ -16,8 +17,14 @@ use crate::{
 ///
 /// # Examples
 /// ```rust
+/// use serde::{
+///     Deserialize,
+///     Serialize,
+/// };
+/// use std::fmt::Debug;
+///
 /// use cqrs_es2::{
-///     test::customer::{
+///     test::customers::{
 ///         CustomerCommand,
 ///         CustomerEvent,
 ///         NameAdded,
@@ -26,12 +33,14 @@ use crate::{
 ///     IAggregate,
 /// };
 ///
-/// use serde::{
-///     Deserialize,
+/// #[derive(
+///     Debug,
+///     PartialEq,
+///     Default,
+///     Clone,
 ///     Serialize,
-/// };
-///
-/// #[derive(Serialize, Deserialize)]
+///     Deserialize
+/// )]
 /// struct Customer {
 ///     customer_id: String,
 ///     name: String,
@@ -40,6 +49,7 @@ use crate::{
 ///
 /// impl IAggregate for Customer {
 ///     type Command = CustomerCommand;
+///
 ///     type Event = CustomerEvent;
 ///
 ///     fn aggregate_type() -> &'static str {
@@ -58,9 +68,11 @@ use crate::{
 ///                              customer",
 ///                     ));
 ///                 }
+///
 ///                 let payload = NameAdded {
 ///                     changed_name: payload.changed_name,
 ///                 };
+///
 ///                 Ok(vec![CustomerEvent::NameAdded(payload)])
 ///             },
 ///             CustomerCommand::UpdateEmail(_) => {
@@ -83,29 +95,16 @@ use crate::{
 ///         }
 ///     }
 /// }
-///
-/// impl Default for Customer {
-///     fn default() -> Self {
-///         Customer {
-///             customer_id: "".to_string(),
-///             name: "".to_string(),
-///             email: "".to_string(),
-///         }
-///     }
-/// }
-///
-/// impl Clone for Customer {
-///     fn clone(&self) -> Self {
-///         Customer {
-///             customer_id: self.customer_id.clone(),
-///             name: self.name.clone(),
-///             email: self.email.clone(),
-///         }
-///     }
-/// }
 /// ```
 pub trait IAggregate:
-    Default + Clone + Serialize + DeserializeOwned + Sync + Send {
+    Debug
+    + PartialEq
+    + Default
+    + Clone
+    + Serialize
+    + DeserializeOwned
+    + Sync
+    + Send {
     /// An inbound command used to make changes in the state of the
     /// Aggregate
     type Command: IDomainCommand;

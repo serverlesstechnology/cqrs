@@ -18,18 +18,19 @@ use std::fmt::Debug;
 ///
 /// # Examples
 /// ```rust
-/// use cqrs_es2::IDomainCommand;
 /// use std::fmt::Debug;
+///
+/// use cqrs_es2::IDomainCommand;
 ///
 /// #[derive(Debug, PartialEq)]
 /// pub enum CustomerCommand {
-///     ChangeName(ChangeName),
+///     AddCustomerName(AddCustomerName),
 ///     UpdateEmail(UpdateEmail),
 /// }
 ///
 /// #[derive(Debug, PartialEq)]
-/// pub struct ChangeName {
-///     new_name: String,
+/// pub struct AddCustomerName {
+///     changed_name: String,
 /// }
 ///
 /// #[derive(Debug, PartialEq)]

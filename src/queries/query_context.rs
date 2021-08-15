@@ -1,4 +1,7 @@
-use std::marker::PhantomData;
+use std::{
+    fmt::Debug,
+    marker::PhantomData,
+};
 
 use super::super::aggregates::IAggregate;
 
@@ -6,6 +9,7 @@ use super::i_query::IQuery;
 
 /// Returns the query and context around it that is needed when
 /// committing in a query store implementation.
+#[derive(Debug, Clone)]
 pub struct QueryContext<Q, A>
 where
     Q: IQuery<A>,
@@ -20,19 +24,4 @@ where
     pub version: i64,
 
     _phantom: PhantomData<A>,
-}
-
-impl<Q, A> Clone for QueryContext<Q, A>
-where
-    Q: IQuery<A>,
-    A: IAggregate,
-{
-    fn clone(&self) -> Self {
-        QueryContext {
-            query_instance_id: self.query_instance_id.clone(),
-            query: self.query.clone(),
-            version: self.version,
-            _phantom: PhantomData::default(),
-        }
-    }
 }

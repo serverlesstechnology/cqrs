@@ -28,12 +28,13 @@ use std::fmt::Debug;
 ///
 /// # Examples
 /// ```rust
-/// use cqrs_es2::IDomainEvent;
 /// use serde::{
 ///     Deserialize,
 ///     Serialize,
 /// };
 /// use std::fmt::Debug;
+///
+/// use cqrs_es2::IDomainEvent;
 ///
 /// #[derive(
 ///     Debug,
@@ -43,7 +44,7 @@ use std::fmt::Debug;
 ///     Deserialize
 /// )]
 /// pub enum CustomerEvent {
-///     NameChanged(NameChanged),
+///     NameAdded(NameAdded),
 ///     EmailUpdated(EmailUpdated),
 /// }
 ///
@@ -54,7 +55,7 @@ use std::fmt::Debug;
 ///     Serialize,
 ///     Deserialize
 /// )]
-/// pub struct NameChanged {
+/// pub struct NameAdded {
 ///     changed_name: String,
 /// }
 ///

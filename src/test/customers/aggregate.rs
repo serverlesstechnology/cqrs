@@ -7,11 +7,21 @@ use std::fmt::Debug;
 use crate::{
     AggregateError,
     IAggregate,
-    IDomainCommand,
-    IDomainEvent,
 };
 
-#[derive(Serialize, Deserialize)]
+use super::{
+    commands::*,
+    events::*,
+};
+
+#[derive(
+    Debug,
+    PartialEq,
+    Default,
+    Clone,
+    Serialize,
+    Deserialize
+)]
 pub struct Customer {
     pub customer_id: String,
     pub name: String,
@@ -20,6 +30,7 @@ pub struct Customer {
 
 impl IAggregate for Customer {
     type Command = CustomerCommand;
+
     type Event = CustomerEvent;
 
     fn aggregate_type() -> &'static str {
@@ -63,77 +74,3 @@ impl IAggregate for Customer {
         }
     }
 }
-
-impl Default for Customer {
-    fn default() -> Self {
-        Customer {
-            customer_id: "".to_string(),
-            name: "".to_string(),
-            email: "".to_string(),
-        }
-    }
-}
-
-impl Clone for Customer {
-    fn clone(&self) -> Self {
-        Customer {
-            customer_id: self.customer_id.clone(),
-            name: self.name.clone(),
-            email: self.email.clone(),
-        }
-    }
-}
-
-#[derive(
-    Debug,
-    PartialEq,
-    Clone,
-    Serialize,
-    Deserialize
-)]
-pub enum CustomerEvent {
-    NameAdded(NameAdded),
-    EmailUpdated(EmailUpdated),
-}
-
-#[derive(
-    Debug,
-    PartialEq,
-    Clone,
-    Serialize,
-    Deserialize
-)]
-pub struct NameAdded {
-    pub changed_name: String,
-}
-
-#[derive(
-    Debug,
-    PartialEq,
-    Clone,
-    Serialize,
-    Deserialize
-)]
-pub struct EmailUpdated {
-    pub new_email: String,
-}
-
-impl IDomainEvent for CustomerEvent {}
-
-#[derive(Debug, PartialEq)]
-pub enum CustomerCommand {
-    AddCustomerName(AddCustomerName),
-    UpdateEmail(UpdateEmail),
-}
-
-#[derive(Debug, PartialEq)]
-pub struct AddCustomerName {
-    pub changed_name: String,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct UpdateEmail {
-    pub new_email: String,
-}
-
-impl IDomainCommand for CustomerCommand {}

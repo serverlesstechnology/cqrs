@@ -1,11 +1,11 @@
 use super::test_framework::TestFramework;
 
-use super::customer::*;
+use super::customers::*;
 
 type CustomerTestFramework = TestFramework<Customer>;
 
 #[test]
-fn test_add_name() {
+fn test_change_name() {
     CustomerTestFramework::default()
         .given_no_previous_events()
         .when(CustomerCommand::AddCustomerName(
@@ -21,7 +21,7 @@ fn test_add_name() {
 }
 
 #[test]
-fn test_add_name_again() {
+fn test_change_name_again() {
     CustomerTestFramework::default()
         .given(vec![CustomerEvent::NameAdded(
             NameAdded {

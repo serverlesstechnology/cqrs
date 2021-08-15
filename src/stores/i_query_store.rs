@@ -1,7 +1,7 @@
 use crate::{
     aggregates::IAggregate,
     errors::AggregateError,
-    events::EventEnvelope,
+    events::EventContext,
     queries::{
         IQuery,
         IQueryProcessor,
@@ -31,7 +31,7 @@ where
     fn apply_events(
         &mut self,
         query_instance_id: &str,
-        events: &[EventEnvelope<A>],
+        events: &[EventContext<A>],
     ) -> Result<(), AggregateError> {
         match self.load(query_instance_id.to_string()) {
             Ok(mut view_context) => {

@@ -18,7 +18,7 @@ use cqrs_es2::{
     test::TestFramework,
     AggregateError,
     CqrsFramework,
-    EventEnvelope,
+    EventContext,
     IAggregate,
     IDomainCommand,
     IDomainEvent,
@@ -26,7 +26,14 @@ use cqrs_es2::{
     IQueryProcessor,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    PartialEq,
+    Default,
+    Clone,
+    Serialize,
+    Deserialize
+)]
 pub struct TestAggregate {
     id: String,
     description: String,
@@ -90,26 +97,6 @@ impl IAggregate for TestAggregate {
             TestEvent::SomethingElse(e) => {
                 self.description = e.description.clone();
             },
-        }
-    }
-}
-
-impl Default for TestAggregate {
-    fn default() -> Self {
-        TestAggregate {
-            id: "".to_string(),
-            description: "".to_string(),
-            tests: Vec::new(),
-        }
-    }
-}
-
-impl Clone for TestAggregate {
-    fn clone(&self) -> Self {
-        TestAggregate {
-            id: self.id.clone(),
-            description: self.description.clone(),
-            tests: self.tests.clone(),
         }
     }
 }
@@ -187,12 +174,12 @@ pub struct DoSomethingElse {
 impl IDomainCommand for TestCommand {}
 
 struct TestView {
-    events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>,
+    events: Arc<RwLock<Vec<EventContext<TestAggregate>>>>,
 }
 
 impl TestView {
     fn new(
-        events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>
+        events: Arc<RwLock<Vec<EventContext<TestAggregate>>>>
     ) -> Self {
         TestView { events }
     }
@@ -202,7 +189,7 @@ impl IQueryProcessor<TestAggregate> for TestView {
     fn dispatch(
         &mut self,
         _aggregate_id: &str,
-        events: &[EventEnvelope<TestAggregate>],
+        events: &[EventContext<TestAggregate>],
     ) {
         for event in events {
             let mut event_list = self.events.write().unwrap();
@@ -211,7 +198,7 @@ impl IQueryProcessor<TestAggregate> for TestView {
     }
 }
 
-pub type TestEventEnvelope = EventEnvelope<TestAggregate>;
+pub type TestEventEnvelope = EventContext<TestAggregate>;
 
 assert_impl_all!(TestAggregate: IAggregate);
 

@@ -9,7 +9,7 @@ use super::aggregate_test_executor::AggregateTestExecutor;
 ///
 /// ```rust
 /// use cqrs_es2::test::{
-///     customer::{
+///     customers::{
 ///         AddCustomerName,
 ///         Customer,
 ///         CustomerCommand,

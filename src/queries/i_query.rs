@@ -6,7 +6,7 @@ use std::fmt::Debug;
 
 use crate::{
     aggregates::IAggregate,
-    events::EventEnvelope,
+    events::EventContext,
 };
 
 /// A `Query` is a read element in a CQRS system. As events are
@@ -19,7 +19,14 @@ use crate::{
 /// standard database, but a query could also utilize messaging
 /// platform or other asynchronous, eventually-consistent systems.
 pub trait IQuery<A: IAggregate>:
-    Debug + Default + Clone + Serialize + DeserializeOwned {
+    Debug
+    + PartialEq
+    + Default
+    + Clone
+    + Serialize
+    + DeserializeOwned
+    + Sync
+    + Send {
     /// query_type is a unique identifier for this query
     fn query_type() -> &'static str;
 
@@ -27,6 +34,6 @@ pub trait IQuery<A: IAggregate>:
     /// based on events passed via this method.
     fn update(
         &mut self,
-        event: &EventEnvelope<A>,
+        event: &EventContext<A>,
     );
 }

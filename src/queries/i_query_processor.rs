@@ -1,6 +1,6 @@
 use crate::{
     aggregates::IAggregate,
-    events::EventEnvelope,
+    events::EventContext,
 };
 
 /// Each CQRS platform should have one or more `QueryProcessor`s where
@@ -12,6 +12,6 @@ pub trait IQueryProcessor<A: IAggregate> {
     fn dispatch(
         &mut self,
         aggregate_id: &str,
-        events: &[EventEnvelope<A>],
+        events: &[EventContext<A>],
     );
 }

@@ -6,7 +6,7 @@ use crate::{
         IAggregate,
     },
     errors::AggregateError,
-    events::EventEnvelope,
+    events::EventContext,
 };
 
 /// The abstract central source for loading past events and committing
@@ -16,7 +16,7 @@ pub trait IEventStore<A: IAggregate> {
     fn load_events(
         &mut self,
         aggregate_id: &str,
-    ) -> Vec<EventEnvelope<A>>;
+    ) -> Vec<EventContext<A>>;
 
     /// Load aggregate at current state
     fn load_aggregate(
@@ -30,7 +30,7 @@ pub trait IEventStore<A: IAggregate> {
         events: Vec<A::Event>,
         context: AggregateContext<A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError>;
+    ) -> Result<Vec<EventContext<A>>, AggregateError>;
 
     /// Method to wrap a set of events with the additional metadata
     /// needed for persistence and publishing
@@ -40,20 +40,20 @@ pub trait IEventStore<A: IAggregate> {
         current_sequence: usize,
         resultant_events: Vec<A::Event>,
         base_metadata: HashMap<String, String>,
-    ) -> Vec<EventEnvelope<A>> {
+    ) -> Vec<EventContext<A>> {
         let mut sequence = current_sequence;
-        let mut wrapped_events: Vec<EventEnvelope<A>> = Vec::new();
+        let mut wrapped_events: Vec<EventContext<A>> = Vec::new();
         for payload in resultant_events {
             sequence += 1;
             let aggregate_id: String = aggregate_id.to_string();
             let sequence = sequence;
             let metadata = base_metadata.clone();
-            wrapped_events.push(EventEnvelope::new_with_metadata(
+            wrapped_events.push(EventContext {
                 aggregate_id,
                 sequence,
                 payload,
                 metadata,
-            ));
+            });
         }
         wrapped_events
     }

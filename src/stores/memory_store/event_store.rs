@@ -12,7 +12,7 @@ use crate::{
         IAggregate,
     },
     errors::AggregateError,
-    events::EventEnvelope,
+    events::EventContext,
 };
 
 use super::super::IEventStore;
@@ -30,7 +30,7 @@ impl<A: IAggregate> Default for EventStore<A> {
 }
 
 type LockedEventEnvelopeMap<A> =
-    RwLock<HashMap<String, Vec<EventEnvelope<A>>>>;
+    RwLock<HashMap<String, Vec<EventContext<A>>>>;
 
 impl<A: IAggregate> EventStore<A> {
     /// Get a shared copy of the events stored within the event store.
@@ -41,11 +41,11 @@ impl<A: IAggregate> EventStore<A> {
     fn load_committed_events(
         &self,
         aggregate_id: String,
-    ) -> Vec<EventEnvelope<A>> {
+    ) -> Vec<EventContext<A>> {
         // uninteresting unwrap: this will not be used in production,
         // for tests only
         let event_map = self.events.read().unwrap();
-        let mut committed_events: Vec<EventEnvelope<A>> = Vec::new();
+        let mut committed_events: Vec<EventContext<A>> = Vec::new();
 
         match event_map.get(aggregate_id.as_str()) {
             None => {},
@@ -61,7 +61,7 @@ impl<A: IAggregate> EventStore<A> {
 
     fn aggregate_id(
         &self,
-        events: &[EventEnvelope<A>],
+        events: &[EventContext<A>],
     ) -> String {
         // uninteresting unwrap: this is not a struct for production
         // use
@@ -74,7 +74,7 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
     fn load_events(
         &mut self,
         aggregate_id: &str,
-    ) -> Vec<EventEnvelope<A>> {
+    ) -> Vec<EventContext<A>> {
         let events =
             self.load_committed_events(aggregate_id.to_string());
 
@@ -113,7 +113,7 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
         events: Vec<A::Event>,
         context: AggregateContext<A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError> {
+    ) -> Result<Vec<EventContext<A>>, AggregateError> {
         let aggregate_id = context.aggregate_id.as_str();
         let current_sequence = context.current_sequence;
         let wrapped_events = self.wrap_events(
