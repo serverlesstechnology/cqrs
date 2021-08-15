@@ -5,3 +5,6 @@ pub use events::*;
 mod aggregate;
 mod commands;
 mod events;
+
+#[cfg(test)]
+mod test;

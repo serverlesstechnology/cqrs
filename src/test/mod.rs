@@ -1,12 +1,6 @@
-pub use test_framework::TestFramework;
+pub use framework::TestFramework;
 
-mod aggregate_result_validator;
-mod aggregate_test_executor;
-
-mod test_framework;
+mod framework;
 
 #[doc(hidden)]
 pub mod customers;
-
-#[cfg(test)]
-mod test_customer;

@@ -1,6 +1,6 @@
-use super::test_framework::TestFramework;
+use crate::test::TestFramework;
 
-use super::customers::*;
+use super::*;
 
 type CustomerTestFramework = TestFramework<Customer>;
 
