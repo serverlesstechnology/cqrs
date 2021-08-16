@@ -34,9 +34,8 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> Default
     for EventStore<C, E, A>
 {
     fn default() -> Self {
-        let events = Default::default();
-        EventStore {
-            events,
+        Self {
+            events: Default::default(),
             _phantom: PhantomData,
         }
     }

@@ -15,6 +15,11 @@ use crate::{
 
 /// The abstract central source for loading past events and committing
 /// new events.
+///
+/// # Examples
+///
+/// ```rust
+/// ```
 pub trait IEventStore<C: ICommand, E: IEvent, A: IAggregate<C, E>> {
     /// Load all events for a particular `aggregate_id`
     fn load_events(

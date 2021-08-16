@@ -111,13 +111,12 @@ impl<
         let agg_type = A::aggregate_type();
         let id = context.aggregate_id.as_str();
         let query_type = Q::query_type();
+        let version = context.version;
 
-        let sql = match context.version {
-            0 => INSERT_QUERY,
+        let sql = match version {
+            1 => INSERT_QUERY,
             _ => UPDATE_QUERY,
         };
-
-        let version = context.version + 1;
 
         // let query_instance_id = &self.query_instance_id;
         let payload = match serde_json::to_value(&context.payload) {

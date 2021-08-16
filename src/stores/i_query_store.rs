@@ -17,6 +17,7 @@ use crate::{
 /// queries.
 ///
 /// # Examples
+///
 /// ```rust
 /// ```
 pub trait IQueryStore<
@@ -50,14 +51,19 @@ impl<
         aggregate_id: &str,
         events: &[EventContext<C, E>],
     ) -> Result<(), AggregateError> {
-        match self.load(aggregate_id) {
-            Ok(mut context) => {
-                for event in events {
-                    context.payload.update(event);
-                }
-                self.commit(context)
+        let mut context = match self.load(aggregate_id) {
+            Ok(x) => x,
+            Err(e) => {
+                return Err(e);
             },
-            Err(e) => Err(e),
+        };
+
+        for event in events {
+            context.payload.update(event);
         }
+
+        context.version += 1;
+
+        self.commit(context)
     }
 }

@@ -41,9 +41,8 @@ impl<
     > Default for QueryStore<C, E, A, Q>
 {
     fn default() -> Self {
-        let events = Default::default();
-        QueryStore {
-            events,
+        Self {
+            events: Default::default(),
             _phantom: PhantomData,
         }
     }
