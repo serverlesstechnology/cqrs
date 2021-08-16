@@ -13,7 +13,7 @@
 
 ```toml
 [dependencies]
-cqrs-es2 = "0.5.1"
+cqrs-es2 = "0.6.0"
 serde = { version = "^1.0.127", features = ["derive"] }
 serde_json = "^1.0.66"
 ```
@@ -27,7 +27,7 @@ Full fledged demo applications:
 
 ## Change log
 
-### `v0.5.1`
+### `v0.6.0`
 
 - Improve docs
 - Rename `IDomainEvent` to `IEvent`

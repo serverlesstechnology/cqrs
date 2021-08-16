@@ -34,7 +34,7 @@ pub struct Repository<
     ES: IEventStore<C, E, A>,
 > {
     store: ES,
-    query_processors: Vec<Box<dyn IEventDispatcher<C, E>>>,
+    dispatchers: Vec<Box<dyn IEventDispatcher<C, E>>>,
     _phantom: PhantomData<A>,
 }
 
@@ -49,11 +49,11 @@ impl<
     /// provided elements.
     pub fn new(
         store: ES,
-        query_processors: Vec<Box<dyn IEventDispatcher<C, E>>>,
+        dispatchers: Vec<Box<dyn IEventDispatcher<C, E>>>,
     ) -> Repository<C, E, A, ES> {
         Repository {
             store,
-            query_processors,
+            dispatchers,
             _phantom: PhantomData,
         }
     }
@@ -138,7 +138,7 @@ impl<
 
         let dispatch_events = event_contexts.as_slice();
 
-        for processor in &mut self.query_processors {
+        for processor in &mut self.dispatchers {
             match processor.dispatch(&aggregate_id, &dispatch_events)
             {
                 Ok(_) => {},
