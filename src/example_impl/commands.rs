@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::IDomainCommand;
+use crate::ICommand;
 
 #[derive(Debug, PartialEq)]
 pub enum CustomerCommand {
@@ -24,4 +24,4 @@ pub struct AddAddress {
     pub new_address: String,
 }
 
-impl IDomainCommand for CustomerCommand {}
+impl ICommand for CustomerCommand {}

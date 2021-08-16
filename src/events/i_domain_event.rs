@@ -4,11 +4,12 @@ use serde::{
 };
 use std::fmt::Debug;
 
-/// A `DomainEvent` represents any business change in the state of an
-/// `Aggregate`. `DomainEvent`s are immutable and with [event sourcing](https://martinfowler.com/eaaDev/EventSourcing.html)
+/// An `IEvent` represents any business change in the state of an
+/// `Aggregate`. `IEvent`s are immutable and with
+/// [event sourcing](https://martinfowler.com/eaaDev/EventSourcing.html)
 /// they are the source of truth.
 ///
-/// The name of a `DomainEvent` should always be in the past tense,
+/// The name of an `IEvent` should always be in the past tense,
 /// e.g.,
 /// - `AdminPrivilegesGranted`
 /// - `EmailAddressChanged`
@@ -19,7 +20,7 @@ use std::fmt::Debug;
 /// same name as the element, and elements that do not require
 /// additional information use an empty payload.
 ///
-/// Though the `DomainEvent` trait only has a single function, the
+/// Though the `IEvent` trait only has a single function, the
 /// events must also derive a number of standard traits.
 /// - `Clone` - events may be cloned throughout the framework,
 ///   particularly when applied to queries
@@ -34,7 +35,7 @@ use std::fmt::Debug;
 /// };
 /// use std::fmt::Debug;
 ///
-/// use cqrs_es2::IDomainEvent;
+/// use cqrs_es2::IEvent;
 ///
 /// #[derive(
 ///     Debug,
@@ -70,9 +71,9 @@ use std::fmt::Debug;
 ///     new_email: String,
 /// }
 ///
-/// impl IDomainEvent for CustomerEvent {};
+/// impl IEvent for CustomerEvent {};
 /// ```
-pub trait IDomainEvent:
+pub trait IEvent:
     Debug + PartialEq + Clone + Serialize + DeserializeOwned + Sync + Send
 {
 }

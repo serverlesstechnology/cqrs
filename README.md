@@ -30,6 +30,8 @@ Full fledged demo applications:
 ### `v0.5.1`
 
 - Improve docs
+- Rename `IDomainEvent` to `IEvent`
+- Rename `IDomainCommand` to `ICommand`
 
 ### `v0.5.0`
 

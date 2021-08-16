@@ -4,7 +4,7 @@ use serde::{
 };
 use std::fmt::Debug;
 
-use crate::IDomainEvent;
+use crate::IEvent;
 
 #[derive(
     Debug,
@@ -52,4 +52,4 @@ pub struct AddressUpdated {
     pub new_address: String,
 }
 
-impl IDomainEvent for CustomerEvent {}
+impl IEvent for CustomerEvent {}

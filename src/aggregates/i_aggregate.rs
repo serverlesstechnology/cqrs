@@ -5,9 +5,9 @@ use serde::{
 use std::fmt::Debug;
 
 use crate::{
-    commands::IDomainCommand,
+    commands::ICommand,
     errors::AggregateError,
-    events::IDomainEvent,
+    events::IEvent,
 };
 
 /// In CQRS (and Domain Driven Design) an `Aggregate` is the
@@ -140,10 +140,10 @@ pub trait IAggregate:
     + Send {
     /// An inbound command used to make changes in the state of the
     /// Aggregate
-    type Command: IDomainCommand;
+    type Command: ICommand;
 
     /// An event representing some change in state of the Aggregate
-    type Event: IDomainEvent;
+    type Event: IEvent;
 
     /// aggregate_type is a unique identifier for this aggregate
     fn aggregate_type() -> &'static str;

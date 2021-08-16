@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 
-/// A `DomainCommand` represents business API call.
+/// An `ICommand` represents business API call.
 ///
-/// The name of a `DomainCommand` should always be in the present
+/// The name of an `ICommand` should always be in the present
 /// tense, e.g.,
 /// - `ChangeEmailAddress`
 /// - `AddDependency`
@@ -12,7 +12,7 @@ use std::fmt::Debug;
 /// same name as the element, and elements that do not require
 /// additional information use an empty payload.
 ///
-/// Though the `DomainCommand` trait only has a single function, the
+/// Though the `ICommand` trait only has a single function, the
 /// commands must also derive a number of standard traits.
 /// - `Debug` and `PartialEq` - needed for effective testing
 ///
@@ -20,7 +20,7 @@ use std::fmt::Debug;
 /// ```rust
 /// use std::fmt::Debug;
 ///
-/// use cqrs_es2::IDomainCommand;
+/// use cqrs_es2::ICommand;
 ///
 /// #[derive(Debug, PartialEq)]
 /// pub enum CustomerCommand {
@@ -38,6 +38,6 @@ use std::fmt::Debug;
 ///     new_email: String,
 /// }
 ///
-/// impl IDomainCommand for CustomerCommand {};
+/// impl ICommand for CustomerCommand {};
 /// ```
-pub trait IDomainCommand: Debug + PartialEq + Sync + Send {}
+pub trait ICommand: Debug + PartialEq + Sync + Send {}

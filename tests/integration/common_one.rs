@@ -135,7 +135,7 @@ pub static CONNECTION_STRING: &str =
 //     pub description: String,
 // }
 
-// impl IDomainEvent for TestEvent {}
+// impl IEvent for TestEvent {}
 
 // #[derive(Debug, PartialEq)]
 // pub enum TestCommand {
@@ -159,7 +159,7 @@ pub static CONNECTION_STRING: &str =
 //     pub description: String,
 // }
 
-// impl IDomainCommand for TestCommand {}
+// impl ICommand for TestCommand {}
 
 // pub struct TestQuery {
 //     events: Rc<RwLock<Vec<EventContext<TestAggregate>>>>,
