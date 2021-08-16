@@ -1,6 +1,6 @@
 use crate::{
     commands::ICommand,
-    errors::AggregateError,
+    errors::Error,
 };
 
 use super::{
@@ -21,7 +21,7 @@ use super::{
 ///         CustomerCommand,
 ///         CustomerEvent,
 ///     },
-///     AggregateError,
+///     Error,
 ///     EventContext,
 ///     IEventDispatcher,
 /// };
@@ -39,7 +39,7 @@ use super::{
 ///         &mut self,
 ///         aggregate_id: &str,
 ///         events: &[EventContext<CustomerCommand, CustomerEvent>],
-///     ) -> Result<(), AggregateError> {
+///     ) -> Result<(), Error> {
 ///         for event in events {
 ///             //..
 ///         }
@@ -54,5 +54,5 @@ pub trait IEventDispatcher<C: ICommand, E: IEvent> {
         &mut self,
         aggregate_id: &str,
         events: &[EventContext<C, E>],
-    ) -> Result<(), AggregateError>;
+    ) -> Result<(), Error>;
 }

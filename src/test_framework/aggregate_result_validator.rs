@@ -1,15 +1,15 @@
 use crate::{
-    errors::AggregateError,
+    errors::Error,
     events::IEvent,
 };
 
 /// Validation object for the `TestFramework` package.
 pub struct AggregateResultValidator<E: IEvent> {
-    result: Result<Vec<E>, AggregateError>,
+    result: Result<Vec<E>, Error>,
 }
 
 impl<E: IEvent> AggregateResultValidator<E> {
-    pub fn new(result: Result<Vec<E>, AggregateError>) -> Self {
+    pub fn new(result: Result<Vec<E>, Error>) -> Self {
         Self { result }
     }
 
@@ -32,7 +32,7 @@ impl<E: IEvent> AggregateResultValidator<E> {
         assert_eq!(&events[..], &expected_events[..]);
     }
 
-    /// Verifies that an `AggregateError` with the expected message is
+    /// Verifies that an `Error` with the expected message is
     /// produced with the command.
     pub fn then_expect_error(
         self,
@@ -49,14 +49,14 @@ impl<E: IEvent> AggregateResultValidator<E> {
         };
 
         match err {
-            AggregateError::TechnicalError(err) => {
+            Error::TechnicalError(err) => {
                 panic!(
                     "expected user error but found technical error: \
                      {}",
                     err
                 )
             },
-            AggregateError::UserError(err) => {
+            Error::UserError(err) => {
                 assert_eq!(
                     err.message,
                     Some(error_message.to_string())

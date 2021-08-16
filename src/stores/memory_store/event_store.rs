@@ -13,7 +13,7 @@ use crate::{
         IAggregate,
     },
     commands::ICommand,
-    errors::AggregateError,
+    errors::Error,
     events::{
         EventContext,
         IEvent,
@@ -78,7 +78,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
         &mut self,
         aggregate_id: &str,
         with_metadata: bool,
-    ) -> Result<Vec<EventContext<C, E>>, AggregateError> {
+    ) -> Result<Vec<EventContext<C, E>>, Error> {
         let event_contexts = self.load_committed_events(aggregate_id);
 
         if with_metadata {
@@ -109,7 +109,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
     fn load_aggregate(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<AggregateContext<C, E, A>, AggregateError> {
+    ) -> Result<AggregateContext<C, E, A>, Error> {
         let committed_events =
             match self.load_events(&aggregate_id, false) {
                 Ok(x) => x,
@@ -139,7 +139,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
         events: Vec<E>,
         context: AggregateContext<C, E, A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventContext<C, E>>, AggregateError> {
+    ) -> Result<Vec<EventContext<C, E>>, Error> {
         if events.len() == 0 {
             return Ok(Vec::default());
         }

@@ -10,7 +10,7 @@ use std::{
 use crate::{
     aggregates::IAggregate,
     commands::ICommand,
-    errors::AggregateError,
+    errors::Error,
     events::{
         EventContext,
         IEvent,
@@ -76,7 +76,7 @@ impl<
     fn load(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<QueryContext<C, E, Q>, AggregateError> {
+    ) -> Result<QueryContext<C, E, Q>, Error> {
         // uninteresting unwrap: this will not be used in production,
         // for tests only
         let event_map = self.events.read().unwrap();
@@ -97,7 +97,7 @@ impl<
     fn commit(
         &mut self,
         context: QueryContext<C, E, Q>,
-    ) -> Result<(), AggregateError> {
+    ) -> Result<(), Error> {
         let id = context.aggregate_id.clone();
 
         // uninteresting unwrap: this is not a struct for production
@@ -120,7 +120,7 @@ impl<
         &mut self,
         aggregate_id: &str,
         events: &[EventContext<C, E>],
-    ) -> Result<(), AggregateError> {
+    ) -> Result<(), Error> {
         self.dispatch_events(aggregate_id, events)
     }
 }

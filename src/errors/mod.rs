@@ -2,8 +2,8 @@
 //!
 //! A central location for errors and error handling
 
-pub use aggregate_error::AggregateError;
-pub use user_error_payload::UserErrorPayload;
+pub use error::Error;
+pub use user_error::UserError;
 
-mod aggregate_error;
-mod user_error_payload;
+mod error;
+mod user_error;

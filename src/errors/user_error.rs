@@ -13,12 +13,12 @@ use serde::{
     Serialize,
 };
 
-/// Payload for an `AggregateError::UserError`, somewhat modeled on
+/// Payload for an `Error::UserError`, somewhat modeled on
 /// the errors produced by the [`validator`](https://github.com/Keats/validator) package. This payload implements `Serialize`
 /// with the intention of allowing the user to return this object as
 /// the response payload.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct UserErrorPayload {
+pub struct UserError {
     /// An optional code to indicate the a user-defined error.
     pub code: Option<String>,
 
@@ -31,7 +31,7 @@ pub struct UserErrorPayload {
     pub params: Option<HashMap<String, String>>,
 }
 
-impl Display for UserErrorPayload {
+impl Display for UserError {
     fn fmt(
         &self,
         f: &mut Formatter<'_>,

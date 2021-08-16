@@ -11,7 +11,7 @@ use crate::{
         IAggregate,
     },
     commands::ICommand,
-    errors::AggregateError,
+    errors::Error,
     events::{
         EventContext,
         IEvent,
@@ -57,7 +57,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
     fn load_aggregate_from_snapshot(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<AggregateContext<C, E, A>, AggregateError> {
+    ) -> Result<AggregateContext<C, E, A>, Error> {
         let agg_type = A::aggregate_type();
         let id = aggregate_id.to_string();
 
@@ -67,7 +67,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
         {
             Ok(x) => x,
             Err(e) => {
-                return Err(AggregateError::new(
+                return Err(Error::new(
                     format!(
                         "could not load events table for aggregate \
                          id {} with error: {}",
@@ -92,7 +92,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
         let aggregate = match serde_json::from_value(row.get(1)) {
             Ok(x) => x,
             Err(e) => {
-                return Err(AggregateError::new(
+                return Err(Error::new(
                     format!(
                         "bad payload found in events table for \
                          aggregate id {} with error: {}",
@@ -113,7 +113,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
     fn load_aggregate_from_events(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<AggregateContext<C, E, A>, AggregateError> {
+    ) -> Result<AggregateContext<C, E, A>, Error> {
         let id = aggregate_id.to_string();
 
         let events = match self.load_events(&id, false) {
@@ -150,7 +150,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
         events: Vec<E>,
         context: AggregateContext<C, E, A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventContext<C, E>>, AggregateError> {
+    ) -> Result<Vec<EventContext<C, E>>, Error> {
         let mut updated_aggregate = context.aggregate.clone();
 
         let agg_type = A::aggregate_type().to_string();
@@ -167,7 +167,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
         let mut trans = match self.conn.transaction() {
             Ok(x) => x,
             Err(e) => {
-                return Err(AggregateError::TechnicalError(
+                return Err(Error::TechnicalError(
                     e.to_string(),
                 ));
             },
@@ -216,7 +216,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
                         Some(state) => {
                             if state.code() == "23505" {
                                 return Err(
-                                    AggregateError::TechnicalError(
+                                    Error::TechnicalError(
                                         "optimistic lock error"
                                             .to_string(),
                                     ),
@@ -291,7 +291,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
         match trans.commit() {
             Ok(_) => Ok(wrapped_events),
             Err(e) => {
-                Err(AggregateError::TechnicalError(
+                Err(Error::TechnicalError(
                     e.to_string(),
                 ))
             },
@@ -303,7 +303,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
         events: Vec<E>,
         context: AggregateContext<C, E, A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventContext<C, E>>, AggregateError> {
+    ) -> Result<Vec<EventContext<C, E>>, Error> {
         let agg_type = A::aggregate_type().to_string();
         let id = context.aggregate_id.as_str();
         let current_sequence = context.current_sequence;
@@ -314,7 +314,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
         let mut trans = match self.conn.transaction() {
             Ok(x) => x,
             Err(err) => {
-                return Err(AggregateError::TechnicalError(
+                return Err(Error::TechnicalError(
                     err.to_string(),
                 ));
             },
@@ -326,7 +326,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
             let payload = match serde_json::to_value(&event.payload) {
                 Ok(x) => x,
                 Err(err) => {
-                    return Err(AggregateError::new(
+                    return Err(Error::new(
                         format!(
                             "Could not serialize the event payload \
                              for aggregate id {} with error: {}",
@@ -341,7 +341,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
             {
                 Ok(x) => x,
                 Err(err) => {
-                    return Err(AggregateError::new(
+                    return Err(Error::new(
                         format!(
                             "could not serialize the event metadata \
                              for aggregate id {} with error: {}",
@@ -365,7 +365,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
                         Some(state) => {
                             if state.code() == "23505" {
                                 return Err(
-                                    AggregateError::TechnicalError(
+                                    Error::TechnicalError(
                                         "optimistic lock error"
                                             .to_string(),
                                     ),
@@ -373,7 +373,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
                             }
                         },
                     }
-                    return Err(AggregateError::TechnicalError(
+                    return Err(Error::TechnicalError(
                         format!(
                             "unable to insert event table for \
                              aggregate id {} with error: {}\n  and \
@@ -388,7 +388,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
         match trans.commit() {
             Ok(_) => Ok(events),
             Err(err) => {
-                Err(AggregateError::TechnicalError(
+                Err(Error::TechnicalError(
                     err.to_string(),
                 ))
             },
@@ -403,7 +403,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
         &mut self,
         aggregate_id: &str,
         with_metadata: bool,
-    ) -> Result<Vec<EventContext<C, E>>, AggregateError> {
+    ) -> Result<Vec<EventContext<C, E>>, Error> {
         let agg_type = A::aggregate_type();
 
         let sql = match with_metadata {
@@ -417,7 +417,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
         {
             Ok(x) => x,
             Err(e) => {
-                return Err(AggregateError::new(
+                return Err(Error::new(
                     format!(
                         "could not load events table for aggregate \
                          id {} with error: {}",
@@ -436,7 +436,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
             let payload = match serde_json::from_value(row.get(1)) {
                 Ok(x) => x,
                 Err(e) => {
-                    return Err(AggregateError::new(
+                    return Err(Error::new(
                         format!(
                             "bad payload found in events table for \
                              aggregate id {} with error: {}",
@@ -452,7 +452,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
                     match serde_json::from_value(row.get(2)) {
                         Ok(x) => x,
                         Err(err) => {
-                            return Err(AggregateError::new(
+                            return Err(Error::new(
                                 format!(
                                     "bad metadata found in events \
                                      table for aggregate id {} with \
@@ -481,7 +481,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
     fn load_aggregate(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<AggregateContext<C, E, A>, AggregateError> {
+    ) -> Result<AggregateContext<C, E, A>, Error> {
         match self.with_snapshots {
             true => self.load_aggregate_from_snapshot(aggregate_id),
             false => self.load_aggregate_from_events(aggregate_id),
@@ -493,7 +493,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
         events: Vec<E>,
         context: AggregateContext<C, E, A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventContext<C, E>>, AggregateError> {
+    ) -> Result<Vec<EventContext<C, E>>, Error> {
         match self.with_snapshots {
             true => {
                 self.commit_with_snapshots(events, context, metadata)

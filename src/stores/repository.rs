@@ -6,7 +6,7 @@ use std::{
 use crate::{
     aggregates::IAggregate,
     commands::ICommand,
-    errors::AggregateError,
+    errors::Error,
     events::{
         IEvent,
         IEventDispatcher,
@@ -63,7 +63,7 @@ impl<
     /// the state of an aggregate.
     ///
     /// An error while processing will result in no events committed
-    /// and an AggregateError being returned.
+    /// and an Error being returned.
     ///
     /// If successful the events produced will be applied to the
     /// configured `QueryProcessor`s.
@@ -75,7 +75,7 @@ impl<
         &mut self,
         aggregate_id: &str,
         command: C,
-    ) -> Result<(), AggregateError> {
+    ) -> Result<(), Error> {
         self.execute_with_metadata(
             aggregate_id,
             command,
@@ -97,7 +97,7 @@ impl<
     /// - application version
     ///
     /// An error while processing will result in no events committed
-    /// and an AggregateError being returned.
+    /// and an Error being returned.
     ///
     /// If successful the events produced will be applied to the
     /// configured `QueryProcessor`s.
@@ -106,7 +106,7 @@ impl<
         aggregate_id: &str,
         command: C,
         metadata: HashMap<String, String>,
-    ) -> Result<(), AggregateError> {
+    ) -> Result<(), Error> {
         let aggregate_context =
             match self.store.load_aggregate(&aggregate_id) {
                 Ok(x) => x,
@@ -143,7 +143,7 @@ impl<
             {
                 Ok(_) => {},
                 Err(e) => {
-                    return Err(AggregateError::new(
+                    return Err(Error::new(
                         e.to_string().as_str(),
                     ))
                 },

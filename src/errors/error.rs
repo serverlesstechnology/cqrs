@@ -13,14 +13,14 @@ use serde::{
     Serialize,
 };
 
-use super::user_error_payload::UserErrorPayload;
+use super::user_error::UserError;
 
 /// The base error for the framework.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub enum AggregateError {
+pub enum Error {
     /// The user has made an error, a String value contains a message
     /// to be delivered to the user.
-    UserError(UserErrorPayload),
+    UserError(UserError),
 
     /// A technical error was encountered that prevented the command
     /// from being applied to the aggregate. In general the
@@ -29,29 +29,29 @@ pub enum AggregateError {
     TechnicalError(String),
 }
 
-impl error::Error for AggregateError {}
+impl error::Error for Error {}
 
-impl Display for AggregateError {
+impl Display for Error {
     fn fmt(
         &self,
         f: &mut Formatter<'_>,
     ) -> fmtResult {
         match self {
-            AggregateError::TechnicalError(message) => {
+            Error::TechnicalError(message) => {
                 write!(f, "{}", message)
             },
-            AggregateError::UserError(message) => {
+            Error::UserError(message) => {
                 write!(f, "{}", message)
             },
         }
     }
 }
 
-impl AggregateError {
+impl Error {
     /// Convenience function to construct a simple `UserError` from a
     /// `&str`.
     pub fn new(msg: &str) -> Self {
-        AggregateError::UserError(UserErrorPayload {
+        Error::UserError(UserError {
             code: None,
             message: Some(msg.to_string()),
             params: None,
@@ -59,17 +59,15 @@ impl AggregateError {
     }
 }
 
-impl From<serde_json::error::Error> for AggregateError {
+impl From<serde_json::error::Error> for Error {
     fn from(err: serde_json::error::Error) -> Self {
         match err.classify() {
             serde_json::error::Category::Syntax => {
-                AggregateError::new("invalid json")
+                Error::new("invalid json")
             },
             serde_json::error::Category::Io |
             serde_json::error::Category::Data |
-            serde_json::error::Category::Eof => {
-                AggregateError::new("fail")
-            },
+            serde_json::error::Category::Eof => Error::new("fail"),
         }
     }
 }

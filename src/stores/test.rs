@@ -9,7 +9,7 @@ use crate::{
         EventStore,
         QueryStore,
     },
-    AggregateError,
+    Error,
 };
 
 use super::repository::Repository;
@@ -100,7 +100,7 @@ fn test_repository() {
         )
         .unwrap_err();
     assert_eq!(
-        AggregateError::new(
+        Error::new(
             "this address has already been added for this customer"
         ),
         err

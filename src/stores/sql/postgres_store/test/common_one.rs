@@ -21,7 +21,7 @@ pub static CONNECTION_STRING: &str =
 //     fn handle(
 //         &self,
 //         command: Self::Command,
-//     ) -> Result<Vec<Self::Event>, AggregateError> {
+//     ) -> Result<Vec<Self::Event>, Error> {
 //         match command {
 //             TestCommand::CreateTest(command) => {
 //                 let event = TestEvent::Created(Created {
@@ -32,7 +32,7 @@ pub static CONNECTION_STRING: &str =
 //             TestCommand::ConfirmTest(command) => {
 //                 for test in &self.tests {
 //                     if test == &command.test_name {
-//                         return Err(AggregateError::new(
+//                         return Err(Error::new(
 //                             "test already performed",
 //                         ));
 //                     }

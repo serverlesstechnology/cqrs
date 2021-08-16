@@ -5,7 +5,7 @@ use serde::{
 use std::fmt::Debug;
 
 use crate::{
-    AggregateError,
+    Error,
     IAggregate,
     ICommandHandler,
     IEventHandler,
@@ -41,11 +41,11 @@ impl ICommandHandler<CustomerCommand, CustomerEvent> for Customer {
     fn handle(
         &self,
         command: CustomerCommand,
-    ) -> Result<Vec<CustomerEvent>, AggregateError> {
+    ) -> Result<Vec<CustomerEvent>, Error> {
         match command {
             CustomerCommand::AddCustomerName(payload) => {
                 if self.name.as_str() != "" {
-                    return Err(AggregateError::new(
+                    return Err(Error::new(
                         "a name has already been added for this \
                          customer",
                     ));
@@ -72,7 +72,7 @@ impl ICommandHandler<CustomerCommand, CustomerEvent> for Customer {
                     .iter()
                     .any(|i| payload.new_address.eq(i))
                 {
-                    return Err(AggregateError::new(
+                    return Err(Error::new(
                         "this address has already been added for \
                          this customer",
                     ));

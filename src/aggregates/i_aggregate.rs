@@ -36,7 +36,7 @@ use crate::{
 ///         EmailUpdated,
 ///         NameAdded,
 ///     },
-///     AggregateError,
+///     Error,
 ///     IAggregate,
 ///     ICommandHandler,IEventHandler
 /// };
@@ -66,11 +66,11 @@ use crate::{
 ///     fn handle(
 ///         &self,
 ///         command: CustomerCommand,
-///     ) -> Result<Vec<CustomerEvent>, AggregateError> {
+///     ) -> Result<Vec<CustomerEvent>, Error> {
 ///         match command {
 ///             CustomerCommand::AddCustomerName(payload) => {
 ///                 if self.name.as_str() != "" {
-///                     return Err(AggregateError::new(
+///                     return Err(Error::new(
 ///                         "a name has already been added for this \
 ///                              customer",
 ///                     ));
@@ -97,7 +97,7 @@ use crate::{
 ///                     .iter()
 ///                     .any(|i| payload.new_address.eq(i))
 ///                 {
-///                     return Err(AggregateError::new(
+///                     return Err(Error::new(
 ///                         "this address has already been added \
 ///                              for this customer",
 ///                     ));

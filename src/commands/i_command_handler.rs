@@ -1,5 +1,5 @@
 use crate::{
-    errors::AggregateError,
+    errors::Error,
     events::IEvent,
 };
 
@@ -21,7 +21,7 @@ use super::i_command::ICommand;
 ///         EmailUpdated,
 ///         NameAdded,
 ///     },
-///     AggregateError,
+///     Error,
 ///     ICommandHandler,
 /// };
 ///
@@ -33,7 +33,7 @@ use super::i_command::ICommand;
 ///     fn handle(
 ///         &self,
 ///         command: CustomerCommand,
-///     ) -> Result<Vec<CustomerEvent>, AggregateError> {
+///     ) -> Result<Vec<CustomerEvent>, Error> {
 ///         match command {
 ///             CustomerCommand::AddCustomerName(payload) => {
 ///                 let payload = NameAdded {
@@ -70,5 +70,5 @@ pub trait ICommandHandler<C: ICommand, E: IEvent> {
     fn handle(
         &self,
         command: C,
-    ) -> Result<Vec<E>, AggregateError>;
+    ) -> Result<Vec<E>, Error>;
 }

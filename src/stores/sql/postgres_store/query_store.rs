@@ -5,7 +5,7 @@ use postgres::Client;
 use crate::{
     aggregates::IAggregate,
     commands::ICommand,
-    errors::AggregateError,
+    errors::Error,
     events::{
         EventContext,
         IEvent,
@@ -66,7 +66,7 @@ impl<
     fn load(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<QueryContext<C, E, Q>, AggregateError> {
+    ) -> Result<QueryContext<C, E, Q>, Error> {
         let agg_type = A::aggregate_type();
         let id = aggregate_id.to_string();
         let query_type = Q::query_type();
@@ -77,7 +77,7 @@ impl<
         ) {
             Ok(x) => x,
             Err(e) => {
-                return Err(AggregateError::new(
+                return Err(Error::new(
                     e.to_string().as_str(),
                 ));
             },
@@ -92,7 +92,7 @@ impl<
                         Ok(QueryContext::new(id, version, payload))
                     },
                     Err(e) => {
-                        Err(AggregateError::new(
+                        Err(Error::new(
                             e.to_string().as_str(),
                         ))
                     },
@@ -111,7 +111,7 @@ impl<
     fn commit(
         &mut self,
         context: QueryContext<C, E, Q>,
-    ) -> Result<(), AggregateError> {
+    ) -> Result<(), Error> {
         let agg_type = A::aggregate_type();
         let id = context.aggregate_id.as_str();
         let query_type = Q::query_type();
@@ -126,7 +126,7 @@ impl<
         let payload = match serde_json::to_value(&context.payload) {
             Ok(x) => x,
             Err(e) => {
-                return Err(AggregateError::new(
+                return Err(Error::new(
                     format!(
                         "unable to serialize the payload of query \
                          '{}' with id: '{}', error: {}",
@@ -149,7 +149,7 @@ impl<
         ) {
             Ok(_) => Ok(()),
             Err(e) => {
-                return Err(AggregateError::new(
+                return Err(Error::new(
                     e.to_string().as_str(),
                 ));
             },
@@ -168,7 +168,7 @@ impl<
         &mut self,
         aggregate_id: &str,
         events: &[EventContext<C, E>],
-    ) -> Result<(), AggregateError> {
+    ) -> Result<(), Error> {
         self.dispatch_events(aggregate_id, events)
     }
 }

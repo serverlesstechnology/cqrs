@@ -4,7 +4,7 @@ use std::sync::{
 };
 
 use crate::{
-    AggregateError,
+    Error,
     EventContext,
     IEventDispatcher,
 };
@@ -37,7 +37,7 @@ impl IEventDispatcher<CustomerCommand, CustomerEvent>
         &mut self,
         _aggregate_id: &str,
         events: &[EventContext<CustomerCommand, CustomerEvent>],
-    ) -> Result<(), AggregateError> {
+    ) -> Result<(), Error> {
         for event in events {
             let mut event_list = self.events.write().unwrap();
             event_list.push(event.clone());

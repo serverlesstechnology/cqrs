@@ -1,7 +1,7 @@
 use crate::{
     aggregates::IAggregate,
     commands::ICommand,
-    errors::AggregateError,
+    errors::Error,
     events::{
         EventContext,
         IEvent,
@@ -25,20 +25,20 @@ pub trait IQueryStore<
     fn load(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<QueryContext<C, E, Q>, AggregateError>;
+    ) -> Result<QueryContext<C, E, Q>, Error>;
 
     /// commits the query
     fn commit(
         &mut self,
         context: QueryContext<C, E, Q>,
-    ) -> Result<(), AggregateError>;
+    ) -> Result<(), Error>;
 
     /// used as a default implementation for dispatching
     fn dispatch_events(
         &mut self,
         aggregate_id: &str,
         events: &[EventContext<C, E>],
-    ) -> Result<(), AggregateError> {
+    ) -> Result<(), Error> {
         let mut context = match self.load(aggregate_id) {
             Ok(x) => x,
             Err(e) => {

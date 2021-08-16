@@ -6,7 +6,7 @@ use crate::{
         IAggregate,
     },
     commands::ICommand,
-    errors::AggregateError,
+    errors::Error,
     events::{
         EventContext,
         IEvent,
@@ -21,13 +21,13 @@ pub trait IEventStore<C: ICommand, E: IEvent, A: IAggregate<C, E>> {
         &mut self,
         aggregate_id: &str,
         with_metadata: bool,
-    ) -> Result<Vec<EventContext<C, E>>, AggregateError>;
+    ) -> Result<Vec<EventContext<C, E>>, Error>;
 
     /// Load aggregate at current state
     fn load_aggregate(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<AggregateContext<C, E, A>, AggregateError>;
+    ) -> Result<AggregateContext<C, E, A>, Error>;
 
     /// Commit new events
     fn commit(
@@ -35,7 +35,7 @@ pub trait IEventStore<C: ICommand, E: IEvent, A: IAggregate<C, E>> {
         events: Vec<E>,
         context: AggregateContext<C, E, A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventContext<C, E>>, AggregateError>;
+    ) -> Result<Vec<EventContext<C, E>>, Error>;
 
     /// Method to wrap a set of events with the additional metadata
     /// needed for persistence and publishing
