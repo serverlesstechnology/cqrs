@@ -104,21 +104,40 @@ where
     ) -> Result<(), AggregateError> {
         match self.store.load_aggregate(&aggregate_id) {
             Ok(aggregate_context) => {
-                let resultant_events = aggregate_context
+                let resultant_events = match aggregate_context
                     .aggregate
-                    .handle(command)?;
+                    .handle(command)
+                {
+                    Ok(x) => x,
+                    Err(e) => {
+                        return Err(e);
+                    },
+                };
 
-                let committed_events = self.store.commit(
+                let committed_events = match self.store.commit(
                     resultant_events,
                     aggregate_context,
                     metadata,
-                )?;
+                ) {
+                    Ok(x) => x,
+                    Err(e) => {
+                        return Err(e);
+                    },
+                };
 
                 let dispatch_events = committed_events.as_slice();
 
                 for processor in &mut self.query_processors {
-                    processor
-                        .dispatch(&aggregate_id, &dispatch_events);
+                    match processor
+                        .dispatch(&aggregate_id, &dispatch_events)
+                    {
+                        Ok(_) => {},
+                        Err(e) => {
+                            return Err(AggregateError::new(
+                                e.to_string().as_str(),
+                            ))
+                        },
+                    }
                 }
 
                 Ok(())

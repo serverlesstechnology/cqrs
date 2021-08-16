@@ -26,6 +26,7 @@ pub struct Customer {
     pub customer_id: String,
     pub name: String,
     pub email: String,
+    pub addresses: Vec<String>,
 }
 
 impl IAggregate for Customer {
@@ -56,7 +57,35 @@ impl IAggregate for Customer {
 
                 Ok(vec![CustomerEvent::NameAdded(payload)])
             },
-            CustomerCommand::UpdateEmail(_) => Ok(Default::default()),
+            CustomerCommand::UpdateEmail(payload) => {
+                let payload = EmailUpdated {
+                    new_email: payload.new_email,
+                };
+
+                Ok(vec![CustomerEvent::EmailUpdated(
+                    payload,
+                )])
+            },
+            CustomerCommand::AddAddress(payload) => {
+                if self
+                    .addresses
+                    .iter()
+                    .any(|i| payload.new_address.eq(i))
+                {
+                    return Err(AggregateError::new(
+                        "this address has already been added for \
+                         this customer",
+                    ));
+                }
+
+                let payload = AddressUpdated {
+                    new_address: payload.new_address,
+                };
+
+                Ok(vec![CustomerEvent::AddressUpdated(
+                    payload,
+                )])
+            },
         }
     }
 
@@ -70,6 +99,10 @@ impl IAggregate for Customer {
             },
             CustomerEvent::EmailUpdated(payload) => {
                 self.email = payload.new_email.clone();
+            },
+            CustomerEvent::AddressUpdated(payload) => {
+                self.addresses
+                    .push(payload.new_address.clone())
             },
         }
     }

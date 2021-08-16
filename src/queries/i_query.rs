@@ -27,7 +27,7 @@ use crate::{
 /// use std::fmt::Debug;
 ///
 /// use cqrs_es2::{
-///     test::customers::{
+///     example_impl::{
 ///         Customer,
 ///         CustomerEvent,
 ///     },
@@ -46,6 +46,7 @@ use crate::{
 /// pub struct CustomerContactQuery {
 ///     pub name: String,
 ///     pub email: String,
+///     pub latest_address: String,
 /// }
 ///
 /// impl IQuery<Customer> for CustomerContactQuery {
@@ -63,6 +64,9 @@ use crate::{
 ///             },
 ///             CustomerEvent::EmailUpdated(payload) => {
 ///                 self.email = payload.new_email.clone();
+///             },
+///             CustomerEvent::AddressUpdated(payload) => {
+///                 self.latest_address = payload.new_address.clone();
 ///             },
 ///         }
 ///     }

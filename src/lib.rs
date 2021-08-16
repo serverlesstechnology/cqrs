@@ -32,6 +32,7 @@ pub use crate::{
     framework::*,
     queries::*,
     stores::*,
+    test_framework::*,
 };
 
 // Errors module holds the library error types.
@@ -57,13 +58,15 @@ mod stores;
 // system.
 mod queries;
 
-// Framework provides the base framework and associated logic for
-// processing loading aggregates via an event store and subsequently
-// processing commands.
-mod framework;
-
 /// Test provides a test framework for building a resilient test base
 /// around aggregates. A `TestFramework` should be used to build a
 /// comprehensive set of aggregate tests to verify your application
 /// logic (aka business rules).
-pub mod test;
+mod framework;
+
+// TestFramework provides the base framework and associated logic for
+// testing aggregates business logic.
+mod test_framework;
+
+#[doc(hidden)]
+pub mod example_impl;

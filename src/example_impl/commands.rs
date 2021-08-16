@@ -6,6 +6,7 @@ use crate::IDomainCommand;
 pub enum CustomerCommand {
     AddCustomerName(AddCustomerName),
     UpdateEmail(UpdateEmail),
+    AddAddress(AddAddress),
 }
 
 #[derive(Debug, PartialEq)]
@@ -16,6 +17,11 @@ pub struct AddCustomerName {
 #[derive(Debug, PartialEq)]
 pub struct UpdateEmail {
     pub new_email: String,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct AddAddress {
+    pub new_address: String,
 }
 
 impl IDomainCommand for CustomerCommand {}

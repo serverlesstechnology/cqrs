@@ -8,8 +8,8 @@ use super::aggregate_test_executor::AggregateTestExecutor;
 /// ***most important*** parts of any CQRS system.
 ///
 /// ```rust
-/// use cqrs_es2::test::{
-///     customers::{
+/// use cqrs_es2::{
+///     example_impl::{
 ///         AddCustomerName,
 ///         Customer,
 ///         CustomerCommand,
@@ -18,6 +18,7 @@ use super::aggregate_test_executor::AggregateTestExecutor;
 ///     },
 ///     TestFramework,
 /// };
+///
 /// type CustomerTestFramework = TestFramework<Customer>;
 ///
 /// CustomerTestFramework::default()

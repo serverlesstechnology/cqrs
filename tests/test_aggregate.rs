@@ -1,6 +1,7 @@
-use crate::test::TestFramework;
-
-use super::*;
+use cqrs_es2::{
+    example_impl::*,
+    TestFramework,
+};
 
 type CustomerTestFramework = TestFramework<Customer>;
 

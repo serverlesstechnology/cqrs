@@ -16,6 +16,7 @@ use crate::IDomainEvent;
 pub enum CustomerEvent {
     NameAdded(NameAdded),
     EmailUpdated(EmailUpdated),
+    AddressUpdated(AddressUpdated),
 }
 
 #[derive(
@@ -38,6 +39,17 @@ pub struct NameAdded {
 )]
 pub struct EmailUpdated {
     pub new_email: String,
+}
+
+#[derive(
+    Debug,
+    PartialEq,
+    Clone,
+    Serialize,
+    Deserialize
+)]
+pub struct AddressUpdated {
+    pub new_address: String,
 }
 
 impl IDomainEvent for CustomerEvent {}

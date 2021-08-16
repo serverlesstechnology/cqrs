@@ -24,9 +24,11 @@ use crate::{
 /// use std::fmt::Debug;
 ///
 /// use cqrs_es2::{
-///     test::customers::{
+///     example_impl::{
+///         AddressUpdated,
 ///         CustomerCommand,
 ///         CustomerEvent,
+///         EmailUpdated,
 ///         NameAdded,
 ///     },
 ///     AggregateError,
@@ -45,6 +47,7 @@ use crate::{
 ///     customer_id: String,
 ///     name: String,
 ///     email: String,
+///     pub addresses: Vec<String>,
 /// }
 ///
 /// impl IAggregate for Customer {
@@ -75,8 +78,34 @@ use crate::{
 ///
 ///                 Ok(vec![CustomerEvent::NameAdded(payload)])
 ///             },
-///             CustomerCommand::UpdateEmail(_) => {
-///                 Ok(Default::default())
+///             CustomerCommand::UpdateEmail(payload) => {
+///                 let payload = EmailUpdated {
+///                     new_email: payload.new_email,
+///                 };
+///
+///                 Ok(vec![CustomerEvent::EmailUpdated(
+///                     payload,
+///                 )])
+///             },
+///             CustomerCommand::AddAddress(payload) => {
+///                 if self
+///                     .addresses
+///                     .iter()
+///                     .any(|i| payload.new_address.eq(i))
+///                 {
+///                     return Err(AggregateError::new(
+///                         "this address has already been added \
+///                              for this customer",
+///                     ));
+///                 }
+///
+///                 let payload = AddressUpdated {
+///                     new_address: payload.new_address,
+///                 };
+///
+///                 Ok(vec![CustomerEvent::AddressUpdated(
+///                     payload,
+///                 )])
 ///             },
 ///         }
 ///     }
@@ -91,6 +120,10 @@ use crate::{
 ///             },
 ///             CustomerEvent::EmailUpdated(payload) => {
 ///                 self.email = payload.new_email.clone();
+///             },
+///             CustomerEvent::AddressUpdated(payload) => {
+///                 self.addresses
+///                     .push(payload.new_address.clone())
 ///             },
 ///         }
 ///     }
