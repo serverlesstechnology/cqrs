@@ -5,7 +5,10 @@ use std::{
 
 use crate::{
     example_impl::*,
-    memory_store::EventStore,
+    memory_store::{
+        EventStore,
+        QueryStore,
+    },
     AggregateError,
 };
 
@@ -13,6 +16,13 @@ use super::repository::Repository;
 
 type ThisEventStore =
     EventStore<CustomerCommand, CustomerEvent, Customer>;
+
+type ThisQueryStore = QueryStore<
+    CustomerCommand,
+    CustomerEvent,
+    Customer,
+    CustomerContactQuery,
+>;
 
 fn metadata() -> HashMap<String, String> {
     let now = "2021-03-18T12:32:45.930Z".to_string();
@@ -22,14 +32,24 @@ fn metadata() -> HashMap<String, String> {
 }
 
 #[test]
-fn framework_test() {
+fn test_repository() {
     let event_store = ThisEventStore::default();
     let stored_events = event_store.get_events();
 
-    let delivered_events = Default::default();
-    let view = TestView::new(Arc::clone(&delivered_events));
+    let query_store = ThisQueryStore::default();
 
-    let mut repo = Repository::new(event_store, vec![Box::new(view)]);
+    let dispatched_events = Default::default();
+    let custom_dispatcher =
+        CustomDispatcher::new(Arc::clone(&dispatched_events));
+
+    let mut repo = Repository::new(
+        event_store,
+        vec![
+            Box::new(query_store),
+            Box::new(custom_dispatcher),
+        ],
+    );
+
     let uuid = uuid::Uuid::new_v4().to_string();
     let id = uuid.clone();
     let metadata = metadata();
@@ -45,7 +65,7 @@ fn framework_test() {
     assert_eq!(1, stored_events.read().unwrap().len());
     assert_eq!(
         1,
-        delivered_events.read().unwrap().len()
+        dispatched_events.read().unwrap().len()
     );
 
     let test = "TEST_A";
@@ -60,7 +80,7 @@ fn framework_test() {
 
     assert_eq!(
         2,
-        delivered_events.read().unwrap().len()
+        dispatched_events.read().unwrap().len()
     );
     let stored_event_count = stored_events
         .read()
@@ -88,7 +108,7 @@ fn framework_test() {
 
     assert_eq!(
         2,
-        delivered_events.read().unwrap().len()
+        dispatched_events.read().unwrap().len()
     );
     let stored_event_count = stored_events
         .read()

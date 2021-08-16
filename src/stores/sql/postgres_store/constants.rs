@@ -21,7 +21,7 @@ VALUES
 pub static SELECT_EVENTS: &str = "
 SELECT
     sequence,
-    payload,
+    payload
 FROM
     events
 WHERE

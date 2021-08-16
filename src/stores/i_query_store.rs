@@ -20,7 +20,7 @@ pub trait IQueryStore<
     E: IEvent,
     A: IAggregate<C, E>,
     Q: IQuery<C, E>,
-> {
+>: IEventDispatcher<C, E> {
     /// loads the query
     fn load(
         &mut self,
@@ -32,16 +32,9 @@ pub trait IQueryStore<
         &mut self,
         context: QueryContext<C, E, Q>,
     ) -> Result<(), AggregateError>;
-}
 
-impl<
-        C: ICommand,
-        E: IEvent,
-        A: IAggregate<C, E>,
-        Q: IQuery<C, E>,
-    > IEventDispatcher<C, E> for dyn IQueryStore<C, E, A, Q>
-{
-    fn dispatch(
+    /// used as a default implementation for dispatching
+    fn dispatch_events(
         &mut self,
         aggregate_id: &str,
         events: &[EventContext<C, E>],

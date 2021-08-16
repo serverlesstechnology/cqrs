@@ -11,7 +11,11 @@ use crate::{
     aggregates::IAggregate,
     commands::ICommand,
     errors::AggregateError,
-    events::IEvent,
+    events::{
+        EventContext,
+        IEvent,
+        IEventDispatcher,
+    },
     queries::{
         IQuery,
         QueryContext,
@@ -59,20 +63,6 @@ impl<
     pub fn get_events(&self) -> Arc<LockedQueryContextMap<C, E, Q>> {
         Arc::clone(&self.events)
     }
-
-    fn load_query(
-        &self,
-        aggregate_id: &str,
-    ) -> Option<QueryContext<C, E, Q>> {
-        // uninteresting unwrap: this will not be used in production,
-        // for tests only
-        let event_map = self.events.read().unwrap();
-
-        match event_map.get(aggregate_id) {
-            None => None,
-            Some(x) => Some(x.clone()),
-        }
-    }
 }
 
 impl<
@@ -87,17 +77,19 @@ impl<
         &mut self,
         aggregate_id: &str,
     ) -> Result<QueryContext<C, E, Q>, AggregateError> {
-        match self.load_query(aggregate_id) {
+        // uninteresting unwrap: this will not be used in production,
+        // for tests only
+        let event_map = self.events.read().unwrap();
+
+        match event_map.get(aggregate_id) {
             None => {
-                Err(AggregateError::new(
-                    format!(
-                        "Could not find aggregate '{}'",
-                        aggregate_id
-                    )
-                    .as_str(),
+                Ok(QueryContext::new(
+                    aggregate_id.to_string(),
+                    0,
+                    Default::default(),
                 ))
             },
-            Some(context) => Ok(context),
+            Some(x) => Ok(x.clone()),
         }
     }
 
@@ -114,5 +106,21 @@ impl<
         event_map.insert(id, context);
 
         Ok(())
+    }
+}
+
+impl<
+        C: ICommand,
+        E: IEvent,
+        A: IAggregate<C, E>,
+        Q: IQuery<C, E>,
+    > IEventDispatcher<C, E> for QueryStore<C, E, A, Q>
+{
+    fn dispatch(
+        &mut self,
+        aggregate_id: &str,
+        events: &[EventContext<C, E>],
+    ) -> Result<(), AggregateError> {
+        self.dispatch_events(aggregate_id, events)
     }
 }

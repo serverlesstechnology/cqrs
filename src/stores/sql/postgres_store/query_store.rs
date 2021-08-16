@@ -6,7 +6,11 @@ use crate::{
     aggregates::IAggregate,
     commands::ICommand,
     errors::AggregateError,
-    events::IEvent,
+    events::{
+        EventContext,
+        IEvent,
+        IEventDispatcher,
+    },
     queries::{
         IQuery,
         QueryContext,
@@ -150,5 +154,21 @@ impl<
                 ));
             },
         }
+    }
+}
+
+impl<
+        C: ICommand,
+        E: IEvent,
+        A: IAggregate<C, E>,
+        Q: IQuery<C, E>,
+    > IEventDispatcher<C, E> for QueryStore<C, E, A, Q>
+{
+    fn dispatch(
+        &mut self,
+        aggregate_id: &str,
+        events: &[EventContext<C, E>],
+    ) -> Result<(), AggregateError> {
+        self.dispatch_events(aggregate_id, events)
     }
 }

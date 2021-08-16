@@ -2,19 +2,11 @@ use serde::{
     Deserialize,
     Serialize,
 };
-use std::{
-    fmt::Debug,
-    sync::{
-        Arc,
-        RwLock,
-    },
-};
+use std::fmt::Debug;
 
 use crate::{
-    AggregateError,
     EventContext,
     IEventConsumer,
-    IEventDispatcher,
     IQuery,
 };
 
@@ -61,36 +53,5 @@ impl IEventConsumer<CustomerCommand, CustomerEvent>
                 self.latest_address = payload.new_address.clone();
             },
         }
-    }
-}
-
-pub struct TestView {
-    events: Arc<
-        RwLock<Vec<EventContext<CustomerCommand, CustomerEvent>>>,
-    >,
-}
-
-impl TestView {
-    pub fn new(
-        events: Arc<
-            RwLock<Vec<EventContext<CustomerCommand, CustomerEvent>>>,
-        >
-    ) -> Self {
-        TestView { events }
-    }
-}
-
-impl IEventDispatcher<CustomerCommand, CustomerEvent> for TestView {
-    fn dispatch(
-        &mut self,
-        _aggregate_id: &str,
-        events: &[EventContext<CustomerCommand, CustomerEvent>],
-    ) -> Result<(), AggregateError> {
-        for event in events {
-            let mut event_list = self.events.write().unwrap();
-            event_list.push(event.clone());
-        }
-
-        Ok(())
     }
 }
