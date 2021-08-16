@@ -66,11 +66,14 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
             .query(SELECT_SNAPSHOT, &[&agg_type, &id])
         {
             Ok(x) => x,
-            Err(_e) => {
-                return Ok(AggregateContext::new(
-                    id,
-                    A::default(),
-                    0,
+            Err(e) => {
+                return Err(AggregateError::new(
+                    format!(
+                        "could not load events table for aggregate \
+                         id {} with error: {}",
+                        &id, e
+                    )
+                    .as_str(),
                 ));
             },
         };
@@ -86,10 +89,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
             Some(x) => x,
         };
 
-        let s: i64 = row.get(0);
-        let val = row.get(1);
-
-        let aggregate = match serde_json::from_value(val) {
+        let aggregate = match serde_json::from_value(row.get(1)) {
             Ok(x) => x,
             Err(e) => {
                 return Err(AggregateError::new(
@@ -102,6 +102,8 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
                 ));
             },
         };
+
+        let s: i64 = row.get(0);
 
         Ok(AggregateContext::new(
             id, aggregate, s as usize,
@@ -414,8 +416,15 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
             .query(sql, &[&agg_type, &aggregate_id])
         {
             Ok(x) => x,
-            Err(_e) => {
-                return Ok(Vec::new());
+            Err(e) => {
+                return Err(AggregateError::new(
+                    format!(
+                        "could not load events table for aggregate \
+                         id {} with error: {}",
+                        &aggregate_id, e
+                    )
+                    .as_str(),
+                ));
             },
         };
 

@@ -15,11 +15,6 @@ use crate::{
 
 /// The abstract central source for loading and committing
 /// queries.
-///
-/// # Examples
-///
-/// ```rust
-/// ```
 pub trait IQueryStore<
     C: ICommand,
     E: IEvent,
