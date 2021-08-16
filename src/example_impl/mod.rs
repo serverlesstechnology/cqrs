@@ -7,3 +7,6 @@ mod aggregate;
 mod commands;
 mod events;
 mod queries;
+
+#[cfg(test)]
+mod test;

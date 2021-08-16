@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
-use cqrs_es2::{
+use crate::{
     example_impl::*,
-    memory_store::EventStore as MemoryEventStore,
     IAggregate,
     IEventStore,
 };
+
+use super::event_store::EventStore;
 
 fn metadata() -> HashMap<String, String> {
     let now = "2021-03-18T12:32:45.930Z".to_string();
@@ -16,7 +17,7 @@ fn metadata() -> HashMap<String, String> {
 
 #[test]
 fn test_mem_store() {
-    let mut event_store = MemoryEventStore::<Customer>::default();
+    let mut event_store = EventStore::<Customer>::default();
     let id = "test_id_A";
     let initial_events = event_store
         .load_events(&id, true)

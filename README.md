@@ -20,9 +20,7 @@ serde_json = "^1.0.66"
 
 ## Usage
 
-Documentation [is available here](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
-
-Demo applications:
+Full fledged demo applications:
 
 - [RESTful](https://github.com/brgirgis/cqrs-restful-demo).
 - [gRPC](https://github.com/brgirgis/cqrs-grpc-demo).
@@ -31,6 +29,7 @@ Demo applications:
 
 ### `v0.5.0`
 
+- Add multi-store support
 - Reorganize test framework module
 - Improve unittest coverage
 - Improve error return
@@ -88,7 +87,15 @@ Demo applications:
 ## TODO
 
 - Event upcasters.
-- Event serialization uses the event type as the root node of the JSON tree. This simplifies
-  deserialization but is non-standard.
-- A persistence implementation for DynamoDb.
-- A persistence implementation for MySql.
+- Event serialization uses the event type as the root node of the JSON tree.
+  This simplifies deserialization but is non-standard.
+- A persistence implementation for:
+  - SQL:
+    - MySql
+    - MariaDB
+    - MSSQL
+    - SQLite
+  - NoSQL:
+    - MongoDB
+    - DynamoDb
+    - Redis

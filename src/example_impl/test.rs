@@ -1,6 +1,9 @@
-use cqrs_es2::{
-    example_impl::*,
-    TestFramework,
+use crate::TestFramework;
+
+use super::{
+    aggregate::Customer,
+    commands::*,
+    events::*,
 };
 
 type CustomerTestFramework = TestFramework<Customer>;

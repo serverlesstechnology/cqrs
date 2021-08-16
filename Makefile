@@ -2,7 +2,6 @@
 all:
 	make clean
 	make build
-	make test
 	make doc
 
 clean:
@@ -10,6 +9,12 @@ clean:
 
 build:
 	cargo build
+
+up:
+	docker-compose up -d
+
+down:
+	docker-compose down
 
 test:
 	cargo test
