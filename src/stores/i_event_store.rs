@@ -5,33 +5,37 @@ use crate::{
         AggregateContext,
         IAggregate,
     },
+    commands::ICommand,
     errors::AggregateError,
-    events::EventContext,
+    events::{
+        EventContext,
+        IEvent,
+    },
 };
 
 /// The abstract central source for loading past events and committing
 /// new events.
-pub trait IEventStore<A: IAggregate> {
+pub trait IEventStore<C: ICommand, E: IEvent, A: IAggregate<C, E>> {
     /// Load all events for a particular `aggregate_id`
     fn load_events(
         &mut self,
         aggregate_id: &str,
         with_metadata: bool,
-    ) -> Result<Vec<EventContext<A>>, AggregateError>;
+    ) -> Result<Vec<EventContext<C, E>>, AggregateError>;
 
     /// Load aggregate at current state
     fn load_aggregate(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<AggregateContext<A>, AggregateError>;
+    ) -> Result<AggregateContext<C, E, A>, AggregateError>;
 
     /// Commit new events
     fn commit(
         &mut self,
-        events: Vec<A::Event>,
-        context: AggregateContext<A>,
+        events: Vec<E>,
+        context: AggregateContext<C, E, A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventContext<A>>, AggregateError>;
+    ) -> Result<Vec<EventContext<C, E>>, AggregateError>;
 
     /// Method to wrap a set of events with the additional metadata
     /// needed for persistence and publishing
@@ -39,22 +43,22 @@ pub trait IEventStore<A: IAggregate> {
         &self,
         aggregate_id: &str,
         current_sequence: usize,
-        events: Vec<A::Event>,
+        events: Vec<E>,
         metadata: HashMap<String, String>,
-    ) -> Vec<EventContext<A>> {
+    ) -> Vec<EventContext<C, E>> {
         let mut sequence = current_sequence;
 
-        let mut wrapped_events: Vec<EventContext<A>> = Vec::new();
+        let mut wrapped_events = Vec::new();
 
         for payload in events {
             sequence += 1;
 
-            wrapped_events.push(EventContext {
-                aggregate_id: aggregate_id.to_string(),
+            wrapped_events.push(EventContext::new(
+                aggregate_id.to_string(),
                 sequence,
                 payload,
-                metadata: metadata.clone(),
-            });
+                metadata.clone(),
+            ));
         }
 
         wrapped_events

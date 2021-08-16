@@ -6,11 +6,17 @@ use std::{
 use postgres::Client;
 
 use crate::{
-    AggregateContext,
-    AggregateError,
-    EventContext,
-    IAggregate,
-    IEventStore,
+    aggregates::{
+        AggregateContext,
+        IAggregate,
+    },
+    commands::ICommand,
+    errors::AggregateError,
+    events::{
+        EventContext,
+        IEvent,
+    },
+    stores::IEventStore,
 };
 
 use super::constants::{
@@ -26,13 +32,15 @@ use super::constants::{
 /// serialization of the aggregate rather than individual events. This
 /// is similar to the "snapshot strategy" seen in many CQRS
 /// frameworks.
-pub struct EventStore<A: IAggregate> {
+pub struct EventStore<C: ICommand, E: IEvent, A: IAggregate<C, E>> {
     conn: Client,
     with_snapshots: bool,
-    _phantom: PhantomData<A>,
+    _phantom: PhantomData<(C, E, A)>,
 }
 
-impl<A: IAggregate> EventStore<A> {
+impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
+    EventStore<C, E, A>
+{
     /// Creates a new `EventStore` from the provided
     /// database connection.
     pub fn new(
@@ -49,7 +57,7 @@ impl<A: IAggregate> EventStore<A> {
     fn load_aggregate_from_snapshot(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<AggregateContext<A>, AggregateError> {
+    ) -> Result<AggregateContext<C, E, A>, AggregateError> {
         let agg_type = A::aggregate_type();
         let id = aggregate_id.to_string();
 
@@ -59,21 +67,21 @@ impl<A: IAggregate> EventStore<A> {
         {
             Ok(x) => x,
             Err(_e) => {
-                return Ok(AggregateContext {
-                    aggregate_id: id,
-                    aggregate: A::default(),
-                    current_sequence: 0,
-                });
+                return Ok(AggregateContext::new(
+                    id,
+                    A::default(),
+                    0,
+                ));
             },
         };
 
         let row = match rows.iter().next() {
             None => {
-                return Ok(AggregateContext {
-                    aggregate_id: id,
-                    aggregate: A::default(),
-                    current_sequence: 0,
-                });
+                return Ok(AggregateContext::new(
+                    id,
+                    A::default(),
+                    0,
+                ));
             },
             Some(x) => x,
         };
@@ -95,17 +103,15 @@ impl<A: IAggregate> EventStore<A> {
             },
         };
 
-        Ok(AggregateContext {
-            aggregate_id: id,
-            aggregate: aggregate,
-            current_sequence: s as usize,
-        })
+        Ok(AggregateContext::new(
+            id, aggregate, s as usize,
+        ))
     }
 
     fn load_aggregate_from_events(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<AggregateContext<A>, AggregateError> {
+    ) -> Result<AggregateContext<C, E, A>, AggregateError> {
         let id = aggregate_id.to_string();
 
         let events = match self.load_events(&id, false) {
@@ -116,11 +122,11 @@ impl<A: IAggregate> EventStore<A> {
         };
 
         if events.len() == 0 {
-            return Ok(AggregateContext {
-                aggregate_id: id,
-                aggregate: A::default(),
-                current_sequence: 0,
-            });
+            return Ok(AggregateContext::new(
+                id,
+                A::default(),
+                0,
+            ));
         }
 
         let mut aggregate = A::default();
@@ -130,19 +136,19 @@ impl<A: IAggregate> EventStore<A> {
             .map(|x| &x.payload)
             .for_each(|x| aggregate.apply(&x));
 
-        Ok(AggregateContext {
-            aggregate_id: id,
+        Ok(AggregateContext::new(
+            id,
             aggregate,
-            current_sequence: events.last().unwrap().sequence,
-        })
+            events.last().unwrap().sequence,
+        ))
     }
 
     fn commit_with_snapshots(
         &mut self,
-        events: Vec<A::Event>,
-        context: AggregateContext<A>,
+        events: Vec<E>,
+        context: AggregateContext<C, E, A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventContext<A>>, AggregateError> {
+    ) -> Result<Vec<EventContext<C, E>>, AggregateError> {
         let mut updated_aggregate = context.aggregate.clone();
 
         let agg_type = A::aggregate_type().to_string();
@@ -292,10 +298,10 @@ impl<A: IAggregate> EventStore<A> {
 
     fn commit_events_only(
         &mut self,
-        events: Vec<A::Event>,
-        context: AggregateContext<A>,
+        events: Vec<E>,
+        context: AggregateContext<C, E, A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventContext<A>>, AggregateError> {
+    ) -> Result<Vec<EventContext<C, E>>, AggregateError> {
         let agg_type = A::aggregate_type().to_string();
         let id = context.aggregate_id.as_str();
         let current_sequence = context.current_sequence;
@@ -388,12 +394,14 @@ impl<A: IAggregate> EventStore<A> {
     }
 }
 
-impl<A: IAggregate> IEventStore<A> for EventStore<A> {
+impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
+    for EventStore<C, E, A>
+{
     fn load_events(
         &mut self,
         aggregate_id: &str,
         with_metadata: bool,
-    ) -> Result<Vec<EventContext<A>>, AggregateError> {
+    ) -> Result<Vec<EventContext<C, E>>, AggregateError> {
         let agg_type = A::aggregate_type();
 
         let sql = match with_metadata {
@@ -450,14 +458,12 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
                 false => Default::default(),
             };
 
-            let event = EventContext {
-                aggregate_id: aggregate_id.to_string(),
-                sequence: sequence as usize,
+            result.push(EventContext::new(
+                aggregate_id.to_string(),
+                sequence as usize,
                 payload,
                 metadata,
-            };
-
-            result.push(event);
+            ));
         }
 
         Ok(result)
@@ -466,7 +472,7 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
     fn load_aggregate(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<AggregateContext<A>, AggregateError> {
+    ) -> Result<AggregateContext<C, E, A>, AggregateError> {
         match self.with_snapshots {
             true => self.load_aggregate_from_snapshot(aggregate_id),
             false => self.load_aggregate_from_events(aggregate_id),
@@ -475,10 +481,10 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
 
     fn commit(
         &mut self,
-        events: Vec<A::Event>,
-        context: AggregateContext<A>,
+        events: Vec<E>,
+        context: AggregateContext<C, E, A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventContext<A>>, AggregateError> {
+    ) -> Result<Vec<EventContext<C, E>>, AggregateError> {
         match self.with_snapshots {
             true => {
                 self.commit_with_snapshots(events, context, metadata)

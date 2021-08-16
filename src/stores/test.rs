@@ -5,11 +5,14 @@ use std::{
 
 use crate::{
     example_impl::*,
-    memory_store::EventStore as MemoryEventStore,
+    memory_store::EventStore,
     AggregateError,
 };
 
 use super::repository::Repository;
+
+type ThisEventStore =
+    EventStore<CustomerCommand, CustomerEvent, Customer>;
 
 fn metadata() -> HashMap<String, String> {
     let now = "2021-03-18T12:32:45.930Z".to_string();
@@ -20,7 +23,7 @@ fn metadata() -> HashMap<String, String> {
 
 #[test]
 fn framework_test() {
-    let event_store = MemoryEventStore::default();
+    let event_store = ThisEventStore::default();
     let stored_events = event_store.get_events();
 
     let delivered_events = Default::default();

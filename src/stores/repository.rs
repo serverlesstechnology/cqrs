@@ -4,12 +4,13 @@ use std::{
 };
 
 use crate::{
-    aggregates::{
-        AggregateContext,
-        IAggregate,
-    },
+    aggregates::IAggregate,
+    commands::ICommand,
     errors::AggregateError,
-    queries::IQueryProcessor,
+    events::{
+        IEvent,
+        IEventDispatcher,
+    },
     stores::IEventStore,
 };
 
@@ -26,26 +27,30 @@ use crate::{
 /// 4. persisting any generated events or rolling back on an error
 ///
 /// To manage these tasks we use a `Repository`.
-pub struct Repository<A, ES>
-where
-    A: IAggregate,
-    ES: IEventStore<A>, {
+pub struct Repository<
+    C: ICommand,
+    E: IEvent,
+    A: IAggregate<C, E>,
+    ES: IEventStore<C, E, A>,
+> {
     store: ES,
-    query_processors: Vec<Box<dyn IQueryProcessor<A>>>,
-    _phantom: PhantomData<AggregateContext<A>>,
+    query_processors: Vec<Box<dyn IEventDispatcher<C, E>>>,
+    _phantom: PhantomData<A>,
 }
 
-impl<A, ES> Repository<A, ES>
-where
-    A: IAggregate,
-    ES: IEventStore<A>,
+impl<
+        C: ICommand,
+        E: IEvent,
+        A: IAggregate<C, E>,
+        ES: IEventStore<C, E, A>,
+    > Repository<C, E, A, ES>
 {
     /// Creates new framework for dispatching commands using the
     /// provided elements.
     pub fn new(
         store: ES,
-        query_processors: Vec<Box<dyn IQueryProcessor<A>>>,
-    ) -> Repository<A, ES> {
+        query_processors: Vec<Box<dyn IEventDispatcher<C, E>>>,
+    ) -> Repository<C, E, A, ES> {
         Repository {
             store,
             query_processors,
@@ -69,7 +74,7 @@ where
     pub fn execute(
         &mut self,
         aggregate_id: &str,
-        command: A::Command,
+        command: C,
     ) -> Result<(), AggregateError> {
         self.execute_with_metadata(
             aggregate_id,
@@ -99,7 +104,7 @@ where
     pub fn execute_with_metadata(
         &mut self,
         aggregate_id: &str,
-        command: A::Command,
+        command: C,
         metadata: HashMap<String, String>,
     ) -> Result<(), AggregateError> {
         let aggregate_context =

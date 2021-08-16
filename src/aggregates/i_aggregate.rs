@@ -5,9 +5,14 @@ use serde::{
 use std::fmt::Debug;
 
 use crate::{
-    commands::ICommand,
-    errors::AggregateError,
-    events::IEvent,
+    commands::{
+        ICommand,
+        ICommandHandler,
+    },
+    events::{
+        IEvent,
+        IEventHandler,
+    },
 };
 
 /// In CQRS (and Domain Driven Design) an `Aggregate` is the
@@ -33,6 +38,7 @@ use crate::{
 ///     },
 ///     AggregateError,
 ///     IAggregate,
+///     ICommandHandler,IEventHandler
 /// };
 ///
 /// #[derive(
@@ -50,19 +56,17 @@ use crate::{
 ///     pub addresses: Vec<String>,
 /// }
 ///
-/// impl IAggregate for Customer {
-///     type Command = CustomerCommand;
-///
-///     type Event = CustomerEvent;
-///
+/// impl IAggregate<CustomerCommand, CustomerEvent> for Customer {
 ///     fn aggregate_type() -> &'static str {
 ///         "customer"
 ///     }
+/// }
 ///
+/// impl ICommandHandler<CustomerCommand, CustomerEvent> for Customer {
 ///     fn handle(
 ///         &self,
-///         command: Self::Command,
-///     ) -> Result<Vec<Self::Event>, AggregateError> {
+///         command: CustomerCommand,
+///     ) -> Result<Vec<CustomerEvent>, AggregateError> {
 ///         match command {
 ///             CustomerCommand::AddCustomerName(payload) => {
 ///                 if self.name.as_str() != "" {
@@ -108,11 +112,12 @@ use crate::{
 ///                 )])
 ///             },
 ///         }
-///     }
+///     }}
 ///
+/// impl IEventHandler<CustomerEvent> for Customer {
 ///     fn apply(
 ///         &mut self,
-///         event: &Self::Event,
+///         event: &CustomerEvent,
 ///     ) {
 ///         match event {
 ///             CustomerEvent::NameAdded(payload) => {
@@ -129,35 +134,17 @@ use crate::{
 ///     }
 /// }
 /// ```
-pub trait IAggregate:
+pub trait IAggregate<C: ICommand, E: IEvent>:
     Debug
     + PartialEq
     + Default
     + Clone
     + Serialize
     + DeserializeOwned
+    + ICommandHandler<C, E>
+    + IEventHandler<E>
     + Sync
     + Send {
-    /// An inbound command used to make changes in the state of the
-    /// Aggregate
-    type Command: ICommand;
-
-    /// An event representing some change in state of the Aggregate
-    type Event: IEvent;
-
     /// aggregate_type is a unique identifier for this aggregate
     fn aggregate_type() -> &'static str;
-
-    /// handle inbound command and return a vector of events or an
-    /// error
-    fn handle(
-        &self,
-        command: Self::Command,
-    ) -> Result<Vec<Self::Event>, AggregateError>;
-
-    /// Update the aggregate's state with an event
-    fn apply(
-        &mut self,
-        event: &Self::Event,
-    );
 }

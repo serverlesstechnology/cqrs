@@ -13,12 +13,13 @@ use std::{
 use crate::{
     AggregateError,
     EventContext,
+    IEventConsumer,
+    IEventDispatcher,
     IQuery,
-    IQueryProcessor,
 };
 
 use super::{
-    aggregate::Customer,
+    commands::CustomerCommand,
     events::CustomerEvent,
 };
 
@@ -36,14 +37,18 @@ pub struct CustomerContactQuery {
     pub latest_address: String,
 }
 
-impl IQuery<Customer> for CustomerContactQuery {
+impl IQuery<CustomerCommand, CustomerEvent> for CustomerContactQuery {
     fn query_type() -> &'static str {
         "customer_contact_query"
     }
+}
 
+impl IEventConsumer<CustomerCommand, CustomerEvent>
+    for CustomerContactQuery
+{
     fn update(
         &mut self,
-        event: &EventContext<Customer>,
+        event: &EventContext<CustomerCommand, CustomerEvent>,
     ) {
         match &event.payload {
             CustomerEvent::NameAdded(payload) => {
@@ -60,22 +65,26 @@ impl IQuery<Customer> for CustomerContactQuery {
 }
 
 pub struct TestView {
-    events: Arc<RwLock<Vec<EventContext<Customer>>>>,
+    events: Arc<
+        RwLock<Vec<EventContext<CustomerCommand, CustomerEvent>>>,
+    >,
 }
 
 impl TestView {
     pub fn new(
-        events: Arc<RwLock<Vec<EventContext<Customer>>>>
+        events: Arc<
+            RwLock<Vec<EventContext<CustomerCommand, CustomerEvent>>>,
+        >
     ) -> Self {
         TestView { events }
     }
 }
 
-impl IQueryProcessor<Customer> for TestView {
+impl IEventDispatcher<CustomerCommand, CustomerEvent> for TestView {
     fn dispatch(
         &mut self,
         _aggregate_id: &str,
-        events: &[EventContext<Customer>],
+        events: &[EventContext<CustomerCommand, CustomerEvent>],
     ) -> Result<(), AggregateError> {
         for event in events {
             let mut event_list = self.events.write().unwrap();

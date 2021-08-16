@@ -6,7 +6,8 @@ use super::{
     events::*,
 };
 
-type CustomerTestFramework = TestFramework<Customer>;
+type CustomerTestFramework =
+    TestFramework<CustomerCommand, CustomerEvent, Customer>;
 
 #[test]
 fn test_change_name() {

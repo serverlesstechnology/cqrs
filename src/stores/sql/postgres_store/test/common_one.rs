@@ -173,7 +173,7 @@ pub static CONNECTION_STRING: &str =
 //     }
 // }
 
-// impl IQueryProcessor<TestAggregate> for TestQuery {
+// impl IQueryHandler<TestAggregate> for TestQuery {
 //     fn dispatch(
 //         &mut self,
 //         _aggregate_id: &str,

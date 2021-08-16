@@ -3,11 +3,15 @@ use std::marker::PhantomData;
 use postgres::Client;
 
 use crate::{
-    AggregateError,
-    IAggregate,
-    IQuery,
-    IQueryStore,
-    QueryContext,
+    aggregates::IAggregate,
+    commands::ICommand,
+    errors::AggregateError,
+    events::IEvent,
+    queries::{
+        IQuery,
+        QueryContext,
+    },
+    stores::IQueryStore,
 };
 
 use super::constants::{
@@ -18,18 +22,22 @@ use super::constants::{
 
 /// This provides a simple query repository that can be used both to
 /// return deserialized views and to act as a query processor.
-pub struct QueryStore<Q, A>
-where
-    Q: IQuery<A>,
-    A: IAggregate, {
+pub struct QueryStore<
+    C: ICommand,
+    E: IEvent,
+    A: IAggregate<C, E>,
+    Q: IQuery<C, E>,
+> {
     conn: Client,
-    _phantom: PhantomData<(Q, A)>,
+    _phantom: PhantomData<(C, E, A, Q)>,
 }
 
-impl<Q, A> QueryStore<Q, A>
-where
-    Q: IQuery<A>,
-    A: IAggregate,
+impl<
+        C: ICommand,
+        E: IEvent,
+        A: IAggregate<C, E>,
+        Q: IQuery<C, E>,
+    > QueryStore<C, E, A, Q>
 {
     /// Creates a new `QueryStore` that will store its'
     /// views in the table named identically to the `query_name`
@@ -44,15 +52,17 @@ where
     }
 }
 
-impl<Q, A> IQueryStore<Q, A> for QueryStore<Q, A>
-where
-    Q: IQuery<A>,
-    A: IAggregate,
+impl<
+        C: ICommand,
+        E: IEvent,
+        A: IAggregate<C, E>,
+        Q: IQuery<C, E>,
+    > IQueryStore<C, E, A, Q> for QueryStore<C, E, A, Q>
 {
     fn load(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<QueryContext<Q, A>, AggregateError> {
+    ) -> Result<QueryContext<C, E, Q>, AggregateError> {
         let agg_type = A::aggregate_type();
         let id = aggregate_id.to_string();
         let query_type = Q::query_type();
@@ -75,12 +85,7 @@ where
 
                 match serde_json::from_value(row.get(1)) {
                     Ok(payload) => {
-                        Ok(QueryContext {
-                            aggregate_id: id,
-                            version,
-                            payload,
-                            _phantom: PhantomData,
-                        })
+                        Ok(QueryContext::new(id, version, payload))
                     },
                     Err(e) => {
                         Err(AggregateError::new(
@@ -90,19 +95,18 @@ where
                 }
             },
             None => {
-                Ok(QueryContext {
-                    aggregate_id: id,
-                    version: 0,
-                    payload: Default::default(),
-                    _phantom: PhantomData,
-                })
+                Ok(QueryContext::new(
+                    id,
+                    0,
+                    Default::default(),
+                ))
             },
         }
     }
 
     fn commit(
         &mut self,
-        context: QueryContext<Q, A>,
+        context: QueryContext<C, E, Q>,
     ) -> Result<(), AggregateError> {
         let agg_type = A::aggregate_type();
         let id = context.aggregate_id.as_str();

@@ -2,7 +2,8 @@ use crate::example_impl::*;
 
 use super::test_framework::TestFramework;
 
-type ThisTestFramework = TestFramework<Customer>;
+type ThisTestFramework =
+    TestFramework<CustomerCommand, CustomerEvent, Customer>;
 
 #[test]
 fn test_framework_test() {

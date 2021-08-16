@@ -32,6 +32,12 @@ Full fledged demo applications:
 - Improve docs
 - Rename `IDomainEvent` to `IEvent`
 - Rename `IDomainCommand` to `ICommand`
+- Cleanup generics dependence
+- Introduce new interfaces:
+  - `ICommandHandler`
+  - `IEventHandler`
+  - `IEventDispatcher`
+  - `IEventConsumer`
 
 ### `v0.5.0`
 

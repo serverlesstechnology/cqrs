@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    marker::PhantomData,
     sync::{
         Arc,
         RwLock,
@@ -11,37 +12,48 @@ use crate::{
         AggregateContext,
         IAggregate,
     },
+    commands::ICommand,
     errors::AggregateError,
-    events::EventContext,
+    events::{
+        EventContext,
+        IEvent,
+    },
+    stores::IEventStore,
 };
 
-use super::super::IEventStore;
-
-type LockedEventContextMap<A> =
-    RwLock<HashMap<String, Vec<EventContext<A>>>>;
+type LockedEventContextMap<C, E> =
+    RwLock<HashMap<String, Vec<EventContext<C, E>>>>;
 
 ///  Simple memory store only useful for testing purposes
-pub struct EventStore<A: IAggregate> {
-    events: Arc<LockedEventContextMap<A>>,
+pub struct EventStore<C: ICommand, E: IEvent, A: IAggregate<C, E>> {
+    events: Arc<LockedEventContextMap<C, E>>,
+    _phantom: PhantomData<A>,
 }
 
-impl<A: IAggregate> Default for EventStore<A> {
+impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> Default
+    for EventStore<C, E, A>
+{
     fn default() -> Self {
         let events = Default::default();
-        EventStore { events }
+        EventStore {
+            events,
+            _phantom: PhantomData,
+        }
     }
 }
 
-impl<A: IAggregate> EventStore<A> {
+impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
+    EventStore<C, E, A>
+{
     /// Get a shared copy of the events stored within the event store.
-    pub fn get_events(&self) -> Arc<LockedEventContextMap<A>> {
+    pub fn get_events(&self) -> Arc<LockedEventContextMap<C, E>> {
         Arc::clone(&self.events)
     }
 
     fn load_committed_events(
         &self,
         aggregate_id: &str,
-    ) -> Vec<EventContext<A>> {
+    ) -> Vec<EventContext<C, E>> {
         // uninteresting unwrap: this will not be used in production,
         // for tests only
         let event_map = self.events.read().unwrap();
@@ -60,12 +72,14 @@ impl<A: IAggregate> EventStore<A> {
     }
 }
 
-impl<A: IAggregate> IEventStore<A> for EventStore<A> {
+impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
+    for EventStore<C, E, A>
+{
     fn load_events(
         &mut self,
         aggregate_id: &str,
         with_metadata: bool,
-    ) -> Result<Vec<EventContext<A>>, AggregateError> {
+    ) -> Result<Vec<EventContext<C, E>>, AggregateError> {
         let event_contexts = self.load_committed_events(aggregate_id);
 
         if with_metadata {
@@ -76,12 +90,12 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
         let mut events = Vec::new();
 
         for event_context in event_contexts {
-            events.push(EventContext {
-                aggregate_id: event_context.aggregate_id,
-                sequence: event_context.sequence,
-                payload: event_context.payload,
-                metadata: Default::default(),
-            });
+            events.push(EventContext::new(
+                event_context.aggregate_id,
+                event_context.sequence,
+                event_context.payload,
+                Default::default(),
+            ));
         }
 
         println!(
@@ -96,7 +110,7 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
     fn load_aggregate(
         &mut self,
         aggregate_id: &str,
-    ) -> Result<AggregateContext<A>, AggregateError> {
+    ) -> Result<AggregateContext<C, E, A>, AggregateError> {
         let committed_events =
             match self.load_events(&aggregate_id, false) {
                 Ok(x) => x,
@@ -114,19 +128,19 @@ impl<A: IAggregate> IEventStore<A> for EventStore<A> {
             aggregate.apply(&event);
         }
 
-        Ok(AggregateContext {
-            aggregate_id: aggregate_id.to_string(),
+        Ok(AggregateContext::new(
+            aggregate_id.to_string(),
             aggregate,
             current_sequence,
-        })
+        ))
     }
 
     fn commit(
         &mut self,
-        events: Vec<A::Event>,
-        context: AggregateContext<A>,
+        events: Vec<E>,
+        context: AggregateContext<C, E, A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventContext<A>>, AggregateError> {
+    ) -> Result<Vec<EventContext<C, E>>, AggregateError> {
         if events.len() == 0 {
             return Ok(Vec::default());
         }

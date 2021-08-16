@@ -1,22 +1,26 @@
 use crate::{
-    aggregates::IAggregate,
     errors::AggregateError,
+    events::IEvent,
 };
 
 /// Validation object for the `TestFramework` package.
-pub struct AggregateResultValidator<A: IAggregate> {
-    pub result: Result<Vec<A::Event>, AggregateError>,
+pub struct AggregateResultValidator<E: IEvent> {
+    result: Result<Vec<E>, AggregateError>,
 }
 
-impl<A: IAggregate> AggregateResultValidator<A> {
+impl<E: IEvent> AggregateResultValidator<E> {
+    pub fn new(result: Result<Vec<E>, AggregateError>) -> Self {
+        Self { result }
+    }
+
     /// Verifies that the expected events have been produced by the
     /// command.
     pub fn then_expect_events(
         self,
-        expected_events: Vec<A::Event>,
+        expected_events: Vec<E>,
     ) {
         let events = match self.result {
-            Ok(expected_events) => expected_events,
+            Ok(x) => x,
             Err(err) => {
                 panic!(
                     "expected success, received aggregate error: \
@@ -34,30 +38,30 @@ impl<A: IAggregate> AggregateResultValidator<A> {
         self,
         error_message: &str,
     ) {
-        match self.result {
+        let err = match self.result {
             Ok(events) => {
                 panic!(
                     "expected error, received events: '{:?}'",
                     events
                 );
             },
-            Err(err) => {
-                match err {
-                    AggregateError::TechnicalError(err) => {
-                        panic!(
-                            "expected user error but found \
-                             technical error: {}",
-                            err
-                        )
-                    },
-                    AggregateError::UserError(err) => {
-                        assert_eq!(
-                            err.message,
-                            Some(error_message.to_string())
-                        );
-                    },
-                }
-            },
+            Err(e) => e,
         };
+
+        match err {
+            AggregateError::TechnicalError(err) => {
+                panic!(
+                    "expected user error but found technical error: \
+                     {}",
+                    err
+                )
+            },
+            AggregateError::UserError(err) => {
+                assert_eq!(
+                    err.message,
+                    Some(error_message.to_string())
+                );
+            },
+        }
     }
 }

@@ -3,17 +3,17 @@ use std::{
     marker::PhantomData,
 };
 
-use super::super::aggregates::IAggregate;
+use crate::{
+    commands::ICommand,
+    events::IEvent,
+};
 
 use super::i_query::IQuery;
 
 /// Returns the query and context around it that is needed when
 /// committing in a query store implementation.
 #[derive(Debug, Clone)]
-pub struct QueryContext<Q, A>
-where
-    Q: IQuery<A>,
-    A: IAggregate, {
+pub struct QueryContext<C: ICommand, E: IEvent, Q: IQuery<C, E>> {
     /// The id of the aggregate instance.
     pub aggregate_id: String,
 
@@ -23,6 +23,21 @@ where
     /// The current state of the query instance.
     pub payload: Q,
 
-    /// phantom data for aggregate type
-    pub _phantom: PhantomData<A>,
+    _phantom: PhantomData<(C, E)>,
+}
+
+impl<C: ICommand, E: IEvent, Q: IQuery<C, E>> QueryContext<C, E, Q> {
+    /// Constructor
+    pub fn new(
+        aggregate_id: String,
+        version: i64,
+        payload: Q,
+    ) -> Self {
+        Self {
+            aggregate_id,
+            version,
+            payload,
+            _phantom: PhantomData,
+        }
+    }
 }

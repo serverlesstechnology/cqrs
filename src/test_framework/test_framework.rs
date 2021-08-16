@@ -1,6 +1,9 @@
+use crate::{
+    aggregates::IAggregate,
+    commands::ICommand,
+    events::IEvent,
+};
 use std::marker::PhantomData;
-
-use crate::aggregates::IAggregate;
 
 use super::aggregate_test_executor::AggregateTestExecutor;
 
@@ -19,7 +22,8 @@ use super::aggregate_test_executor::AggregateTestExecutor;
 ///     TestFramework,
 /// };
 ///
-/// type CustomerTestFramework = TestFramework<Customer>;
+/// type CustomerTestFramework =
+///     TestFramework<CustomerCommand, CustomerEvent, Customer>;
 ///
 /// CustomerTestFramework::default()
 ///     .given_no_previous_events()
@@ -49,17 +53,20 @@ use super::aggregate_test_executor::AggregateTestExecutor;
 ///         "a name has already been added for this customer",
 ///     )
 /// ```
-pub struct TestFramework<A: IAggregate> {
-    _phantom: PhantomData<A>,
+pub struct TestFramework<C: ICommand, E: IEvent, A: IAggregate<C, E>>
+{
+    _phantom: PhantomData<(C, E, A)>,
 }
 
-impl<A: IAggregate> TestFramework<A> {
+impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
+    TestFramework<C, E, A>
+{
     /// Initiates an aggregate test with no previous events.
     #[must_use]
     pub fn given_no_previous_events(
         &self
-    ) -> AggregateTestExecutor<A> {
-        AggregateTestExecutor { events: Vec::new() }
+    ) -> AggregateTestExecutor<C, E, A> {
+        AggregateTestExecutor::new(Vec::new())
     }
 
     /// Initiates an aggregate test with a collection of previous
@@ -67,13 +74,15 @@ impl<A: IAggregate> TestFramework<A> {
     #[must_use]
     pub fn given(
         &self,
-        events: Vec<A::Event>,
-    ) -> AggregateTestExecutor<A> {
-        AggregateTestExecutor { events }
+        events: Vec<E>,
+    ) -> AggregateTestExecutor<C, E, A> {
+        AggregateTestExecutor::new(events)
     }
 }
 
-impl<A: IAggregate> Default for TestFramework<A> {
+impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> Default
+    for TestFramework<C, E, A>
+{
     fn default() -> Self {
         TestFramework {
             _phantom: PhantomData,

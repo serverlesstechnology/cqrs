@@ -14,6 +14,7 @@ use std::fmt::Debug;
 ///
 /// Though the `ICommand` trait only has a single function, the
 /// commands must also derive a number of standard traits.
+/// - `Clone` - events may be cloned throughout the framework
 /// - `Debug` and `PartialEq` - needed for effective testing
 ///
 /// # Examples
@@ -22,22 +23,22 @@ use std::fmt::Debug;
 ///
 /// use cqrs_es2::ICommand;
 ///
-/// #[derive(Debug, PartialEq)]
+/// #[derive(Debug, PartialEq, Clone)]
 /// pub enum CustomerCommand {
 ///     AddCustomerName(AddCustomerName),
 ///     UpdateEmail(UpdateEmail),
 /// }
 ///
-/// #[derive(Debug, PartialEq)]
+/// #[derive(Debug, PartialEq, Clone)]
 /// pub struct AddCustomerName {
 ///     changed_name: String,
 /// }
 ///
-/// #[derive(Debug, PartialEq)]
+/// #[derive(Debug, PartialEq, Clone)]
 /// pub struct UpdateEmail {
 ///     new_email: String,
 /// }
 ///
 /// impl ICommand for CustomerCommand {};
 /// ```
-pub trait ICommand: Debug + PartialEq + Sync + Send {}
+pub trait ICommand: Debug + PartialEq + Clone + Sync + Send {}

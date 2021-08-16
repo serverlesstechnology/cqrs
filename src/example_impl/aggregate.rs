@@ -7,6 +7,8 @@ use std::fmt::Debug;
 use crate::{
     AggregateError,
     IAggregate,
+    ICommandHandler,
+    IEventHandler,
 };
 
 use super::{
@@ -29,19 +31,17 @@ pub struct Customer {
     pub addresses: Vec<String>,
 }
 
-impl IAggregate for Customer {
-    type Command = CustomerCommand;
-
-    type Event = CustomerEvent;
-
+impl IAggregate<CustomerCommand, CustomerEvent> for Customer {
     fn aggregate_type() -> &'static str {
         "customer"
     }
+}
 
+impl ICommandHandler<CustomerCommand, CustomerEvent> for Customer {
     fn handle(
         &self,
-        command: Self::Command,
-    ) -> Result<Vec<Self::Event>, AggregateError> {
+        command: CustomerCommand,
+    ) -> Result<Vec<CustomerEvent>, AggregateError> {
         match command {
             CustomerCommand::AddCustomerName(payload) => {
                 if self.name.as_str() != "" {
@@ -88,10 +88,12 @@ impl IAggregate for Customer {
             },
         }
     }
+}
 
+impl IEventHandler<CustomerEvent> for Customer {
     fn apply(
         &mut self,
-        event: &Self::Event,
+        event: &CustomerEvent,
     ) {
         match event {
             CustomerEvent::NameAdded(payload) => {

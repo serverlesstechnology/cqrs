@@ -5,8 +5,11 @@ use serde::{
 use std::fmt::Debug;
 
 use crate::{
-    aggregates::IAggregate,
-    events::EventContext,
+    commands::ICommand,
+    events::{
+        IEvent,
+        IEventConsumer,
+    },
 };
 
 /// A `Query` is a read element in a CQRS system. As events are
@@ -29,9 +32,10 @@ use crate::{
 /// use cqrs_es2::{
 ///     example_impl::{
 ///         Customer,
-///         CustomerEvent,
+///         CustomerEvent,CustomerCommand
 ///     },
 ///     EventContext,
+///     IEventConsumer,
 ///     IQuery,
 /// };
 ///
@@ -49,14 +53,16 @@ use crate::{
 ///     pub latest_address: String,
 /// }
 ///
-/// impl IQuery<Customer> for CustomerContactQuery {
+/// impl IQuery<CustomerCommand, CustomerEvent> for CustomerContactQuery {
 ///     fn query_type() -> &'static str {
 ///         "customer_contact_query"
 ///     }
+/// }
 ///
+/// impl IEventConsumer<CustomerCommand, CustomerEvent> for CustomerContactQuery {
 ///     fn update(
 ///         &mut self,
-///         event: &EventContext<Customer>,
+///         event: &EventContext<CustomerCommand, CustomerEvent>,
 ///     ) {
 ///         match &event.payload {
 ///             CustomerEvent::NameAdded(payload) => {
@@ -72,22 +78,16 @@ use crate::{
 ///     }
 /// }
 /// ```
-pub trait IQuery<A: IAggregate>:
+pub trait IQuery<C: ICommand, E: IEvent>:
     Debug
     + PartialEq
     + Default
     + Clone
     + Serialize
     + DeserializeOwned
+    + IEventConsumer<C, E>
     + Sync
     + Send {
     /// query_type is a unique identifier for this query
     fn query_type() -> &'static str;
-
-    /// Each implemented query is responsible for updating its stated
-    /// based on events passed via this method.
-    fn update(
-        &mut self,
-        event: &EventContext<A>,
-    );
 }
