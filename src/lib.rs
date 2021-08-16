@@ -16,10 +16,7 @@
 //!
 //! ## Usage
 //!
-//! Documentation [is available here](https://doc.rust-cqrs.org)
-//! along with an introduction to CQRS and event sourcing.
-//!
-//! Demo applications:
+//! Full fledged demo applications:
 //!
 //! - [RESTful](https://github.com/brgirgis/cqrs-restful-demo).
 //! - [gRPC](https://github.com/brgirgis/cqrs-grpc-demo).

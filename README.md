@@ -13,7 +13,7 @@
 
 ```toml
 [dependencies]
-cqrs-es2 = "0.5.0"
+cqrs-es2 = "0.5.1"
 serde = { version = "^1.0.127", features = ["derive"] }
 serde_json = "^1.0.66"
 ```
@@ -26,6 +26,10 @@ Full fledged demo applications:
 - [gRPC](https://github.com/brgirgis/cqrs-grpc-demo).
 
 ## Change log
+
+### `v0.5.1`
+
+- Improve docs
 
 ### `v0.5.0`
 
@@ -86,9 +90,7 @@ Full fledged demo applications:
 
 ## TODO
 
-- Event upcasters.
-- Event serialization uses the event type as the root node of the JSON tree.
-  This simplifies deserialization but is non-standard.
+- Improve error support
 - A persistence implementation for:
   - SQL:
     - MySql
@@ -99,3 +101,7 @@ Full fledged demo applications:
     - MongoDB
     - DynamoDb
     - Redis
+- Inherited notes:
+  - Event upcasters.
+  - Event serialization uses the event type as the root node of the JSON tree.
+    This simplifies deserialization but is non-standard.

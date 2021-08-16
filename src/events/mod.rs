@@ -1,3 +1,7 @@
+//! # events
+//!
+//! A central location for `DomainEvent` interfaces
+
 pub use event_context::EventContext;
 pub use i_domain_event::IDomainEvent;
 
