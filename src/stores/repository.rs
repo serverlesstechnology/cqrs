@@ -25,8 +25,8 @@ use crate::{
 /// 3. using the recreated `Aggregate` to handle an inbound `Command`
 /// 4. persisting any generated events or rolling back on an error
 ///
-/// To manage these tasks we use a `CqrsFramework`.
-pub struct CqrsFramework<A, ES>
+/// To manage these tasks we use a `Repository`.
+pub struct Repository<A, ES>
 where
     A: IAggregate,
     ES: IEventStore<A>, {
@@ -35,7 +35,7 @@ where
     _phantom: PhantomData<AggregateContext<A>>,
 }
 
-impl<A, ES> CqrsFramework<A, ES>
+impl<A, ES> Repository<A, ES>
 where
     A: IAggregate,
     ES: IEventStore<A>,
@@ -45,8 +45,8 @@ where
     pub fn new(
         store: ES,
         query_processors: Vec<Box<dyn IQueryProcessor<A>>>,
-    ) -> CqrsFramework<A, ES> {
-        CqrsFramework {
+    ) -> Repository<A, ES> {
+        Repository {
             store,
             query_processors,
             _phantom: PhantomData,
@@ -102,47 +102,49 @@ where
         command: A::Command,
         metadata: HashMap<String, String>,
     ) -> Result<(), AggregateError> {
-        match self.store.load_aggregate(&aggregate_id) {
-            Ok(aggregate_context) => {
-                let resultant_events = match aggregate_context
-                    .aggregate
-                    .handle(command)
-                {
-                    Ok(x) => x,
-                    Err(e) => {
-                        return Err(e);
-                    },
-                };
+        let aggregate_context =
+            match self.store.load_aggregate(&aggregate_id) {
+                Ok(x) => x,
+                Err(e) => {
+                    return Err(e);
+                },
+            };
 
-                let committed_events = match self.store.commit(
-                    resultant_events,
-                    aggregate_context,
-                    metadata,
-                ) {
-                    Ok(x) => x,
-                    Err(e) => {
-                        return Err(e);
-                    },
-                };
-
-                let dispatch_events = committed_events.as_slice();
-
-                for processor in &mut self.query_processors {
-                    match processor
-                        .dispatch(&aggregate_id, &dispatch_events)
-                    {
-                        Ok(_) => {},
-                        Err(e) => {
-                            return Err(AggregateError::new(
-                                e.to_string().as_str(),
-                            ))
-                        },
-                    }
-                }
-
-                Ok(())
+        let events = match aggregate_context
+            .aggregate
+            .handle(command)
+        {
+            Ok(x) => x,
+            Err(e) => {
+                return Err(e);
             },
-            Err(e) => Err(e),
+        };
+
+        let event_contexts = match self.store.commit(
+            events,
+            aggregate_context,
+            metadata,
+        ) {
+            Ok(x) => x,
+            Err(e) => {
+                return Err(e);
+            },
+        };
+
+        let dispatch_events = event_contexts.as_slice();
+
+        for processor in &mut self.query_processors {
+            match processor.dispatch(&aggregate_id, &dispatch_events)
+            {
+                Ok(_) => {},
+                Err(e) => {
+                    return Err(AggregateError::new(
+                        e.to_string().as_str(),
+                    ))
+                },
+            }
         }
+
+        Ok(())
     }
 }

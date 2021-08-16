@@ -7,7 +7,7 @@ use cqrs_es2::{
     example_impl::*,
     memory_store::EventStore as MemoryEventStore,
     AggregateError,
-    CqrsFramework,
+    Repository,
     TestFramework,
 };
 
@@ -110,12 +110,11 @@ fn framework_test() {
     let delivered_events = Default::default();
     let view = TestView::new(Arc::clone(&delivered_events));
 
-    let mut cqrs =
-        CqrsFramework::new(event_store, vec![Box::new(view)]);
+    let mut repo = Repository::new(event_store, vec![Box::new(view)]);
     let uuid = uuid::Uuid::new_v4().to_string();
     let id = uuid.clone();
     let metadata = metadata();
-    cqrs.execute_with_metadata(
+    repo.execute_with_metadata(
         &id,
         CustomerCommand::AddAddress(AddAddress {
             new_address: uuid.clone(),
@@ -132,7 +131,7 @@ fn framework_test() {
 
     let test = "TEST_A";
     let id = uuid.clone();
-    cqrs.execute(
+    repo.execute(
         &id,
         CustomerCommand::AddAddress(AddAddress {
             new_address: test.to_string(),
@@ -153,7 +152,7 @@ fn framework_test() {
     assert_eq!(2, stored_event_count);
 
     let id = uuid.clone();
-    let err = cqrs
+    let err = repo
         .execute(
             &id,
             CustomerCommand::AddAddress(AddAddress {

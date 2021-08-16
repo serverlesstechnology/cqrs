@@ -29,7 +29,6 @@ pub use crate::{
     commands::*,
     errors::*,
     events::*,
-    framework::*,
     queries::*,
     stores::*,
     test_framework::*,
@@ -62,10 +61,6 @@ mod queries;
 /// around aggregates. A `TestFramework` should be used to build a
 /// comprehensive set of aggregate tests to verify your application
 /// logic (aka business rules).
-mod framework;
-
-// TestFramework provides the base framework and associated logic for
-// testing aggregates business logic.
 mod test_framework;
 
 #[doc(hidden)]
