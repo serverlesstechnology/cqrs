@@ -1,17 +1,17 @@
 [package]
 name = "cqrs-es2"
-version = "0.6.1"
+version = "0.7.0"
 authors = [
   "Dave Garred <dave.garred@serverlesstechnology.com>",
   "Bassem Girgis <brgirgis@gmail.com>",
 ]
 edition = "2018"
 license = "MIT"
-description = "A lightweight CQRS and event sourcing framework."
+description = "A Rust library providing lightweight CQRS and event sourcing framework."
 readme = "README.md"
 documentation = "https://docs.rs/cqrs-es2"
 repository = "https://github.com/brgirgis/cqrs-es2"
-keywords = ["cqrs", "event-sourcing", "serverless", "lambda"]
+keywords = ["cqrs", "event-sourcing", "es", "DDD"]
 
 [dependencies]
 log = "^0.4"
