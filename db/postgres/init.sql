@@ -32,5 +32,19 @@ CREATE TABLE queries
     PRIMARY KEY (aggregate_type, aggregate_id, query_type)
 );
 
-CREATE USER test_user WITH ENCRYPTED PASSWORD 'test_pass';
-GRANT ALL PRIVILEGES ON DATABASE postgres TO test_user;
+CREATE
+    USER
+    test_user
+WITH
+    NOCREATEDB
+ENCRYPTED PASSWORD
+    'test_pass';
+
+GRANT
+    ALL PRIVILEGES
+ON TABLE
+    events,
+    snapshots,
+    queries
+TO
+    test_user;

@@ -1,3 +1,7 @@
+use log::{
+    info,
+    trace,
+};
 use std::{
     fmt::Debug,
     marker::PhantomData,
@@ -12,7 +16,7 @@ use super::i_aggregate::IAggregate;
 
 /// Returns the aggregate and context around it that is needed when
 /// committing events in an event store implementation.
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct AggregateContext<
     C: ICommand,
     E: IEvent,
@@ -41,11 +45,15 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>>
         aggregate: A,
         current_sequence: usize,
     ) -> Self {
-        Self {
+        let x = Self {
             aggregate_id,
             aggregate,
             current_sequence,
             _phantom: PhantomData,
-        }
+        };
+
+        trace!("Created new {:?}", x,);
+
+        x
     }
 }

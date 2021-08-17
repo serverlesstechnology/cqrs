@@ -1,16 +1,9 @@
-use postgres::{
-    Client,
-    NoTls,
-};
-
 use crate::{
     example_impl::*,
-    postgres_store::query_store::QueryStore,
+    memory_store::query_store::QueryStore,
     IQueryStore,
     QueryContext,
 };
-
-use super::common::*;
 
 type ThisQueryStore = QueryStore<
     CustomerCommand,
@@ -26,15 +19,15 @@ type ThisQueryContext = QueryContext<
 >;
 
 #[test]
-fn commit_and_load_queries() {
-    let conn = Client::connect(CONNECTION_STRING, NoTls).unwrap();
-    let mut store = ThisQueryStore::new(conn);
+fn test_memory_query_store() {
+    let mut store = ThisQueryStore::default();
 
-    let id = uuid::Uuid::new_v4().to_string();
+    let id = "test_id_A";
 
-    // loading nonexisting query returns default constructor
+    let stored_context = store.load(&id).unwrap();
+
     assert_eq!(
-        store.load(id.as_str()).unwrap(),
+        stored_context,
         ThisQueryContext::new(id.to_string(), 0, Default::default())
     );
 

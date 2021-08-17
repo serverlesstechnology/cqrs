@@ -14,7 +14,7 @@ use super::i_event::IEvent;
 ///
 /// Within any system an event must be unique based on its'
 /// `aggregate_type`, `aggregate_id` and `sequence`.
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct EventContext<C: ICommand, E: IEvent> {
     /// The id of the aggregate instance.
     pub aggregate_id: String,

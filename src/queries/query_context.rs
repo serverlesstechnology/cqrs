@@ -12,7 +12,7 @@ use super::i_query::IQuery;
 
 /// Returns the query and context around it that is needed when
 /// committing in a query store implementation.
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct QueryContext<C: ICommand, E: IEvent, Q: IQuery<C, E>> {
     /// The id of the aggregate instance.
     pub aggregate_id: String,

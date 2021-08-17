@@ -77,35 +77,31 @@ impl<
         ) {
             Ok(x) => x,
             Err(e) => {
-                return Err(Error::new(
-                    e.to_string().as_str(),
+                return Err(Error::new(e.to_string().as_str()));
+            },
+        };
+
+        let row = match result.iter().next() {
+            Some(x) => x,
+            None => {
+                return Ok(QueryContext::new(
+                    id,
+                    0,
+                    Default::default(),
                 ));
             },
         };
 
-        match result.iter().next() {
-            Some(row) => {
-                let version = row.get(0);
+        let version = row.get(0);
 
-                match serde_json::from_value(row.get(1)) {
-                    Ok(payload) => {
-                        Ok(QueryContext::new(id, version, payload))
-                    },
-                    Err(e) => {
-                        Err(Error::new(
-                            e.to_string().as_str(),
-                        ))
-                    },
-                }
+        let payload = match serde_json::from_value(row.get(1)) {
+            Ok(x) => x,
+            Err(e) => {
+                return Err(Error::new(e.to_string().as_str()));
             },
-            None => {
-                Ok(QueryContext::new(
-                    id,
-                    0,
-                    Default::default(),
-                ))
-            },
-        }
+        };
+
+        Ok(QueryContext::new(id, version, payload))
     }
 
     fn commit(
@@ -149,9 +145,7 @@ impl<
         ) {
             Ok(_) => Ok(()),
             Err(e) => {
-                return Err(Error::new(
-                    e.to_string().as_str(),
-                ));
+                return Err(Error::new(e.to_string().as_str()));
             },
         }
     }

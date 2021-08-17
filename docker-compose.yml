@@ -3,7 +3,6 @@ version: "3.4"
 services:
   db:
     image: postgres
-    restart: always
     volumes:
       - "./db/postgres:/docker-entrypoint-initdb.d"
     networks:
@@ -12,8 +11,8 @@ services:
       - "5432:5432"
     environment:
       - "POSTGRES_DB=test"
-      - "POSTGRES_USER=test_user"
-      - "POSTGRES_PASSWORD=test_pass"
+      - "POSTGRES_USER=admin"
+      - "POSTGRES_PASSWORD=admin_pass"
 
   ui:
     image: adminer
