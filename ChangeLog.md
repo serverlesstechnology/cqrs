@@ -3,6 +3,7 @@
 ## `v0.6.1`
 
 - Improve logging
+- Improve unit test coverage
 
 ## `v0.6.0`
 
