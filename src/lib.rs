@@ -21,8 +21,8 @@
 //!
 //! Full fledged demo applications:
 //!
-//! - [RESTful](https://github.com/brgirgis/cqrs-restful-demo).
-//! - [gRPC](https://github.com/brgirgis/cqrs-grpc-demo).
+//! - [RESTful](https://github.com/brgirgis/cqrs-restful-demo)
+//! - [gRPC](https://github.com/brgirgis/cqrs-grpc-demo)
 
 pub use crate::{
     aggregates::*,
