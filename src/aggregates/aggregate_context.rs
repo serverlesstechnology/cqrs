@@ -1,7 +1,4 @@
-use log::{
-    info,
-    trace,
-};
+use log::trace;
 use std::{
     fmt::Debug,
     marker::PhantomData,

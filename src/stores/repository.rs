@@ -1,3 +1,8 @@
+use log::{
+    debug,
+    error,
+    trace,
+};
 use std::{
     collections::HashMap,
     marker::PhantomData,
@@ -50,12 +55,16 @@ impl<
     pub fn new(
         store: ES,
         dispatchers: Vec<Box<dyn IEventDispatcher<C, E>>>,
-    ) -> Repository<C, E, A, ES> {
-        Repository {
+    ) -> Self {
+        let x = Self {
             store,
             dispatchers,
             _phantom: PhantomData,
-        }
+        };
+
+        trace!("Created new Repository");
+
+        x
     }
 
     /// This applies a command to an aggregate. Executing a command
@@ -107,20 +116,40 @@ impl<
         command: C,
         metadata: HashMap<String, String>,
     ) -> Result<(), Error> {
+        trace!(
+            "Applying command '{:?}' to aggregate '{}' with \
+             metadata '{:?}'",
+            &command,
+            &aggregate_id,
+            &metadata
+        );
+
         let aggregate_context =
             match self.store.load_aggregate(&aggregate_id) {
                 Ok(x) => x,
                 Err(e) => {
+                    error!(
+                        "Loading aggregate '{}' returned error '{}'",
+                        &aggregate_id,
+                        e.to_string()
+                    );
                     return Err(e);
                 },
             };
 
         let events = match aggregate_context
             .aggregate
-            .handle(command)
+            .handle(command.clone())
         {
             Ok(x) => x,
             Err(e) => {
+                error!(
+                    "Handling command '{:?}' for aggregate '{}' \
+                     returned error '{}'",
+                    &command,
+                    &aggregate_id,
+                    e.to_string()
+                );
                 return Err(e);
             },
         };
@@ -128,10 +157,14 @@ impl<
         let event_contexts = match self.store.commit(
             events,
             aggregate_context,
-            metadata,
+            metadata.clone(),
         ) {
             Ok(x) => x,
             Err(e) => {
+                error!(
+                    "Committing events returned error '{}'",
+                    e.to_string()
+                );
                 return Err(e);
             },
         };
@@ -143,12 +176,20 @@ impl<
             {
                 Ok(_) => {},
                 Err(e) => {
-                    return Err(Error::new(
-                        e.to_string().as_str(),
-                    ))
+                    error!(
+                        "dispatcher returned error '{}'",
+                        e.to_string()
+                    );
+                    return Err(Error::new(e.to_string().as_str()));
                 },
             }
         }
+
+        debug!(
+            "Successfully applied command '{:?}' to aggregate '{}' \
+             with metadata '{:?}'",
+            &command, &aggregate_id, &metadata
+        );
 
         Ok(())
     }

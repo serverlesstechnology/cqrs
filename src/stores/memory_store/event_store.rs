@@ -1,3 +1,4 @@
+use log::debug;
 use std::{
     collections::HashMap,
     marker::PhantomData,
@@ -97,7 +98,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
             ));
         }
 
-        println!(
+        debug!(
             "loading: {} events for aggregate ID '{}'",
             &events.len(),
             aggregate_id
@@ -146,7 +147,7 @@ impl<C: ICommand, E: IEvent, A: IAggregate<C, E>> IEventStore<C, E, A>
 
         let id = context.aggregate_id;
 
-        println!(
+        debug!(
             "storing: {} new events for aggregate ID '{}'",
             events.len(),
             &id

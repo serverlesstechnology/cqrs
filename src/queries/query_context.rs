@@ -1,3 +1,4 @@
+use log::trace;
 use std::{
     fmt::Debug,
     marker::PhantomData,
@@ -33,11 +34,15 @@ impl<C: ICommand, E: IEvent, Q: IQuery<C, E>> QueryContext<C, E, Q> {
         version: i64,
         payload: Q,
     ) -> Self {
-        Self {
+        let x = Self {
             aggregate_id,
             version,
             payload,
             _phantom: PhantomData,
-        }
+        };
+
+        trace!("Created new {:?}", x,);
+
+        x
     }
 }

@@ -2,7 +2,7 @@
 
 ## `v0.6.1`
 
--
+- Improve logging
 
 ## `v0.6.0`
 

@@ -1,3 +1,4 @@
+use log::trace;
 use std::{
     collections::HashMap,
     fmt::Debug,
@@ -41,12 +42,16 @@ impl<C: ICommand, E: IEvent> EventContext<C, E> {
         payload: E,
         metadata: HashMap<String, String>,
     ) -> Self {
-        Self {
+        let x = Self {
             aggregate_id,
             sequence,
             payload,
             metadata,
             _phantom: PhantomData,
-        }
+        };
+
+        trace!("Created new {:?}", x,);
+
+        x
     }
 }
