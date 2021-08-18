@@ -6,12 +6,12 @@ use super::{
     events::*,
 };
 
-type CustomerTestFramework =
+type ThisTestFramework =
     TestFramework<CustomerCommand, CustomerEvent, Customer>;
 
 #[test]
 fn test_change_name() {
-    CustomerTestFramework::default()
+    ThisTestFramework::default()
         .given_no_previous_events()
         .when(CustomerCommand::AddCustomerName(
             AddCustomerName {
@@ -27,7 +27,7 @@ fn test_change_name() {
 
 #[test]
 fn test_change_name_again() {
-    CustomerTestFramework::default()
+    ThisTestFramework::default()
         .given(vec![CustomerEvent::NameAdded(
             NameAdded {
                 changed_name: "John Doe".to_string(),
