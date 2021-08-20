@@ -43,7 +43,9 @@ structopt = { version = "0.3", features = ["paw"] }
 #paw = "1.0"
 
 # CQRS framework and postgres implementation
-cqrs-es2 = { path = "../../" }
+cqrs-es2 = { path = "../../", default-features = false, features = [
+  "with-sqlx-postgres",
+] }
 
 # sqlx
 sqlx = { version = "0.5.6", features = [
@@ -53,12 +55,6 @@ sqlx = { version = "0.5.6", features = [
   "postgres",
   "uuid",
   "json",
-  # MySQL and MariaDB
-  "mysql",
-  # MS SQL
-  "mssql",
-  # SQLite
-  "sqlite",
   # misc
   "macros",
   "chrono",

@@ -11,3 +11,5 @@ Cargo.lock
 
 # SQLite test files
 test.db*
+
+*.log

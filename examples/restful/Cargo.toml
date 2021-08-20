@@ -15,35 +15,16 @@ log = { version = "^0.4", features = [
 ] }
 fern = "^0.5"
 
-# CQRS framework and postgres implementation
-cqrs-es2 = { path = "../../" }
-
+# serialization
 serde = { version = "^1.0.127", features = ["derive"] }
-serde_json = "1.0"
+serde_json = "^1.0.66"
 
-async-trait = "^0.1"
-
-# sqlx
-sqlx = { version = "0.5.6", features = [
-  # tokio + rustls
-  "runtime-tokio-rustls",
-  # PostgresSQL
-  "postgres",
-  "uuid",
-  "json",
-  # misc
-  "macros",
-  "chrono",
-  "tls",
+# CQRS framework and postgres implementation
+cqrs-es2 = { path = "../../", default-features = false, features = [
+  "with-postgres",
 ] }
 
-tokio = { version = "1", features = [
-  "rt-multi-thread",
-  "time",
-  "fs",
-  "macros",
-  "net",
-] }
+postgres = { version = "^0.19.1", features = ["with-serde_json-1"] }
 
 # rest API
 iron = "0.6.1"

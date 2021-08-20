@@ -24,7 +24,7 @@ repository = "https://github.com/brgirgis/cqrs-es2"
 keywords = ["cqrs", "event-sourcing", "es", "DDD"]
 
 [features]
-default = ["with-all-async", "with-all-sync"]
+default = []
 with-sqlx-postgres = [
   "tokio-cqrs-es2-store",
   "tokio-cqrs-es2-store/with-sqlx-postgres",
@@ -53,9 +53,9 @@ with-all-sqlx = [
   "with-sqlx-sqlite",
 ]
 with-all-async = ["with-all-sqlx"]
-with-all-sql = ["cqrs-es2-store"]
+with-postgres = ["cqrs-es2-store"]
+with-all-sql = ["with-postgres"]
 with-all-sync = ["with-all-sql"]
-
 
 [dependencies]
 cqrs-es2-core = { path = "./cqrs-es2-core" }

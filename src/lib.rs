@@ -23,3 +23,19 @@
 //!
 //! - [RESTful](https://github.com/brgirgis/cqrs-restful-demo)
 //! - [gRPC](https://github.com/brgirgis/cqrs-grpc-demo)
+
+pub use cqrs_es2_core::*;
+
+#[cfg(all(
+    feature = "tokio-cqrs-es2-store",
+    feature = "cqrs-es2-store"
+))]
+compile_error!(
+    "async and sync APIs cannot be enabled at the same time"
+);
+
+#[cfg(feature = "tokio-cqrs-es2-store")]
+pub use tokio_cqrs_es2_store::*;
+
+#[cfg(feature = "cqrs-es2-store")]
+pub use cqrs_es2_store::*;

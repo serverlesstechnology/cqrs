@@ -19,11 +19,11 @@
 pub use repository::*;
 
 #[cfg(any(
-  feature = "with-mariadb",
-  //feature = "with-mssql",
-  feature = "with-mysql",
-  feature = "with-postgres",
-  feature = "with-sqlite",
+  feature = "with-sqlx-mariadb",
+  //feature = "with-sqlx-mssql",
+  feature = "with-sqlx-mysql",
+  feature = "with-sqlx-postgres",
+  feature = "with-sqlx-sqlite",
 ))]
 pub use sql::*;
 
@@ -31,10 +31,10 @@ pub mod memory_store;
 mod repository;
 
 #[cfg(any(
-    feature = "with-mariadb",
-    //feature = "with-mssql",
-    feature = "with-mysql",
-    feature = "with-postgres",
-    feature = "with-sqlite",
+    feature = "with-sqlx-mariadb",
+    //feature = "with-sqlx-mssql",
+    feature = "with-sqlx-mysql",
+    feature = "with-sqlx-postgres",
+    feature = "with-sqlx-sqlite",
 ))]
 mod sql;
