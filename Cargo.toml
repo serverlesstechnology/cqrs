@@ -10,7 +10,7 @@ members = [
 
 [package]
 name = "cqrs-es2"
-version = "0.7.1"
+version = "0.8.0"
 authors = [
   "Dave Garred <dave.garred@serverlesstechnology.com>",
   "Bassem Girgis <brgirgis@gmail.com>",
@@ -58,6 +58,6 @@ with-all-sql = ["with-postgres"]
 with-all-sync = ["with-all-sql"]
 
 [dependencies]
-cqrs-es2-core = { path = "./cqrs-es2-core" }
-cqrs-es2-store = { path = "./cqrs-es2-store", optional = true }
-tokio-cqrs-es2-store = { path = "./tokio-cqrs-es2-store", optional = true }
+cqrs-es2-core = "0.8.0"
+cqrs-es2-store = { version = "0.8.0", optional = true }
+tokio-cqrs-es2-store = { version = "0.8.0", optional = true }
