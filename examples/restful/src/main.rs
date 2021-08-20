@@ -32,8 +32,7 @@ fn setup_logger() -> Result<(), fern::InitError> {
     Ok(())
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     setup_logger().unwrap();
 
     let mut router = Router::new();

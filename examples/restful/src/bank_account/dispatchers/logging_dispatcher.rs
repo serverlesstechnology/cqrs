@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use log::info;
 
 use cqrs_es2::{
@@ -20,11 +19,10 @@ impl LoggingDispatcher {
     }
 }
 
-#[async_trait]
 impl IEventDispatcher<BankAccountCommand, BankAccountEvent>
     for LoggingDispatcher
 {
-    async fn dispatch(
+    fn dispatch(
         &mut self,
         aggregate_id: &str,
         events: &[EventContext<

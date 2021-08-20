@@ -18,7 +18,7 @@ use super::super::stores::get_event_store;
 
 use super::common::std_headers;
 
-pub async fn bank_account_command(
+pub fn bank_account_command(
     req: &mut Request
 ) -> IronResult<Response> {
     debug!("Received command '{:?}'", &req);
@@ -42,18 +42,15 @@ pub async fn bank_account_command(
     let result = match command_type {
         "openBankAccount" => {
             process_command("OpenBankAccount", aggregate_id, payload)
-                .await
         },
         "depositMoney" => {
             process_command("DepositMoney", aggregate_id, payload)
-                .await
         },
         "withdrawMoney" => {
             process_command("WithdrawMoney", aggregate_id, payload)
-                .await
         },
         "writeCheck" => {
-            process_command("WriteCheck", aggregate_id, payload).await
+            process_command("WriteCheck", aggregate_id, payload)
         },
         _ => return Ok(Response::with(status::NotFound)),
     };
@@ -74,7 +71,7 @@ pub async fn bank_account_command(
     }
 }
 
-async fn process_command(
+fn process_command(
     payload_type: &str,
     aggregate_id: &str,
     payload: String,
@@ -96,7 +93,5 @@ async fn process_command(
         chrono::Utc::now().to_rfc3339(),
     );
 
-    event_store
-        .execute_with_metadata(aggregate_id, payload, metadata)
-        .await
+    event_store.execute_with_metadata(aggregate_id, payload, metadata)
 }

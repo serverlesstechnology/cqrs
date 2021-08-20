@@ -1,16 +1,12 @@
-use sqlx::postgres::{
-    PgPool,
-    PgPoolOptions,
+use postgres::{
+    Client,
+    NoTls,
 };
 
-pub async fn db_connection() -> Result<PgPool, sqlx::Error> {
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(
-            "postgresql://demo_user:demo_pass@localhost:5432/demo",
-        )
-        .await
-        .unwrap();
-
-    Ok(pool)
+pub fn db_connection() -> Client {
+    Client::connect(
+        "postgresql://test_user:test_pass@localhost:8084/test",
+        NoTls,
+    )
+    .unwrap()
 }
