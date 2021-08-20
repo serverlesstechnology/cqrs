@@ -1,16 +1,41 @@
 version: "3.4"
 
 services:
-  db:
+  maria-db:
+    image: mariadb
+    volumes:
+      - "./db/mariadb:/docker-entrypoint-initdb.d"
+    networks:
+      - default
+    ports:
+      - "8081:3306"
+    environment:
+      #- "MARIADB_USER=root"
+      - "MARIADB_ROOT_PASSWORD=admin_pass"
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+
+  mysql-db:
+    image: mysql
+    volumes:
+      - "./db/mysql:/docker-entrypoint-initdb.d"
+    networks:
+      - default
+    ports:
+      - "8083:3306"
+    environment:
+      #- "MYSQL_USER=root"
+      - "MYSQL_ROOT_PASSWORD=admin_pass"
+    command: --default-authentication-plugin=mysql_native_password
+
+  postgres-db:
     image: postgres
     volumes:
       - "./db/postgres:/docker-entrypoint-initdb.d"
     networks:
       - default
     ports:
-      - "5432:5432"
+      - "8084:5432"
     environment:
-      - "POSTGRES_DB=test"
       - "POSTGRES_USER=admin"
       - "POSTGRES_PASSWORD=admin_pass"
 
@@ -22,4 +47,6 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      - maria-db
+      - mysql-db
+      - postgres-db

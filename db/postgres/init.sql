@@ -1,3 +1,6 @@
+CREATE DATABASE test;
+\c test;
+
 -- a single table is used for all events in the cqrs system
 CREATE TABLE events
 (

@@ -1,0 +1,28 @@
+
+[package]
+name = "cqrs-es2-core"
+version = "0.7.1"
+authors = [
+  "Dave Garred <dave.garred@serverlesstechnology.com>",
+  "Bassem Girgis <brgirgis@gmail.com>",
+]
+edition = "2018"
+license = "MIT"
+description = "A Rust library providing lightweight CQRS and event sourcing framework."
+readme = "README.md"
+documentation = "https://docs.rs/cqrs-es2"
+repository = "https://github.com/brgirgis/cqrs-es2"
+keywords = ["cqrs", "event-sourcing", "es", "DDD"]
+
+
+[dependencies]
+# logging
+log = "^0.4"
+
+# serialization
+serde = { version = "^1.0.127", features = ["derive"] }
+serde_json = "^1.0.66"
+
+[dev-dependencies]
+#static_assertions = "^1.1.0"
+#uuid = { version = "0.8.2", features = ["v4"] }

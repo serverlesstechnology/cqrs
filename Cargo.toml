@@ -1,3 +1,13 @@
+[workspace]
+members = [
+  ".",
+  "cqrs-es2-core",
+  "cqrs-es2-store",
+  "tokio-cqrs-es2-store",
+  "examples/grpc",
+  "examples/restful",
+]
+
 [package]
 name = "cqrs-es2"
 version = "0.7.1"
@@ -13,14 +23,41 @@ documentation = "https://docs.rs/cqrs-es2"
 repository = "https://github.com/brgirgis/cqrs-es2"
 keywords = ["cqrs", "event-sourcing", "es", "DDD"]
 
+[features]
+default = ["with-all-async", "with-all-sync"]
+with-sqlx-postgres = [
+  "tokio-cqrs-es2-store",
+  "tokio-cqrs-es2-store/with-sqlx-postgres",
+]
+with-sqlx-mysql = [
+  "tokio-cqrs-es2-store",
+  "tokio-cqrs-es2-store/with-sqlx-mysql",
+]
+with-sqlx-mariadb = [
+  "tokio-cqrs-es2-store",
+  "tokio-cqrs-es2-store/with-sqlx-mariadb",
+]
+# with-sqlx-mssql = [
+#   "tokio-cqrs-es2-store",
+#   "tokio-cqrs-es2-store/with-sqlx-mssql",
+# ]
+with-sqlx-sqlite = [
+  "tokio-cqrs-es2-store",
+  "tokio-cqrs-es2-store/with-sqlx-sqlite",
+]
+with-all-sqlx = [
+  "with-sqlx-postgres",
+  "with-sqlx-mysql",
+  "with-sqlx-mariadb",
+  #"with-sqlx-mssql",
+  "with-sqlx-sqlite",
+]
+with-all-async = ["with-all-sqlx"]
+with-all-sql = ["cqrs-es2-store"]
+with-all-sync = ["with-all-sql"]
+
+
 [dependencies]
-log = "^0.4"
-
-serde = { version = "^1.0.127", features = ["derive"] }
-serde_json = "^1.0.66"
-
-postgres = { version = "^0.19.1", features = ["with-serde_json-1"] }
-
-[dev-dependencies]
-static_assertions = "^1.1.0"
-uuid = { version = "0.8.2", features = ["v4"] }
+cqrs-es2-core = { path = "./cqrs-es2-core" }
+cqrs-es2-store = { path = "./cqrs-es2-store", optional = true }
+tokio-cqrs-es2-store = { path = "./tokio-cqrs-es2-store", optional = true }

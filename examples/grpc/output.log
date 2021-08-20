@@ -1,0 +1,30 @@
+[2021-08-20][16:22:47][server][INFO] Server listening on [::1]:50051
+[2021-08-20][16:23:02][h2::codec::framed_write][DEBUG] send frame=Settings { flags: (0x0), initial_window_size: 1048576, max_frame_size: 16384 } 
+[2021-08-20][16:23:02][h2::proto::connection][DEBUG] Connection; peer=Server
+[2021-08-20][16:23:02][h2::codec::framed_read][DEBUG] received frame=Settings { flags: (0x0), enable_push: 0, initial_window_size: 2097152, max_frame_size: 16384 } 
+[2021-08-20][16:23:02][h2::codec::framed_write][DEBUG] send frame=Settings { flags: (0x1: ACK) } 
+[2021-08-20][16:23:02][h2::codec::framed_read][DEBUG] received frame=WindowUpdate { stream_id: StreamId(0), size_increment: 5177345 } 
+[2021-08-20][16:23:02][h2::codec::framed_read][DEBUG] received frame=Settings { flags: (0x1: ACK) } 
+[2021-08-20][16:23:02][h2::proto::settings][DEBUG] received settings ACK; applying Settings { flags: (0x0), initial_window_size: 1048576, max_frame_size: 16384 } 
+[2021-08-20][16:23:02][h2::codec::framed_write][DEBUG] send frame=WindowUpdate { stream_id: StreamId(0), size_increment: 983041 } 
+[2021-08-20][16:23:02][h2::codec::framed_read][DEBUG] received frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) } 
+[2021-08-20][16:23:02][h2::codec::framed_read][DEBUG] received frame=Data { stream_id: StreamId(1) } 
+[2021-08-20][16:23:02][h2::codec::framed_read][DEBUG] received frame=Data { stream_id: StreamId(1), flags: (0x1: END_STREAM) } 
+[2021-08-20][16:23:02][server::bank_account::service::bank_account_service][DEBUG] OpenBankAccountRequest { account_id: "new-account-1" }
+[2021-08-20][16:23:02][sqlx::query][INFO] /* SQLx ping */; rows: 0, elapsed: 2.947ms
+[2021-08-20][16:23:02][sqlx::query][INFO] SELECT last_sequence, payload FROM …; rows: 1, elapsed: 1.178ms
+
+SELECT
+  last_sequence,
+  payload
+FROM
+  snapshots
+WHERE
+  aggregate_type = $1
+  AND aggregate_id = $2;
+
+[2021-08-20][16:23:02][cqrs_es2::stores::repository][ERROR] Handling command 'OpenBankAccount(OpenBankAccount { account_id: "new-account-1" })' for aggregate 'new-account-1' returned error 'UserError - code: None
+  message: Some("bank account is already open")
+ params: None'
+[2021-08-20][16:23:02][h2::codec::framed_write][DEBUG] send frame=Headers { stream_id: StreamId(1), flags: (0x5: END_HEADERS | END_STREAM) } 
+[2021-08-20][16:23:02][sqlx::query][INFO] /* SQLx ping */; rows: 0, elapsed: 333.971µs

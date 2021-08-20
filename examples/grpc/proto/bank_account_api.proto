@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package bank_account_api;
+
+// account commands
+message OpenBankAccountRequest {
+  string account_id = 1;
+}
+
+message DepositMoneyRequest {
+  string account_id = 1;
+  double amount = 2;
+}
+
+message WithdrawMoneyRequest {
+  string account_id = 1;
+  double amount = 2;
+}
+
+message WriteCheckRequest {
+  string account_id = 1;
+  double amount = 2;
+  int64 check_number = 3;
+}
+
+// account queries
+message BankAccountSummaryResponse {
+  string account_id = 1;
+  double balance = 2;
+  repeated int64 written_checks = 3;
+}
+
+// generic types
+message CommandResponse {
+  bool is_successful = 1;
+}
+
+message BankAccountQueryRequest {
+  string account_id = 1;
+}
+
+service BankAccount {
+
+  // commands
+  rpc open_account(OpenBankAccountRequest) returns (CommandResponse);
+  rpc deposit_money(DepositMoneyRequest) returns (CommandResponse);
+  rpc withdraw_money(WithdrawMoneyRequest) returns (CommandResponse);
+  rpc write_check(WriteCheckRequest) returns (CommandResponse);
+
+  // queries
+  rpc get_account_summary(BankAccountQueryRequest) returns (BankAccountSummaryResponse);
+}

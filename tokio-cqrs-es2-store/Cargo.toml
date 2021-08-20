@@ -1,0 +1,75 @@
+
+[package]
+name = "tokio-cqrs-es2-store"
+version = "0.7.1"
+authors = [
+  "Dave Garred <dave.garred@serverlesstechnology.com>",
+  "Bassem Girgis <brgirgis@gmail.com>",
+]
+edition = "2018"
+license = "MIT"
+description = "A Rust library providing lightweight CQRS and event sourcing framework."
+readme = "README.md"
+documentation = "https://docs.rs/cqrs-es2"
+repository = "https://github.com/brgirgis/cqrs-es2"
+keywords = ["cqrs", "event-sourcing", "es", "DDD"]
+
+
+[features]
+default = ["with-all-async"]
+with-sqlx-postgres = [
+  "tokio",
+  "sqlx",
+  "sqlx/postgres",
+  "sqlx/uuid",
+  "sqlx/json",
+]
+with-sqlx-mysql = ["tokio", "sqlx", "sqlx/mysql"]
+with-sqlx-mariadb = ["tokio", "sqlx", "sqlx/mysql"]
+#with-sqlx-mssql = ["tokio", "sqlx", "sqlx/mssql"]
+with-sqlx-sqlite = ["tokio", "sqlx", "sqlx/sqlite"]
+with-all-sqlx = [
+  "with-sqlx-postgres",
+  "with-sqlx-mysql",
+  "with-sqlx-mariadb",
+  #"with-sqlx-mssql",
+  "with-sqlx-sqlite",
+]
+with-all-async = ["with-all-sqlx"]
+
+[dependencies]
+# logging
+log = "^0.4"
+
+# serialization
+serde = { version = "^1.0.127", features = ["derive"] }
+serde_json = "^1.0.66"
+
+async-trait = "^0.1"
+
+# sqlx
+sqlx = { version = "0.5.6", features = [
+  # tokio + rustls
+  "runtime-tokio-rustls",
+  # misc
+  "macros",
+  "chrono",
+  "tls",
+], optional = true }
+
+# async runtime
+tokio = { version = "1", features = [
+  "rt-multi-thread",
+  "time",
+  "fs",
+  "macros",
+  "net",
+], optional = true }
+
+# CQRS framework and postgres implementation
+cqrs-es2-core = { path = "../cqrs-es2-core" }
+
+[dev-dependencies]
+#static_assertions = "^1.1.0"
+uuid = { version = "0.8.2", features = ["v4"] }
+tokio-test = "*"

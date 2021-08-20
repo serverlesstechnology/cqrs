@@ -1,0 +1,72 @@
+[package]
+name = "cqrs-grpc-demo"
+version = "0.1.0"
+edition = "2018"
+authors = ["Bassem Girgis <bgirgis@pm.me>"]
+
+
+[[bin]]
+name = "server"
+path = "src/server/main.rs"
+
+[[bin]]
+name = "client"
+path = "src/client/main.rs"
+
+[dependencies]
+# logging
+log = { version = "^0.4", features = [
+  "max_level_debug",
+  "release_max_level_warn",
+] }
+fern = "^0.5"
+
+# serialization
+serde = { version = "^1.0.127", features = ["derive"] }
+serde_json = "^1.0.66"
+
+async-trait = "^0.1"
+
+# grpc minimum
+tonic = "0.5"
+prost = "0.8"
+tokio = { version = "1", features = [
+  "rt-multi-thread",
+  "time",
+  "fs",
+  "macros",
+  "net",
+] }
+
+# structopt
+structopt = { version = "0.3", features = ["paw"] }
+#paw = "1.0"
+
+# CQRS framework and postgres implementation
+cqrs-es2 = { path = "../../" }
+
+# sqlx
+sqlx = { version = "0.5.6", features = [
+  # tokio + rustls
+  "runtime-tokio-rustls",
+  # PostgresSQL
+  "postgres",
+  "uuid",
+  "json",
+  # MySQL and MariaDB
+  "mysql",
+  # MS SQL
+  "mssql",
+  # SQLite
+  "sqlite",
+  # misc
+  "macros",
+  "chrono",
+  "tls",
+] }
+
+# other
+chrono = "^0.4"
+
+[build-dependencies]
+tonic-build = "0.5"

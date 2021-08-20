@@ -1,0 +1,53 @@
+[package]
+name = "cqrs-restful-demo"
+version = "0.7.0"
+authors = [
+  "Dave Garred <dave.garred@serverlesstechnology.com>",
+  "Bassem Girgis <brgirgis@gmail.com>",
+]
+edition = "2018"
+
+[dependencies]
+# logging
+log = { version = "^0.4", features = [
+  "max_level_debug",
+  "release_max_level_warn",
+] }
+fern = "^0.5"
+
+# CQRS framework and postgres implementation
+cqrs-es2 = { path = "../../" }
+
+serde = { version = "^1.0.127", features = ["derive"] }
+serde_json = "1.0"
+
+async-trait = "^0.1"
+
+# sqlx
+sqlx = { version = "0.5.6", features = [
+  # tokio + rustls
+  "runtime-tokio-rustls",
+  # PostgresSQL
+  "postgres",
+  "uuid",
+  "json",
+  # misc
+  "macros",
+  "chrono",
+  "tls",
+] }
+
+tokio = { version = "1", features = [
+  "rt-multi-thread",
+  "time",
+  "fs",
+  "macros",
+  "net",
+] }
+
+# rest API
+iron = "0.6.1"
+router = "*"
+
+# other
+chrono = "^0.4"
