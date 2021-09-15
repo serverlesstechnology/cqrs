@@ -31,11 +31,13 @@ use crate::aggregate::{Aggregate, AggregateError};
 ///         .then_expect_error("a name has already been added for this customer")
 /// ```
 pub struct TestFramework<A> {
-    _phantom: PhantomData<A>
+    _phantom: PhantomData<A>,
 }
 
 impl<A> TestFramework<A>
-    where A: Aggregate {
+where
+    A: Aggregate,
+{
     /// Initiates an aggregate test with no previous events.
     #[must_use]
     pub fn given_no_previous_events(&self) -> AggregateTestExecutor<A> {
@@ -49,24 +51,28 @@ impl<A> TestFramework<A>
 }
 
 impl<A> Default for TestFramework<A>
-    where A: Aggregate
+where
+    A: Aggregate,
 {
     fn default() -> Self {
-        TestFramework { _phantom: PhantomData }
+        TestFramework {
+            _phantom: PhantomData,
+        }
     }
 }
 
 /// Holds the initial event state of an aggregate and accepts a command.
 pub struct AggregateTestExecutor<A>
-    where
-        A: Aggregate
+where
+    A: Aggregate,
 {
     events: Vec<A::Event>,
 }
 
 impl<A> AggregateTestExecutor<A>
-    where
-        A: Aggregate {
+where
+    A: Aggregate,
+{
     /// Consumes a command and using the state details previously passed provides a validator object
     /// to test against.
     pub fn when(self, command: A::Command) -> AggregateResultValidator<A> {
@@ -81,7 +87,9 @@ impl<A> AggregateTestExecutor<A>
 
 /// Validation object for the `TestFramework` package.
 pub struct AggregateResultValidator<A>
-    where A: Aggregate {
+where
+    A: Aggregate,
+{
     result: Result<Vec<A::Event>, AggregateError>,
 }
 
@@ -89,25 +97,27 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     /// Verifies that the expected events have been produced by the command.
     pub fn then_expect_events(self, expected_events: Vec<A::Event>) {
         let events = match self.result {
-            Ok(expected_events) => { expected_events }
-            Err(err) => { panic!("expected success, received aggregate error: '{}'", err); }
+            Ok(expected_events) => expected_events,
+            Err(err) => {
+                panic!("expected success, received aggregate error: '{}'", err);
+            }
         };
         assert_eq!(&events[..], &expected_events[..]);
     }
     /// Verifies that an `AggregateError` with the expected message is produced with the command.
     pub fn then_expect_error(self, error_message: &str) {
         match self.result {
-            Ok(events) => { panic!("expected error, received events: '{:?}'", events); }
-            Err(err) => {
-                match err {
-                    AggregateError::TechnicalError(err) => {
-                        panic!("expected user error but found technical error: {}", err)
-                    }
-                    AggregateError::UserError(err) => {
-                        assert_eq!(err.message, Some(error_message.to_string()));
-                    }
-                }
+            Ok(events) => {
+                panic!("expected error, received events: '{:?}'", events);
             }
+            Err(err) => match err {
+                AggregateError::TechnicalError(err) => {
+                    panic!("expected user error but found technical error: {}", err)
+                }
+                AggregateError::UserError(err) => {
+                    assert_eq!(err.message, Some(error_message.to_string()));
+                }
+            },
         };
     }
 }

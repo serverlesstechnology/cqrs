@@ -1,30 +1,25 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
-use crate::{AggregateContext, EventStore};
 use crate::aggregate::{Aggregate, AggregateError};
-use crate::event::{EventEnvelope};
+use crate::event::EventEnvelope;
+use crate::{AggregateContext, EventStore};
 
 ///  Simple memory store only useful for testing purposes
-pub struct MemStore<A: Aggregate + Send + Sync>
-{
-    events: Arc<LockedEventEnvelopeMap<A>>
+pub struct MemStore<A: Aggregate + Send + Sync> {
+    events: Arc<LockedEventEnvelopeMap<A>>,
 }
 
-impl<A: Aggregate> Default for MemStore<A>
-{
+impl<A: Aggregate> Default for MemStore<A> {
     fn default() -> Self {
         let events = Default::default();
-        MemStore {
-            events
-        }
+        MemStore { events }
     }
 }
 
 type LockedEventEnvelopeMap<A> = RwLock<HashMap<String, Vec<EventEnvelope<A>>>>;
 
-impl<A: Aggregate> MemStore<A>
-{
+impl<A: Aggregate> MemStore<A> {
     /// Get a shared copy of the events stored within the event store.
     pub fn get_events(&self) -> Arc<LockedEventEnvelopeMap<A>> {
         Arc::clone(&self.events)
@@ -50,12 +45,14 @@ impl<A: Aggregate> MemStore<A>
     }
 }
 
-impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A>
-{
-    fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>>
-    {
+impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A> {
+    fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>> {
         let events = self.load_commited_events(aggregate_id.to_string());
-        println!("loading: {} events for aggregate ID '{}'", &events.len(), &aggregate_id);
+        println!(
+            "loading: {} events for aggregate ID '{}'",
+            &events.len(),
+            &aggregate_id
+        );
         events
     }
 
@@ -67,7 +64,7 @@ impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A>
             current_sequence = envelope.sequence;
             let event = envelope.payload;
             aggregate.apply(&event);
-        };
+        }
         MemStoreAggregateContext {
             aggregate_id: aggregate_id.to_string(),
             aggregate,
@@ -75,8 +72,12 @@ impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A>
         }
     }
 
-
-    fn commit(&self, events: Vec<A::Event>, context: MemStoreAggregateContext<A>, metadata: HashMap<String, String>) -> Result<Vec<EventEnvelope<A>>, AggregateError> {
+    fn commit(
+        &self,
+        events: Vec<A::Event>,
+        context: MemStoreAggregateContext<A>,
+        metadata: HashMap<String, String>,
+    ) -> Result<Vec<EventEnvelope<A>>, AggregateError> {
         let aggregate_id = context.aggregate_id.as_str();
         let current_sequence = context.current_sequence;
         let wrapped_events = self.wrap_events(aggregate_id, current_sequence, events, metadata);
@@ -89,7 +90,10 @@ impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A>
         for event in &wrapped_events {
             new_events.push(event.clone());
         }
-        println!("storing: {} new events for aggregate ID '{}'", new_events_qty, &aggregate_id);
+        println!(
+            "storing: {} new events for aggregate ID '{}'",
+            new_events_qty, &aggregate_id
+        );
         // uninteresting unwrap: this is not a struct for production use
         let mut event_map = self.events.write().unwrap();
         event_map.insert(aggregate_id, new_events);
@@ -99,7 +103,8 @@ impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A>
 
 /// Holds context for a pure event store implementation for MemStore
 pub struct MemStoreAggregateContext<A>
-    where A: Aggregate
+where
+    A: Aggregate,
 {
     /// The aggregate ID of the aggregate instance that has been loaded.
     pub aggregate_id: String,
@@ -109,9 +114,9 @@ pub struct MemStoreAggregateContext<A>
     pub current_sequence: usize,
 }
 
-
 impl<A> AggregateContext<A> for MemStoreAggregateContext<A>
-    where A: Aggregate
+where
+    A: Aggregate,
 {
     fn aggregate(&self) -> &A {
         &self.aggregate

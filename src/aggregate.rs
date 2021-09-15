@@ -1,9 +1,9 @@
-use std::{error, fmt};
 use std::collections::HashMap;
+use std::{error, fmt};
 
-use serde::{Deserialize, Serialize};
-use serde::de::DeserializeOwned;
 use crate::DomainEvent;
+use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
 
 /// In CQRS (and Domain Driven Design) an `Aggregate` is the fundamental component that
 /// encapsulates the state and application logic (aka business rules) for the application.
@@ -119,7 +119,11 @@ impl fmt::Display for AggregateError {
 
 impl fmt::Display for UserErrorPayload {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "UserError - code: {:?}\n  message: {:?}\n params: {:?}", &self.code, &self.message, &self.params)
+        write!(
+            f,
+            "UserError - code: {:?}\n  message: {:?}\n params: {:?}",
+            &self.code, &self.message, &self.params
+        )
     }
 }
 
@@ -138,9 +142,9 @@ impl From<serde_json::error::Error> for AggregateError {
     fn from(err: serde_json::error::Error) -> Self {
         match err.classify() {
             serde_json::error::Category::Syntax => AggregateError::new("invalid json"),
-            serde_json::error::Category::Io |
-            serde_json::error::Category::Data |
-            serde_json::error::Category::Eof => AggregateError::new("fail"),
+            serde_json::error::Category::Io
+            | serde_json::error::Category::Data
+            | serde_json::error::Category::Eof => AggregateError::new("fail"),
         }
     }
 }

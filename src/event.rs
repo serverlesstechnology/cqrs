@@ -46,7 +46,9 @@ use crate::aggregate::Aggregate;
 ///     new_email: String
 /// }
 /// ```
-pub trait DomainEvent: Serialize + DeserializeOwned + Clone + PartialEq + fmt::Debug + Sync + Send {
+pub trait DomainEvent:
+    Serialize + DeserializeOwned + Clone + PartialEq + fmt::Debug + Sync + Send
+{
 }
 
 /// `EventEnvelope` is a data structure that encapsulates an event with along with it's pertinent
@@ -56,8 +58,8 @@ pub trait DomainEvent: Serialize + DeserializeOwned + Clone + PartialEq + fmt::D
 /// `sequence`.
 #[derive(Debug)]
 pub struct EventEnvelope<A>
-    where
-        A: Aggregate
+where
+    A: Aggregate,
 {
     /// The id of the aggregate instance.
     pub aggregate_id: String,
@@ -71,8 +73,7 @@ pub struct EventEnvelope<A>
     pub metadata: HashMap<String, String>,
 }
 
-impl<A: Aggregate> Clone for EventEnvelope<A>
-{
+impl<A: Aggregate> Clone for EventEnvelope<A> {
     fn clone(&self) -> Self {
         EventEnvelope {
             aggregate_id: self.aggregate_id.clone(),
@@ -84,13 +85,15 @@ impl<A: Aggregate> Clone for EventEnvelope<A>
     }
 }
 
-impl<A: Aggregate> EventEnvelope<A>
-{
-
+impl<A: Aggregate> EventEnvelope<A> {
     /// A convenience function for packaging an event in an `EventEnvelope`, used for
     /// testing `QueryProcessor`s.
-    pub fn new(aggregate_id: String, sequence: usize, aggregate_type: String, payload: A::Event) -> Self
-    {
+    pub fn new(
+        aggregate_id: String,
+        sequence: usize,
+        aggregate_type: String,
+        payload: A::Event,
+    ) -> Self {
         EventEnvelope {
             aggregate_id,
             sequence,
@@ -101,8 +104,13 @@ impl<A: Aggregate> EventEnvelope<A>
     }
     /// A convenience function for packaging an event in an `EventEnvelope`, used for
     /// testing `QueryProcessor`s. This version allows custom metadata to also be processed.
-    pub fn new_with_metadata(aggregate_id: String, sequence: usize, aggregate_type: String, payload: A::Event, metadata: HashMap<String, String>) -> Self
-    {
+    pub fn new_with_metadata(
+        aggregate_id: String,
+        sequence: usize,
+        aggregate_type: String,
+        payload: A::Event,
+        metadata: HashMap<String, String>,
+    ) -> Self {
         EventEnvelope {
             aggregate_id,
             sequence,

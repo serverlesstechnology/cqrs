@@ -66,8 +66,6 @@ pub mod mem_store;
 /// your application logic (aka business rules).
 pub mod test;
 
-
 // Query provides the basic downstream query objects needed to render queries (or "views") that
 // describe the state of the system.
 mod query;
-

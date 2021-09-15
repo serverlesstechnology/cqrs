@@ -13,22 +13,24 @@ impl Aggregate for Customer {
     type Command = CustomerCommand;
     type Event = CustomerEvent;
 
-    fn aggregate_type() -> &'static str { "customer" }
+    fn aggregate_type() -> &'static str {
+        "customer"
+    }
 
     fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
         match command {
             CustomerCommand::AddCustomerName(payload) => {
                 if self.name.as_str() != "" {
-                    return Err(AggregateError::new("a name has already been added for this customer"));
+                    return Err(AggregateError::new(
+                        "a name has already been added for this customer",
+                    ));
                 }
                 let payload = NameAdded {
-                    changed_name: payload.changed_name
+                    changed_name: payload.changed_name,
                 };
                 Ok(vec![CustomerEvent::NameAdded(payload)])
             }
-            CustomerCommand::UpdateEmail(_) => {
-                Ok(Default::default())
-            }
+            CustomerCommand::UpdateEmail(_) => Ok(Default::default()),
         }
     }
 
@@ -62,12 +64,12 @@ pub enum CustomerEvent {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct NameAdded {
-    pub changed_name: String
+    pub changed_name: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct EmailUpdated {
-    pub new_email: String
+    pub new_email: String,
 }
 
 impl DomainEvent for CustomerEvent {}
@@ -80,12 +82,12 @@ pub enum CustomerCommand {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct AddCustomerName {
-    pub changed_name: String
+    pub changed_name: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct UpdateEmail {
-    pub new_email: String
+    pub new_email: String,
 }
 
 #[cfg(test)]
@@ -100,23 +102,23 @@ mod doc_tests {
     fn test_add_name() {
         CustomerTestFramework::default()
             .given_no_previous_events()
-            .when(CustomerCommand::AddCustomerName(AddCustomerName { changed_name: "John Doe".to_string() }))
-            .then_expect_events(vec![
-                CustomerEvent::NameAdded(NameAdded {
-                    changed_name: "John Doe".to_string()
-                })
-            ]);
+            .when(CustomerCommand::AddCustomerName(AddCustomerName {
+                changed_name: "John Doe".to_string(),
+            }))
+            .then_expect_events(vec![CustomerEvent::NameAdded(NameAdded {
+                changed_name: "John Doe".to_string(),
+            })]);
     }
 
     #[test]
     fn test_add_name_again() {
         CustomerTestFramework::default()
-            .given(vec![
-                CustomerEvent::NameAdded(NameAdded {
-                    changed_name: "John Doe".to_string()
-                })
-            ])
-            .when(CustomerCommand::AddCustomerName(AddCustomerName { changed_name: "John Doe".to_string() }))
+            .given(vec![CustomerEvent::NameAdded(NameAdded {
+                changed_name: "John Doe".to_string(),
+            })])
+            .when(CustomerCommand::AddCustomerName(AddCustomerName {
+                changed_name: "John Doe".to_string(),
+            }))
             .then_expect_error("a name has already been added for this customer");
     }
 }
