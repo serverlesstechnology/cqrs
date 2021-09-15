@@ -85,7 +85,7 @@ impl<A, ES, AC> CqrsFramework<A, ES, AC>
         let committed_events = self.store.commit(resultant_events, aggregate_context, metadata)?;
         for processor in &self.query_processors {
             let dispatch_events = committed_events.as_slice();
-            processor.dispatch(&aggregate_id, dispatch_events);
+            processor.dispatch(aggregate_id, dispatch_events);
         }
         Ok(())
     }

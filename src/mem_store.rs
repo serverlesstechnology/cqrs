@@ -6,7 +6,7 @@ use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::{EventEnvelope};
 
 ///  Simple memory store only useful for testing purposes
-pub struct MemStore<A: Aggregate>
+pub struct MemStore<A: Aggregate + Send + Sync>
 {
     events: Arc<LockedEventEnvelopeMap<A>>
 }

@@ -4,7 +4,7 @@ use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::{EventEnvelope};
 
 /// The abstract central source for loading past events and committing new events.
-pub trait EventStore<A, AC>
+pub trait EventStore<A, AC> : Send + Sync
     where A: Aggregate,
           AC: AggregateContext<A>
 {
