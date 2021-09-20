@@ -54,7 +54,7 @@ impl Aggregate for TestAggregate {
         }
     }
 
-    fn apply(&mut self, event: &Self::Event) {
+    fn apply(&mut self, event: Self::Event) {
         match event {
             TestEvent::Created(e) => {
                 self.id = e.id.clone();
@@ -197,7 +197,7 @@ fn test_mem_store() {
     let mut agg = TestAggregate::default();
     for stored_envelope in stored_envelopes {
         let event = stored_envelope.payload;
-        agg.apply(&event);
+        agg.apply(event);
     }
     println!("{:#?}", agg);
 }

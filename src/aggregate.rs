@@ -44,7 +44,7 @@ use serde::{Deserialize, Serialize};
 ///         }
 ///     }
 ///
-///     fn apply(&mut self, event: &Self::Event) {
+///     fn apply(&mut self, event: Self::Event) {
 ///         match event {
 ///             CustomerEvent::NameAdded(payload) => {
 ///                 self.name = payload.changed_name.clone();
@@ -75,7 +75,7 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// handle inbound command and return a vector of events or an error
     fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError>;
     /// Update the aggregate's state with an event
-    fn apply(&mut self, event: &Self::Event);
+    fn apply(&mut self, event: Self::Event);
 }
 
 /// The base error for the framework.

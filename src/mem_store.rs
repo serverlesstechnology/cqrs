@@ -63,7 +63,7 @@ impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A> {
         for envelope in committed_events {
             current_sequence = envelope.sequence;
             let event = envelope.payload;
-            aggregate.apply(&event);
+            aggregate.apply(event);
         }
         MemStoreAggregateContext {
             aggregate_id: aggregate_id.to_string(),

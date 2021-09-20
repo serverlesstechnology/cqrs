@@ -34,13 +34,13 @@ impl Aggregate for Customer {
         }
     }
 
-    fn apply(&mut self, event: &Self::Event) {
+    fn apply(&mut self, event: Self::Event) {
         match event {
             CustomerEvent::NameAdded(payload) => {
-                self.name = payload.changed_name.clone();
+                self.name = payload.changed_name;
             }
             CustomerEvent::EmailUpdated(payload) => {
-                self.email = payload.new_email.clone();
+                self.email = payload.new_email;
             }
         }
     }

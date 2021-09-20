@@ -78,7 +78,7 @@ where
     pub fn when(self, command: A::Command) -> AggregateResultValidator<A> {
         let mut aggregate = A::default();
         for event in self.events {
-            aggregate.apply(&event);
+            aggregate.apply(event);
         }
         let result = aggregate.handle(command);
         AggregateResultValidator { result }
