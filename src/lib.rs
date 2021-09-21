@@ -18,7 +18,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cqrs-es = "0.1.2"
+//! cqrs-es = "0.1.3"
 //! ```
 //!
 //! ## Usage
