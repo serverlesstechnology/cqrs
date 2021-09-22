@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
+use async_trait::async_trait;
 
 use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::EventEnvelope;
@@ -45,8 +46,9 @@ impl<A: Aggregate> MemStore<A> {
     }
 }
 
+#[async_trait]
 impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A> {
-    fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>> {
+    async fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>> {
         let events = self.load_commited_events(aggregate_id.to_string());
         println!(
             "loading: {} events for aggregate ID '{}'",
@@ -56,8 +58,8 @@ impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A> {
         events
     }
 
-    fn load_aggregate(&self, aggregate_id: &str) -> MemStoreAggregateContext<A> {
-        let committed_events = self.load(aggregate_id);
+    async fn load_aggregate(&self, aggregate_id: &str) -> MemStoreAggregateContext<A> {
+        let committed_events = self.load(aggregate_id).await;
         let mut aggregate = A::default();
         let mut current_sequence = 0;
         for envelope in committed_events {
@@ -72,7 +74,7 @@ impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A> {
         }
     }
 
-    fn commit(
+    async fn commit(
         &self,
         events: Vec<A::Event>,
         context: MemStoreAggregateContext<A>,

@@ -1,20 +1,22 @@
 use std::collections::HashMap;
+use async_trait::async_trait;
 
 use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::EventEnvelope;
 
 /// The abstract central source for loading past events and committing new events.
+#[async_trait]
 pub trait EventStore<A, AC>: Send + Sync
 where
     A: Aggregate,
     AC: AggregateContext<A>,
 {
     /// Load all events for a particular `aggregate_id`
-    fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>>;
+    async fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>>;
     /// Load aggregate at current state
-    fn load_aggregate(&self, aggregate_id: &str) -> AC;
+    async fn load_aggregate(&self, aggregate_id: &str) -> AC;
     /// Commit new events
-    fn commit(
+    async fn commit(
         &self,
         events: Vec<A::Event>,
         context: AC,

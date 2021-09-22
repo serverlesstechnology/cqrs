@@ -63,8 +63,8 @@ where
     ///
     /// # Error
     /// If an error is generated while processing the command this will be returned.
-    pub fn execute(&self, aggregate_id: &str, command: A::Command) -> Result<(), AggregateError> {
-        self.execute_with_metadata(aggregate_id, command, HashMap::new())
+    pub async fn execute(&self, aggregate_id: &str, command: A::Command) -> Result<(), AggregateError> {
+        self.execute_with_metadata(aggregate_id, command, HashMap::new()).await
     }
 
     /// This applies a command to an aggregate along with associated metadata. Executing a command
@@ -81,18 +81,19 @@ where
     /// an AggregateError being returned.
     ///
     /// If successful the events produced will be applied to the configured `QueryProcessor`s.
-    pub fn execute_with_metadata(
+    pub async fn execute_with_metadata(
         &self,
         aggregate_id: &str,
         command: A::Command,
         metadata: HashMap<String, String>,
     ) -> Result<(), AggregateError> {
-        let aggregate_context = self.store.load_aggregate(aggregate_id);
+        let aggregate_context = self.store.load_aggregate(aggregate_id).await;
         let aggregate = aggregate_context.aggregate();
         let resultant_events = aggregate.handle(command)?;
         let committed_events = self
             .store
-            .commit(resultant_events, aggregate_context, metadata)?;
+            .commit(resultant_events, aggregate_context, metadata)
+            .await?;
         for processor in &self.query_processors {
             let dispatch_events = committed_events.as_slice();
             processor.dispatch(aggregate_id, dispatch_events);

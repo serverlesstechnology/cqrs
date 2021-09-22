@@ -13,7 +13,7 @@ cqrs-es is available from Crates.io or Github.
 
 ```toml
 [dependencies]
-cqrs-es = "0.1.3"
+cqrs-es = "0.2.0"
 ```
 
 ## Usage
@@ -23,6 +23,9 @@ Documentation [is available here](https://doc.rust-cqrs.org) along with an intro
 A demo application [is available here](https://github.com/serverlesstechnology/cqrs-demo).
 
 ## Change log
+
+#### `v0.2.0` 
+Moved to async/await for better tool support.
 
 #### `v0.1.3` 
 Aggregates now consume events on `apply`.

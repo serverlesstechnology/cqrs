@@ -154,13 +154,13 @@ fn metadata() -> HashMap<String, String> {
     metadata
 }
 
-#[test]
-fn test_mem_store() {
+#[tokio::test]
+async fn test_mem_store() {
     let event_store = MemStore::<TestAggregate>::default();
     let id = "test_id_A";
-    let initial_events = event_store.load(&id);
+    let initial_events = event_store.load(&id).await;
     assert_eq!(0, initial_events.len());
-    let agg_context = event_store.load_aggregate(&id);
+    let agg_context = event_store.load_aggregate(&id).await;
 
     event_store
         .commit(
@@ -170,10 +170,11 @@ fn test_mem_store() {
             agg_context,
             metadata(),
         )
+        .await
         .unwrap();
-    let stored_events = event_store.load(&id);
+    let stored_events = event_store.load(&id).await;
     assert_eq!(1, stored_events.len());
-    let agg_context = event_store.load_aggregate(&id);
+    let agg_context = event_store.load_aggregate(&id).await;
 
     event_store
         .commit(
@@ -191,8 +192,9 @@ fn test_mem_store() {
             agg_context,
             metadata(),
         )
+        .await
         .unwrap();
-    let stored_envelopes = event_store.load(&id);
+    let stored_envelopes = event_store.load(&id).await;
 
     let mut agg = TestAggregate::default();
     for stored_envelope in stored_envelopes {
@@ -264,8 +266,8 @@ fn test_framework_failure_test_b() {
         .then_expect_error("some error message")
 }
 
-#[test]
-fn framework_test() {
+#[tokio::test]
+async fn framework_test() {
     let event_store = MemStore::default();
     let stored_events = event_store.get_events();
 
@@ -282,7 +284,7 @@ fn framework_test() {
             test_name: uuid.clone(),
         }),
         metadata,
-    )
+    ).await
     .unwrap_or_default();
 
     assert_eq!(1, stored_events.read().unwrap().len());
@@ -295,7 +297,7 @@ fn framework_test() {
         TestCommand::ConfirmTest(ConfirmTest {
             test_name: test.to_string(),
         }),
-    )
+    ).await
     .unwrap_or_default();
 
     assert_eq!(2, delivered_events.read().unwrap().len());
@@ -314,7 +316,7 @@ fn framework_test() {
             TestCommand::ConfirmTest(ConfirmTest {
                 test_name: test.to_string(),
             }),
-        )
+        ).await
         .unwrap_err();
     assert_eq!(AggregateError::new("test already performed"), err);
 
