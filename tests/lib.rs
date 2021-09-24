@@ -1,6 +1,6 @@
+use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use async_trait::async_trait;
 
 use serde::{Deserialize, Serialize};
 use static_assertions::assert_impl_all;
@@ -285,7 +285,8 @@ async fn framework_test() {
             test_name: uuid.clone(),
         }),
         metadata,
-    ).await
+    )
+    .await
     .unwrap_or_default();
 
     assert_eq!(1, stored_events.read().unwrap().len());
@@ -298,7 +299,8 @@ async fn framework_test() {
         TestCommand::ConfirmTest(ConfirmTest {
             test_name: test.to_string(),
         }),
-    ).await
+    )
+    .await
     .unwrap_or_default();
 
     assert_eq!(2, delivered_events.read().unwrap().len());
@@ -317,7 +319,8 @@ async fn framework_test() {
             TestCommand::ConfirmTest(ConfirmTest {
                 test_name: test.to_string(),
             }),
-        ).await
+        )
+        .await
         .unwrap_err();
     assert_eq!(AggregateError::new("test already performed"), err);
 

@@ -1,6 +1,6 @@
+use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use async_trait::async_trait;
 
 use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::EventEnvelope;

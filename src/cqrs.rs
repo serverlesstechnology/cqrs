@@ -63,8 +63,13 @@ where
     ///
     /// # Error
     /// If an error is generated while processing the command this will be returned.
-    pub async fn execute(&self, aggregate_id: &str, command: A::Command) -> Result<(), AggregateError> {
-        self.execute_with_metadata(aggregate_id, command, HashMap::new()).await
+    pub async fn execute(
+        &self,
+        aggregate_id: &str,
+        command: A::Command,
+    ) -> Result<(), AggregateError> {
+        self.execute_with_metadata(aggregate_id, command, HashMap::new())
+            .await
     }
 
     /// This applies a command to an aggregate along with associated metadata. Executing a command

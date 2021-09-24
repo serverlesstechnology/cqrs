@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use async_trait::async_trait;
+use std::collections::HashMap;
 
 use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::EventEnvelope;
