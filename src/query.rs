@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use async_trait::async_trait;
 
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -9,10 +10,11 @@ use crate::event::EventEnvelope;
 /// Each CQRS platform should have one or more `QueryProcessor`s where it will distribute committed
 /// events, it is the responsibility of the `QueryProcessor` to update any interested
 /// queries.
+#[async_trait]
 pub trait QueryProcessor<A: Aggregate>: Send + Sync {
     /// Events will be dispatched here immediately after being committed for the downstream queries
     /// to be updated.
-    fn dispatch(&self, aggregate_id: &str, events: &[EventEnvelope<A>]);
+    async fn dispatch(&self, aggregate_id: &str, events: &[EventEnvelope<A>]);
 }
 
 /// A `Query` is a read element in a CQRS system. As events are emitted multiple downstream queries

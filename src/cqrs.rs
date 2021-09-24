@@ -96,7 +96,7 @@ where
             .await?;
         for processor in &self.query_processors {
             let dispatch_events = committed_events.as_slice();
-            processor.dispatch(aggregate_id, dispatch_events);
+            processor.dispatch(aggregate_id, dispatch_events).await;
         }
         Ok(())
     }

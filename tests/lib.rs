@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
+use async_trait::async_trait;
 
 use serde::{Deserialize, Serialize};
 use static_assertions::assert_impl_all;
@@ -130,9 +131,9 @@ impl TestView {
         TestView { events }
     }
 }
-
+#[async_trait]
 impl QueryProcessor<TestAggregate> for TestView {
-    fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<TestAggregate>]) {
+    async fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<TestAggregate>]) {
         for event in events {
             let mut event_list = self.events.write().unwrap();
             event_list.push(event.clone());
