@@ -7,7 +7,7 @@ use static_assertions::assert_impl_all;
 
 use cqrs_es::mem_store::MemStore;
 use cqrs_es::test::TestFramework;
-use cqrs_es::QueryProcessor;
+use cqrs_es::Query;
 use cqrs_es::{Aggregate, AggregateError, CqrsFramework, DomainEvent, EventEnvelope, EventStore};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -132,7 +132,7 @@ impl TestView {
     }
 }
 #[async_trait]
-impl QueryProcessor<TestAggregate> for TestView {
+impl Query<TestAggregate> for TestView {
     async fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<TestAggregate>]) {
         for event in events {
             let mut event_list = self.events.write().unwrap();

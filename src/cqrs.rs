@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::aggregate::{Aggregate, AggregateError};
-use crate::query::QueryProcessor;
+use crate::query::Query;
 use crate::store::EventStore;
 use crate::AggregateContext;
 
@@ -24,7 +24,7 @@ where
     ES: EventStore<A>,
 {
     store: ES,
-    query_processors: Vec<Box<dyn QueryProcessor<A>>>,
+    query_processors: Vec<Box<dyn Query<A>>>,
 }
 
 impl<A, ES> CqrsFramework<A, ES>
@@ -33,7 +33,7 @@ where
     ES: EventStore<A>,
 {
     /// Creates new framework for dispatching commands using the provided elements.
-    pub fn new(store: ES, query_processors: Vec<Box<dyn QueryProcessor<A>>>) -> CqrsFramework<A, ES>
+    pub fn new(store: ES, query_processors: Vec<Box<dyn Query<A>>>) -> CqrsFramework<A, ES>
     where
         A: Aggregate,
         ES: EventStore<A>,
