@@ -6,20 +6,24 @@ use crate::event::EventEnvelope;
 
 /// The abstract central source for loading past events and committing new events.
 #[async_trait]
-pub trait EventStore<A, AC>: Send + Sync
+pub trait EventStore<A>: Send + Sync
 where
     A: Aggregate,
-    AC: AggregateContext<A>,
 {
+    /// Provides the current state of an aggregate along with surrounding context.
+    /// This is used by the [CqrsFramework](struct.CqrsFramework.html) when loading
+    /// an aggregate in order to handle incoming commands.
+    type AC: AggregateContext<A>;
+
     /// Load all events for a particular `aggregate_id`
     async fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>>;
     /// Load aggregate at current state
-    async fn load_aggregate(&self, aggregate_id: &str) -> AC;
+    async fn load_aggregate(&self, aggregate_id: &str) -> Self::AC;
     /// Commit new events
     async fn commit(
         &self,
         events: Vec<A::Event>,
-        context: AC,
+        context: Self::AC,
         metadata: HashMap<String, String>,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError>;
 

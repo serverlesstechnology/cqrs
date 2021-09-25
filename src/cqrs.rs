@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::marker::PhantomData;
 
 use crate::aggregate::{Aggregate, AggregateError};
 use crate::query::QueryProcessor;
@@ -19,37 +18,29 @@ use crate::AggregateContext;
 ///
 /// To manage these tasks we use a `CqrsFramework`.
 ///
-pub struct CqrsFramework<A, ES, AC>
+pub struct CqrsFramework<A, ES>
 where
     A: Aggregate,
-    ES: EventStore<A, AC>,
-    AC: AggregateContext<A>,
+    ES: EventStore<A>,
 {
     store: ES,
     query_processors: Vec<Box<dyn QueryProcessor<A>>>,
-    _phantom: PhantomData<AC>,
 }
 
-impl<A, ES, AC> CqrsFramework<A, ES, AC>
+impl<A, ES> CqrsFramework<A, ES>
 where
     A: Aggregate,
-    ES: EventStore<A, AC>,
-    AC: AggregateContext<A>,
+    ES: EventStore<A>,
 {
     /// Creates new framework for dispatching commands using the provided elements.
-    pub fn new(
-        store: ES,
-        query_processors: Vec<Box<dyn QueryProcessor<A>>>,
-    ) -> CqrsFramework<A, ES, AC>
+    pub fn new(store: ES, query_processors: Vec<Box<dyn QueryProcessor<A>>>) -> CqrsFramework<A, ES>
     where
         A: Aggregate,
-        ES: EventStore<A, AC>,
-        AC: AggregateContext<A>,
+        ES: EventStore<A>,
     {
         CqrsFramework {
             store,
             query_processors,
-            _phantom: PhantomData,
         }
     }
     /// This applies a command to an aggregate. Executing a command

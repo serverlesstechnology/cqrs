@@ -47,7 +47,9 @@ impl<A: Aggregate> MemStore<A> {
 }
 
 #[async_trait]
-impl<A: Aggregate> EventStore<A, MemStoreAggregateContext<A>> for MemStore<A> {
+impl<A: Aggregate> EventStore<A> for MemStore<A> {
+    type AC = MemStoreAggregateContext<A>;
+
     async fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>> {
         let events = self.load_commited_events(aggregate_id.to_string());
         println!(
