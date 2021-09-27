@@ -72,7 +72,18 @@ pub struct EmailUpdated {
     pub new_email: String,
 }
 
-impl DomainEvent for CustomerEvent {}
+impl DomainEvent for CustomerEvent {
+    fn event_type(&self) -> &'static str {
+        match self {
+            CustomerEvent::NameAdded(_) => "NameAdded",
+            CustomerEvent::EmailUpdated(_) => "EmailUpdated",
+        }
+    }
+
+    fn event_version(&self) -> &'static str {
+        "1.0"
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum CustomerCommand {

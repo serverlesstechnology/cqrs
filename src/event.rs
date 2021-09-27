@@ -49,6 +49,10 @@ use crate::aggregate::Aggregate;
 pub trait DomainEvent:
     Serialize + DeserializeOwned + Clone + PartialEq + fmt::Debug + Sync + Send
 {
+    /// A name specifying the event, used for event upcasting.
+    fn event_type(&self) -> &'static str;
+    /// A version of the `event_type`, use for event upcasting.
+    fn event_version(&self) -> &'static str;
 }
 
 /// `EventEnvelope` is a data structure that encapsulates an event with along with it's pertinent
