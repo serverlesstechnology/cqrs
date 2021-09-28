@@ -42,7 +42,5 @@ Corrected to move all command and event logic into the aggregate.
 ## Todos
 
 - Event upcasters.
-- Event serialization uses the event type as the root node of the JSON tree. This simplifies
-deserialization but is non-standard.
 - A persistence implementation for DynamoDb.
 - A persistence implementation for MySql.

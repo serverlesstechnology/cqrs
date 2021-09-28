@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-#![deny(missing_docs)]
+// #![deny(missing_docs)]
 #![deny(clippy::all)]
 #![warn(rust_2018_idioms)]
 // #![warn(clippy::pedantic,missing_debug_implementations)]
@@ -69,3 +69,6 @@ pub mod test;
 // Query provides the basic downstream query objects needed to render queries (or "views") that
 // describe the state of the system.
 mod query;
+
+/// Common persistence logic used for database-backed event stores.
+pub mod persist;
