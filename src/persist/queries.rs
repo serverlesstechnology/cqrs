@@ -26,12 +26,11 @@ where
     V: View<A>,
     A: Aggregate,
 {
-    /// Creates a new `GenericQuery` that will store serialized views in a Postgres table named
-    /// identically to the `query_name` value provided. This table should be created by the user
-    /// before using this query repository (see `/db/init.sql` sql initialization file).
+    /// Creates a new `GenericQuery` using the provided `ViewRepository`.
     ///
     /// ```ignore
-    /// let query = GenericQuery::<MyView, MyAggregate>::new("my_query", pool.clone());
+    /// let repo: MyRepo = ...
+    /// let query = GenericQuery::<MyRepo, MyView, MyAggregate>::new(repo);
     /// let store = ...
     /// let cqrs = CqrsFramework::new(store, vec![Box::new(query)]);
     /// ```

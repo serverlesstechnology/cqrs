@@ -26,13 +26,14 @@ where
     R: PersistedEventRepository<A>,
     A: Aggregate + Send + Sync,
 {
-    /// Creates a new `PostgresStore` from the provided database connection,
+    /// Creates a new `PostgresStore` from the provided event repository,
     /// an `EventStore` used for configuring a new cqrs framework.
     ///
     /// ```ignore
     /// # use postgres_es::PostgresStore;
     /// # use cqrs_es::CqrsFramework;
-    /// let store = PostgresStore::<MyAggregate>::new(pool);
+    /// let repo = ...
+    /// let store = PersistedEventStore::<MyAggregate>::new(repo);
     /// let cqrs = CqrsFramework::new(store, vec![]);
     /// ```
     pub fn new(repo: R) -> Self {
