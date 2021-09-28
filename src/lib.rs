@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-// #![deny(missing_docs)]
+#![deny(missing_docs)]
 #![deny(clippy::all)]
 #![warn(rust_2018_idioms)]
 // #![warn(clippy::pedantic,missing_debug_implementations)]

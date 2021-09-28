@@ -2,10 +2,14 @@ use std::fmt::{Display, Formatter};
 
 use crate::AggregateError;
 
+/// Errors for implementations of a persistent event store.
 #[derive(Debug)]
 pub enum PersistenceError {
+    /// Optimistic locking conflict occurred while committing and aggregate.
     OptimisticLockError,
+    /// An error occurred connecting to the database.
     ConnectionError(String),
+    /// An unexpected error occurred while accessing the database.
     UnknownError(String),
 }
 

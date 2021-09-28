@@ -84,11 +84,13 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
 pub enum AggregateError {
     /// The user has made an error, a String value contains a message to be delivered to the user.
     UserError(UserErrorPayload),
+    /// A command has been rejected due to a conflict with another command on the same aggregate
+    /// instance. This is usually handled by optimistic locking in systems backed by an RDBMS.
+    AggregateConflict,
     /// A technical error was encountered that prevented the command from being applied to the
     /// aggregate. In general the accompanying message should be logged for investigation rather
     /// than returned to the user.
     TechnicalError(String),
-    AggregateConflict,
 }
 
 /// Payload for an `AggregateError::UserError`, somewhat modeled on the errors produced by the
