@@ -111,11 +111,11 @@ impl<A: Aggregate> AggregateResultValidator<A> {
                 panic!("expected error, received events: '{:?}'", events);
             }
             Err(err) => match err {
-                AggregateError::TechnicalError(err) => {
-                    panic!("expected user error but found technical error: {}", err)
-                }
                 AggregateError::UserError(err) => {
                     assert_eq!(err.message, Some(error_message.to_string()));
+                }
+                _ => {
+                    panic!("expected user error but found technical error: {}", err)
                 }
             },
         };

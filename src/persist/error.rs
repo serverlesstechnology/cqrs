@@ -1,28 +1,32 @@
-use crate::AggregateError;
 use std::fmt::{Display, Formatter};
+
+use crate::AggregateError;
 
 #[derive(Debug)]
 pub enum PersistenceError {
     OptimisticLockError,
+    ConnectionError(String),
     UnknownError(String),
 }
+
 impl Display for PersistenceError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             PersistenceError::OptimisticLockError => write!(f, "optimistic lock error"),
-            PersistenceError::UnknownError(e) => write!(f, "{}", e.as_str()),
+            PersistenceError::ConnectionError(msg) => write!(f, "{}", msg),
+            PersistenceError::UnknownError(msg) => write!(f, "{}", msg),
         }
     }
 }
+
 impl std::error::Error for PersistenceError {}
 
 impl From<PersistenceError> for AggregateError {
     fn from(err: PersistenceError) -> Self {
         match err {
-            PersistenceError::OptimisticLockError => {
-                AggregateError::TechnicalError(err.to_string())
-            }
-            PersistenceError::UnknownError(e) => AggregateError::TechnicalError(e),
+            PersistenceError::ConnectionError(msg) => AggregateError::TechnicalError(msg),
+            PersistenceError::UnknownError(msg) => AggregateError::TechnicalError(msg),
+            PersistenceError::OptimisticLockError => AggregateError::AggregateConflict,
         }
     }
 }

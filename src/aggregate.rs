@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 use std::{error, fmt};
 
-use crate::DomainEvent;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+
+use crate::DomainEvent;
 
 /// In CQRS (and Domain Driven Design) an `Aggregate` is the fundamental component that
 /// encapsulates the state and application logic (aka business rules) for the application.
@@ -87,6 +88,7 @@ pub enum AggregateError {
     /// aggregate. In general the accompanying message should be logged for investigation rather
     /// than returned to the user.
     TechnicalError(String),
+    AggregateConflict,
 }
 
 /// Payload for an `AggregateError::UserError`, somewhat modeled on the errors produced by the
@@ -107,12 +109,9 @@ impl error::Error for AggregateError {}
 impl fmt::Display for AggregateError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AggregateError::TechnicalError(message) => {
-                write!(f, "{}", message)
-            }
-            AggregateError::UserError(message) => {
-                write!(f, "{}", message)
-            }
+            AggregateError::TechnicalError(message) => write!(f, "{}", message),
+            AggregateError::UserError(message) => write!(f, "{}", message),
+            AggregateError::AggregateConflict => write!(f, "aggregate conflict"),
         }
     }
 }
