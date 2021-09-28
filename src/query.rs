@@ -23,7 +23,7 @@ pub trait Query<A: Aggregate>: Send + Sync {
 ///
 /// Queries are generally serialized for persistence, usually in a standard database, but a query
 /// could also utilize messaging platform or other asynchronous, eventually-consistent systems.
-pub trait View<A: Aggregate>: Debug + Default + Serialize + DeserializeOwned {
+pub trait View<A: Aggregate>: Debug + Default + Serialize + DeserializeOwned + Send + Sync {
     /// Each implemented query is responsible for updating its state based on events passed via
     /// this method.
     fn update(&mut self, event: &EventEnvelope<A>);

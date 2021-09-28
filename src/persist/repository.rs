@@ -1,6 +1,7 @@
+use crate::persist::context::QueryContext;
 use crate::persist::error::PersistenceError;
 use crate::persist::SnapshotStoreAggregateContext;
-use crate::{Aggregate, EventEnvelope};
+use crate::{Aggregate, EventEnvelope, View};
 use async_trait::async_trait;
 
 /// Handles the database access needed for operation of a PersistedEventStore.
@@ -39,4 +40,21 @@ where
         current_snapshot: usize,
         events: &[EventEnvelope<A>],
     ) -> Result<(), PersistenceError>;
+}
+
+/// Handles the database access needed for a GenericQuery.
+#[async_trait]
+pub trait ViewRepository<V, A>: Send + Sync
+where
+    V: View<A>,
+    A: Aggregate,
+{
+    /// Returns the current view instance.
+    async fn load(
+        &self,
+        query_instance_id: &str,
+    ) -> Result<Option<(V, QueryContext)>, PersistenceError>;
+
+    /// Updates the view instance.
+    async fn update_view(&self, view: V, context: QueryContext) -> Result<(), PersistenceError>;
 }
