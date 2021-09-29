@@ -70,5 +70,4 @@ pub mod test;
 // describe the state of the system.
 mod query;
 
-/// Common persistence logic used for database-backed event stores.
-pub mod persist;
+
