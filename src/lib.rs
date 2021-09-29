@@ -12,29 +12,10 @@
 //! [![docs](https://img.shields.io/badge/API-docs-blue.svg)](https://docs.rs/cqrs-es)
 //! ---
 //!
-//! ## Installation
-//!
-//! cqrs-es is available from Crates.io or Github.
-//!
-//! ```toml
-//! [dependencies]
-//! cqrs-es = "0.2.1"
-//! ```
-//!
-//! ## Usage
-//!
 //! Documentation [is available here](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
 //!
 //! A demo application [is available here](https://github.com/serverlesstechnology/cqrs-demo).
 //!
-//! ## Todos
-//!
-//! - Event upcasters.
-//! - Event serialization uses the event type as the root node of the JSON tree. This simplifies
-//! deserialization but is non-standard.
-//! - A persistence implementation for DynamoDb.
-//! - A persistence implementation for MySql.
-
 pub use crate::aggregate::*;
 pub use crate::cqrs::*;
 pub use crate::event::*;
