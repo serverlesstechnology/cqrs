@@ -13,7 +13,7 @@ cqrs-es is available from Crates.io or Github.
 
 ```toml
 [dependencies]
-cqrs-es = "0.2.1"
+cqrs-es = "0.2.2"
 ```
 
 ## Usage
@@ -23,6 +23,8 @@ Documentation [is available here](https://doc.rust-cqrs.org) along with an intro
 A demo application [is available here](https://github.com/serverlesstechnology/cqrs-demo).
 
 ## Change log
+
+#### `v0.2.2` 
 
 #### `v0.2.1` 
 - Moved generic persistence logic in from postgres-es package.
