@@ -3,33 +3,8 @@ use std::marker::PhantomData;
 use crate::aggregate::{Aggregate, AggregateError};
 
 /// A framework for rigorously testing the aggregate logic, one of the ***most important***
-/// parts of any CQRS system.
+/// parts of any DDD system.
 ///
-/// ```
-/// # use cqrs_es::test::TestFramework;
-/// # use cqrs_es::doc::{Customer, CustomerEvent, AddCustomerName, NameAdded, CustomerCommand};
-/// type CustomerTestFramework = TestFramework<Customer>;
-///
-/// CustomerTestFramework::default()
-///         .given_no_previous_events()
-///         .when(CustomerCommand::AddCustomerName(AddCustomerName{
-///                 changed_name: "John Doe".to_string()
-///             }))
-///         .then_expect_events(vec![
-///             CustomerEvent::NameAdded(NameAdded{
-///                 changed_name: "John Doe".to_string()
-///             })
-///         ]);
-///
-/// CustomerTestFramework::default()
-///         .given(vec![
-///             CustomerEvent::NameAdded(NameAdded {
-///                 changed_name: "John Doe".to_string()
-///             })
-///         ])
-///         .when(CustomerCommand::AddCustomerName(AddCustomerName{ changed_name: "John Doe".to_string() }))
-///         .then_expect_error("a name has already been added for this customer")
-/// ```
 pub struct TestFramework<A> {
     _phantom: PhantomData<A>,
 }

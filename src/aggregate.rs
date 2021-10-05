@@ -12,7 +12,7 @@ use crate::DomainEvent;
 ///
 /// # Examples
 /// ```rust
-/// # use cqrs_es::doc::{CustomerEvent, CustomerCommand, NameAdded};
+/// # use cqrs_es::doc::{CustomerEvent, CustomerCommand};
 /// # use cqrs_es::{Aggregate, AggregateError};
 /// # use serde::{Serialize,Deserialize};
 /// #[derive(Serialize,Deserialize)]
@@ -30,16 +30,13 @@ use crate::DomainEvent;
 ///
 ///     fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
 ///         match command {
-///             CustomerCommand::AddCustomerName(payload) => {
+///             CustomerCommand::AddCustomerName{changed_name} => {
 ///                 if self.name.as_str() != "" {
 ///                     return Err(AggregateError::new("a name has already been added for this customer"));
 ///                 }
-///                 let payload = NameAdded {
-///                     changed_name: payload.changed_name
-///                 };
-///                 Ok(vec![CustomerEvent::NameAdded(payload)])
+///                 Ok(vec![CustomerEvent::NameAdded{changed_name}])
 ///             }
-///             CustomerCommand::UpdateEmail(_) => {
+///             CustomerCommand::UpdateEmail{..} => {
 ///                 Ok(Default::default())
 ///             }
 ///         }
@@ -47,11 +44,11 @@ use crate::DomainEvent;
 ///
 ///     fn apply(&mut self, event: Self::Event) {
 ///         match event {
-///             CustomerEvent::NameAdded(payload) => {
-///                 self.name = payload.changed_name.clone();
+///             CustomerEvent::NameAdded{changed_name} => {
+///                 self.name = changed_name.clone();
 ///             }
-///             CustomerEvent::EmailUpdated(payload) => {
-///                 self.email = payload.new_email.clone();
+///             CustomerEvent::EmailUpdated{new_email} => {
+///                 self.email = new_email.clone();
 ///             }
 ///         }
 ///     }
