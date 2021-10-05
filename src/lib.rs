@@ -7,14 +7,23 @@
 //!
 //! **A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures.**
 //!
-//! ![Build tag](https://codebuild.us-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoia3ZYcXozMjVZaFhoTldlUmhHemlWVm9LUjVaTC9LN3dSTFZpMkVTTmRycElkcGhJT3g2TUdtajZyRWZMd01xNktvUkNwLzdZYW15bzJkZldQMjJWZ1dNPSIsIml2UGFyYW1ldGVyU3BlYyI6InFORDNyaFFEQUNFQkE1NlUiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
-//! [![Crates.io](https://img.shields.io/crates/v/cqrs-es)](https://crates.io/crates/cqrs-es)
-//! [![docs](https://img.shields.io/badge/API-docs-blue.svg)](https://docs.rs/cqrs-es)
-//! ---
+//! Command Query Responsibility Segregation (CQRS) is a pattern in
+//! [Domain Driven Design](https://martinfowler.com/tags/domain%20driven%20design.html)
+//! that uses separate write and read models for application objects and interconnects them with events.
+//! Event sourcing uses the generated events as the source of truth for the
+//! state of the application.
 //!
-//! Documentation [is available here](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
+//! Together these provide a number of benefits:
+//! - Removes coupling between tests and application logic allowing limitless refactoring.
+//! - Greater isolation of the [aggregate](https://martinfowler.com/bliki/DDD_Aggregate.html).
+//! - Ability to create views that more accurately model our business environment.
+//! - A horizontally scalable read path.
 //!
-//! A demo application [is available here](https://github.com/serverlesstechnology/cqrs-demo).
+//!
+//! Things that could be quite helpful:
+//! - [User guide](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
+//! - [Demo application](https://github.com/serverlesstechnology/cqrs-demo) using the warp http server.
+//!
 //!
 pub use crate::aggregate::*;
 pub use crate::cqrs::*;
@@ -40,6 +49,10 @@ mod cqrs;
 pub mod doc;
 
 /// An in-memory event store suitable for local testing.
+///
+/// A backing store is necessary for any application to store and retrieve the generated events.
+/// This in-memory store is useful for application development and integration tests that do not
+/// require persistence after running.
 pub mod mem_store;
 
 /// Test provides a test framework for building a resilient test base around aggregates.

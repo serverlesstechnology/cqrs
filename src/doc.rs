@@ -2,6 +2,42 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Aggregate, AggregateError, DomainEvent};
 
+
+
+
+#[derive(Debug,Default,Serialize,Deserialize,PartialEq,Clone)]
+pub struct MyEvents;
+impl DomainEvent for MyEvents {
+    fn event_type(&self) -> &'static str {
+        todo!()
+    }
+    fn event_version(&self) -> &'static str {
+        todo!()
+    }
+}
+#[derive(Debug,Default,Serialize,Deserialize)]
+pub struct MyCommands;
+#[derive(Debug,Default,Serialize,Deserialize)]
+pub struct MyAggregate;
+impl Aggregate for MyAggregate {
+    type Command = MyCommands;
+    type Event = MyEvents;
+
+    fn aggregate_type() -> &'static str {
+        todo!()
+    }
+
+    fn handle(&self, _command: Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
+        todo!()
+    }
+
+    fn apply(&mut self, _event: Self::Event) {
+        todo!()
+    }
+}
+
+
+
 #[derive(Serialize, Deserialize)]
 pub struct Customer {
     pub customer_id: String,

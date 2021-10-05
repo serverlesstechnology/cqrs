@@ -6,7 +6,17 @@ use crate::aggregate::{Aggregate, AggregateError};
 use crate::event::EventEnvelope;
 use crate::{AggregateContext, EventStore};
 
-///  Simple memory store only useful for testing purposes
+///  Simple memory store useful for application development and testing purposes.
+///
+/// Creation and use in a constructing a `CqrsFramework`:
+/// ```
+/// # use cqrs_es::doc::MyAggregate;
+/// use cqrs_es::CqrsFramework;
+/// use cqrs_es::mem_store::MemStore;
+///
+/// let store = MemStore::<MyAggregate>::default();
+/// let cqrs = CqrsFramework::new(store, vec![]);
+/// ```
 pub struct MemStore<A: Aggregate + Send + Sync> {
     events: Arc<LockedEventEnvelopeMap<A>>,
 }
@@ -22,9 +32,30 @@ type LockedEventEnvelopeMap<A> = RwLock<HashMap<String, Vec<EventEnvelope<A>>>>;
 
 impl<A: Aggregate> MemStore<A> {
     /// Get a shared copy of the events stored within the event store.
+    ///
+    /// This can be used to verify the state of events that have been committed.
+    /// Example of reading and displaying stored events:
+    /// ```
+    /// # use cqrs_es::doc::MyAggregate;
+    /// # use cqrs_es::EventEnvelope;
+    /// # use cqrs_es::mem_store::MemStore;
+    /// # let store = MemStore::<MyAggregate>::default();
+    /// let my_aggregate_id = "test-aggregate-C";
+    /// let all_locked_events = store.get_events();
+    /// let unlocked_events = all_locked_events.read().unwrap();
+    /// match unlocked_events.get(my_aggregate_id) {
+    ///     Some(events) => {
+    ///         for event in events {
+    ///             println!("{:?}", event);
+    ///         }
+    ///     }
+    ///     None => {}
+    /// };
+    /// ```
     pub fn get_events(&self) -> Arc<LockedEventEnvelopeMap<A>> {
         Arc::clone(&self.events)
     }
+
     fn load_commited_events(&self, aggregate_id: String) -> Vec<EventEnvelope<A>> {
         // uninteresting unwrap: this will not be used in production, for tests only
         let event_map = self.events.read().unwrap();
@@ -105,7 +136,9 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
     }
 }
 
-/// Holds context for a pure event store implementation for MemStore
+/// Holds context for a pure event store implementation for MemStore.
+///
+/// This is used internally by the `CqrsFramework`.
 pub struct MemStoreAggregateContext<A>
 where
     A: Aggregate,
