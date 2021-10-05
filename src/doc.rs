@@ -19,7 +19,8 @@ impl DomainEvent for MyEvents {
 }
 #[derive(Debug,Serialize,Deserialize)]
 pub enum  MyCommands {
-    DoSomething
+    DoSomething,
+    BadCommand,
 }
 #[derive(Debug,Default,Serialize,Deserialize)]
 pub struct MyAggregate;
@@ -31,13 +32,14 @@ impl Aggregate for MyAggregate {
         todo!()
     }
 
-    fn handle(&self, _command: Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
-        todo!()
+    fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
+        match command {
+            MyCommands::DoSomething => Ok(vec![MyEvents::SomethingWasDone]),
+            MyCommands::BadCommand => Err(AggregateError::new("the expected error message")),
+        }
     }
 
-    fn apply(&mut self, _event: Self::Event) {
-        todo!()
-    }
+    fn apply(&mut self, _event: Self::Event) {}
 }
 
 
