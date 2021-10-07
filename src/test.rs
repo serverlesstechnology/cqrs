@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 
-use crate::aggregate::{Aggregate, AggregateError};
+use crate::aggregate::{Aggregate};
+use crate::AggregateError;
 
 /// A framework for rigorously testing the aggregate logic, one of the ***most important***
 /// parts of any DDD system.
@@ -26,7 +27,7 @@ where
     /// use cqrs_es::test::TestFramework;
     ///
     /// let executor = TestFramework::<MyAggregate>::default()
-    ///                     .given_no_previous_events();
+    ///     .given_no_previous_events();
     /// ```
     #[must_use]
     pub fn given_no_previous_events(&self) -> AggregateTestExecutor<A> {
@@ -39,7 +40,7 @@ where
     /// use cqrs_es::test::TestFramework;
     ///
     /// let executor = TestFramework::<MyAggregate>::default()
-    ///                     .given(vec![MyEvents::SomethingWasDone]);
+    ///     .given(vec![MyEvents::SomethingWasDone]);
     /// ```
     #[must_use]
     pub fn given(&self, events: Vec<A::Event>) -> AggregateTestExecutor<A> {
@@ -107,8 +108,8 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     /// use cqrs_es::test::TestFramework;
     ///
     /// let validator = TestFramework::<MyAggregate>::default()
-    ///                     .given_no_previous_events()
-    ///                     .when(MyCommands::DoSomething);
+    ///     .given_no_previous_events()
+    ///     .when(MyCommands::DoSomething);
     ///
     /// validator.then_expect_events(vec![MyEvents::SomethingWasDone]);
     /// ```
@@ -128,8 +129,8 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     /// use cqrs_es::test::TestFramework;
     ///
     /// let validator = TestFramework::<MyAggregate>::default()
-    ///                     .given_no_previous_events()
-    ///                     .when(MyCommands::BadCommand);
+    ///     .given_no_previous_events()
+    ///     .when(MyCommands::BadCommand);
     ///
     /// validator.then_expect_error("the expected error message");
     /// ```

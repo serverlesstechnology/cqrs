@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::aggregate::{Aggregate, AggregateError};
+use crate::{Aggregate, AggregateError};
 use crate::query::Query;
 use crate::store::EventStore;
 use crate::AggregateContext;
@@ -34,6 +34,20 @@ where
     ES: EventStore<A>,
 {
     /// Creates new framework for dispatching commands using the provided elements.
+    /// Takes an `EventStore` and a vector of queries.
+    ///
+    /// For a simple in-memory `EventStore` suitable for testing see
+    /// [MemStore](mem_store/struct.MemStore.html) or for production use a persistent event store
+    /// such as found in [postgres-es](https://crates.io/crates/postgres-es).
+    ///
+    /// ```
+    /// # use cqrs_es::doc::MyAggregate;
+    /// use cqrs_es::CqrsFramework;
+    /// use cqrs_es::mem_store::MemStore;
+    ///
+    /// let store = MemStore::<MyAggregate>::default();
+    /// let cqrs = CqrsFramework::new(store, vec![]);
+    /// ```
     pub fn new(store: ES, query_processors: Vec<Arc<dyn Query<A>>>) -> CqrsFramework<A, ES>
     where
         A: Aggregate,
@@ -53,8 +67,11 @@ where
     ///
     /// If successful the events produced will be applied to the configured `QueryProcessor`s.
     ///
-    /// # Error
-    /// If an error is generated while processing the command this will be returned.
+    /// ```ignore
+    /// let command = MyCommands::DoSomething;
+    ///
+    /// cqrs.execute("agg-id-F39A0C", command).await;
+    /// ```
     pub async fn execute(
         &self,
         aggregate_id: &str,
@@ -78,6 +95,14 @@ where
     /// an AggregateError being returned.
     ///
     /// If successful the events produced will be applied to the configured `QueryProcessor`s.
+    ///
+    /// ```ignore
+    /// let command = MyCommands::DoSomething;
+    /// let mut metadata = HashMap::new();
+    /// metadata.insert("time".to_string(), chrono::Utc::now().to_rfc3339())
+    ///
+    /// cqrs.execute_with_metadata("agg-id-F39A0C", command, metadata).await;
+    /// ```
     pub async fn execute_with_metadata(
         &self,
         aggregate_id: &str,

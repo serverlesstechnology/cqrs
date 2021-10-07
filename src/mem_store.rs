@@ -1,10 +1,10 @@
-use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
-use crate::aggregate::{Aggregate, AggregateError};
+use async_trait::async_trait;
+
+use crate::{Aggregate, AggregateContext, AggregateError, EventStore};
 use crate::event::EventEnvelope;
-use crate::{AggregateContext, EventStore};
 
 ///  Simple memory store useful for application development and testing purposes.
 ///
@@ -39,11 +39,11 @@ impl<A: Aggregate> MemStore<A> {
     /// # use cqrs_es::doc::MyAggregate;
     /// # use cqrs_es::EventEnvelope;
     /// # use cqrs_es::mem_store::MemStore;
-    /// # let store = MemStore::<MyAggregate>::default();
-    /// let my_aggregate_id = "test-aggregate-C";
+    /// let store = MemStore::<MyAggregate>::default();
+    /// //...
     /// let all_locked_events = store.get_events();
     /// let unlocked_events = all_locked_events.read().unwrap();
-    /// match unlocked_events.get(my_aggregate_id) {
+    /// match unlocked_events.get("test-aggregate-id-C450D1A") {
     ///     Some(events) => {
     ///         for event in events {
     ///             println!("{:?}", event);
@@ -140,8 +140,8 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
 ///
 /// This is used internally by the `CqrsFramework`.
 pub struct MemStoreAggregateContext<A>
-where
-    A: Aggregate,
+    where
+        A: Aggregate,
 {
     /// The aggregate ID of the aggregate instance that has been loaded.
     pub aggregate_id: String,
@@ -152,8 +152,8 @@ where
 }
 
 impl<A> AggregateContext<A> for MemStoreAggregateContext<A>
-where
-    A: Aggregate,
+    where
+        A: Aggregate,
 {
     fn aggregate(&self) -> &A {
         &self.aggregate

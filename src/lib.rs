@@ -24,12 +24,12 @@
 //! - [User guide](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
 //! - [Demo application](https://github.com/serverlesstechnology/cqrs-demo) using the warp http server.
 //!
-//!
 pub use crate::aggregate::*;
 pub use crate::cqrs::*;
 pub use crate::event::*;
 pub use crate::query::*;
 pub use crate::store::*;
+pub use crate::error::*;
 
 // Aggregate module holds the central traits that define the fundamental component of CQRS.
 mod aggregate;
@@ -44,6 +44,13 @@ mod store;
 // event store and subsequently processing commands.
 mod cqrs;
 
+// Aggregate error
+mod error;
+
+// Query provides the basic downstream query objects needed to render queries (or "views") that
+// describe the state of the system.
+mod query;
+
 // Documentation items
 #[doc(hidden)]
 pub mod doc;
@@ -53,6 +60,15 @@ pub mod doc;
 /// A backing store is necessary for any application to store and retrieve the generated events.
 /// This in-memory store is useful for application development and integration tests that do not
 /// require persistence after running.
+///
+/// ```
+/// # use cqrs_es::doc::MyAggregate;
+/// use cqrs_es::CqrsFramework;
+/// use cqrs_es::mem_store::MemStore;
+///
+/// let store = MemStore::<MyAggregate>::default();
+/// let cqrs = CqrsFramework::new(store, vec![]);
+/// ```
 pub mod mem_store;
 
 /// Test provides a test framework for building a resilient test base around aggregates.
@@ -65,31 +81,26 @@ pub mod mem_store;
 /// type CustomerTestFramework = TestFramework<Customer>;
 ///
 /// CustomerTestFramework::default()
-///         .given_no_previous_events()
-///         .when(CustomerCommand::AddCustomerName{
-///                 changed_name: "John Doe".to_string()
-///             })
-///         .then_expect_events(vec![
-///             CustomerEvent::NameAdded{
-///                 changed_name: "John Doe".to_string()
-///             }
-///         ]);
+///     .given_no_previous_events()
+///     .when(CustomerCommand::AddCustomerName{
+///             changed_name: "John Doe".to_string()
+///         })
+///     .then_expect_events(vec![
+///         CustomerEvent::NameAdded{
+///             changed_name: "John Doe".to_string()
+///         }]);
 ///
 /// CustomerTestFramework::default()
-///         .given(vec![
-///             CustomerEvent::NameAdded {
-///                 changed_name: "John Doe".to_string()
-///             }
-///         ])
-///         .when(CustomerCommand::AddCustomerName{
-///                 changed_name: "John Doe".to_string()
-///             })
-///         .then_expect_error("a name has already been added for this customer")
+///     .given(vec![
+///         CustomerEvent::NameAdded {
+///             changed_name: "John Doe".to_string()
+///         }])
+///     .when(CustomerCommand::AddCustomerName {
+///             changed_name: "John Doe".to_string()
+///         })
+///     .then_expect_error("a name has already been added for this customer")
 /// ```
 pub mod test;
 
-// Query provides the basic downstream query objects needed to render queries (or "views") that
-// describe the state of the system.
-mod query;
 
 

@@ -2,29 +2,30 @@
 
 **A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures.**
 
-![Build tag](https://codebuild.us-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoia3ZYcXozMjVZaFhoTldlUmhHemlWVm9LUjVaTC9LN3dSTFZpMkVTTmRycElkcGhJT3g2TUdtajZyRWZMd01xNktvUkNwLzdZYW15bzJkZldQMjJWZ1dNPSIsIml2UGFyYW1ldGVyU3BlYyI6InFORDNyaFFEQUNFQkE1NlUiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
+Command Query Responsibility Segregation (CQRS) is a pattern in
+[Domain Driven Design](https://martinfowler.com/tags/domain%20driven%20design.html)
+that uses separate write and read models for application objects and interconnects them with events.
+Event sourcing uses the generated events as the source of truth for the
+state of the application.
+
+Together these provide a number of benefits:
+- Removes coupling between tests and application logic allowing limitless refactoring.
+- Greater isolation of the [aggregate](https://martinfowler.com/bliki/DDD_Aggregate.html).
+- Ability to create views that more accurately model our business environment.
+- A horizontally scalable read path.
+
+
+Things that could be quite helpful:
+- [User guide](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
+- [Demo application](https://github.com/serverlesstechnology/cqrs-demo) using the warp http server.
+
+
 [![Crates.io](https://img.shields.io/crates/v/cqrs-es)](https://crates.io/crates/cqrs-es)
 [![docs](https://img.shields.io/badge/API-docs-blue.svg)](https://docs.rs/cqrs-es)
+
 ---
 
-## Installation
-
-cqrs-es is available from Crates.io or Github.
-
-```toml
-[dependencies]
-cqrs-es = "0.2.2"
-```
-
-## Usage
-
-Documentation [is available here](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
-
-A demo application [is available here](https://github.com/serverlesstechnology/cqrs-demo).
-
 ## Change log
-
-#### `v0.2.2` 
 
 #### `v0.2.1` 
 - Moved generic persistence logic in from postgres-es package.
@@ -43,10 +44,4 @@ Require `Send + Sync` for queries.
 Require `Send + Sync` for support of multi-threaded applications.
 
 #### `v0.1.0` 
-Corrected to move all command and event logic into the aggregate. 
-
-## Todos
-
-- Event upcasters.
-- A persistence implementation for DynamoDb.
-- A persistence implementation for MySql.
+Corrected to move all command and event logic into the aggregate.
