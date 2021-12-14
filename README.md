@@ -18,30 +18,9 @@ Together these provide a number of benefits:
 Things that could be quite helpful:
 - [User guide](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
 - [Demo application](https://github.com/serverlesstechnology/cqrs-demo) using the warp http server.
+- [Change log](change_log.md)
 
 
 [![Crates.io](https://img.shields.io/crates/v/cqrs-es)](https://crates.io/crates/cqrs-es)
 [![docs](https://img.shields.io/badge/API-docs-blue.svg)](https://docs.rs/cqrs-es)
 
----
-
-## Change log
-
-#### `v0.2.1` 
-- Moved generic persistence logic in from postgres-es package.
-- Added event context information to event envelope.
-
-#### `v0.2.0` 
-Moved to async/await for better tool support.
-
-#### `v0.1.3` 
-Aggregates now consume events on `apply`.
-
-#### `v0.1.2` 
-Require `Send + Sync` for queries.
-
-#### `v0.1.1` 
-Require `Send + Sync` for support of multi-threaded applications.
-
-#### `v0.1.0` 
-Corrected to move all command and event logic into the aggregate.

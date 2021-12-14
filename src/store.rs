@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 use std::collections::HashMap;
 
-use crate::aggregate::{Aggregate};
-use crate::AggregateError;
+use crate::aggregate::Aggregate;
 use crate::event::EventEnvelope;
+use crate::AggregateError;
 
 /// The abstract central source for loading past events and committing new events.
 #[async_trait]

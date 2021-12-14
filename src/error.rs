@@ -1,7 +1,7 @@
-use std::fmt;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error;
-use serde::{Serialize,Deserialize};
+use std::fmt;
 
 /// The base error for the framework.
 #[derive(Debug, PartialEq)]

@@ -3,33 +3,14 @@
 #![deny(clippy::all)]
 #![warn(rust_2018_idioms)]
 // #![warn(clippy::pedantic,missing_debug_implementations)]
-//! # cqrs
-//!
-//! **A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures.**
-//!
-//! Command Query Responsibility Segregation (CQRS) is a pattern in
-//! [Domain Driven Design](https://martinfowler.com/tags/domain%20driven%20design.html)
-//! that uses separate write and read models for application objects and interconnects them with events.
-//! Event sourcing uses the generated events as the source of truth for the
-//! state of the application.
-//!
-//! Together these provide a number of benefits:
-//! - Removes coupling between tests and application logic allowing limitless refactoring.
-//! - Greater isolation of the [aggregate](https://martinfowler.com/bliki/DDD_Aggregate.html).
-//! - Ability to create views that more accurately model our business environment.
-//! - A horizontally scalable read path.
-//!
-//!
-//! Things that could be quite helpful:
-//! - [User guide](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
-//! - [Demo application](https://github.com/serverlesstechnology/cqrs-demo) using the warp http server.
+#![doc = include_str!("../README.md")]
 //!
 pub use crate::aggregate::*;
 pub use crate::cqrs::*;
+pub use crate::error::*;
 pub use crate::event::*;
 pub use crate::query::*;
 pub use crate::store::*;
-pub use crate::error::*;
 
 // Aggregate module holds the central traits that define the fundamental component of CQRS.
 mod aggregate;
@@ -101,6 +82,3 @@ pub mod mem_store;
 ///     .then_expect_error("a name has already been added for this customer")
 /// ```
 pub mod test;
-
-
-

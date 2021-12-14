@@ -1,8 +1,8 @@
 [package]
 name = "cqrs-es"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Dave Garred <dave.garred@serverlesstechnology.com>"]
-edition = "2018"
+edition = "2021"
 license-file = "LICENSE"
 keywords = ["cqrs", "event-sourcing", "serverless"]
 description = "A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures."
@@ -11,11 +11,10 @@ repository = "https://github.com/serverlesstechnology/cqrs"
 readme = "README.md"
 
 [dependencies]
-async-trait = "0.1.51"
-serde = { version = "1.0.126", features = ["derive"]}
-serde_json = "1.0.64"
+async-trait = "0.1.52"
+serde = { version = "1.0", features = ["derive"]}
+serde_json = "1.0"
 
 [dev-dependencies]
-static_assertions = "0.3"
 tokio = { version = "1", features = ["macros", "rt"] }
 uuid = { version = "0.8.2", features = ["v4"]}

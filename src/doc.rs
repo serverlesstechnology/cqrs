@@ -2,12 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Aggregate, AggregateError, DomainEvent};
 
-
-
-
-#[derive(Debug,Serialize,Deserialize,PartialEq,Clone)]
-pub enum MyEvents{
-    SomethingWasDone
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub enum MyEvents {
+    SomethingWasDone,
 }
 impl DomainEvent for MyEvents {
     fn event_type(&self) -> &'static str {
@@ -17,12 +14,12 @@ impl DomainEvent for MyEvents {
         todo!()
     }
 }
-#[derive(Debug,Serialize,Deserialize)]
-pub enum  MyCommands {
+#[derive(Debug, Serialize, Deserialize)]
+pub enum MyCommands {
     DoSomething,
     BadCommand,
 }
-#[derive(Debug,Default,Serialize,Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct MyAggregate;
 impl Aggregate for MyAggregate {
     type Command = MyCommands;
@@ -42,8 +39,6 @@ impl Aggregate for MyAggregate {
     fn apply(&mut self, _event: Self::Event) {}
 }
 
-
-
 #[derive(Serialize, Deserialize)]
 pub struct Customer {
     pub customer_id: String,
@@ -61,24 +56,24 @@ impl Aggregate for Customer {
 
     fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
         match command {
-            CustomerCommand::AddCustomerName{ changed_name } => {
+            CustomerCommand::AddCustomerName { changed_name } => {
                 if self.name.as_str() != "" {
                     return Err(AggregateError::new(
                         "a name has already been added for this customer",
                     ));
                 }
-                Ok(vec![CustomerEvent::NameAdded{ changed_name }])
+                Ok(vec![CustomerEvent::NameAdded { changed_name }])
             }
-            CustomerCommand::UpdateEmail{..} => Ok(Default::default()),
+            CustomerCommand::UpdateEmail { .. } => Ok(Default::default()),
         }
     }
 
     fn apply(&mut self, event: Self::Event) {
         match event {
-            CustomerEvent::NameAdded{ changed_name } => {
+            CustomerEvent::NameAdded { changed_name } => {
                 self.name = changed_name;
             }
-            CustomerEvent::EmailUpdated{ new_email } => {
+            CustomerEvent::EmailUpdated { new_email } => {
                 self.email = new_email;
             }
         }
@@ -97,19 +92,15 @@ impl Default for Customer {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum CustomerEvent {
-    NameAdded{
-        changed_name: String,
-    },
-    EmailUpdated{
-        new_email: String,
-    },
+    NameAdded { changed_name: String },
+    EmailUpdated { new_email: String },
 }
 
 impl DomainEvent for CustomerEvent {
     fn event_type(&self) -> &'static str {
         match self {
-            CustomerEvent::NameAdded{..} => "NameAdded",
-            CustomerEvent::EmailUpdated{..} => "EmailUpdated",
+            CustomerEvent::NameAdded { .. } => "NameAdded",
+            CustomerEvent::EmailUpdated { .. } => "EmailUpdated",
         }
     }
 
@@ -120,12 +111,8 @@ impl DomainEvent for CustomerEvent {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum CustomerCommand {
-    AddCustomerName{
-        changed_name: String,
-    },
-    UpdateEmail{
-        new_email: String,
-    },
+    AddCustomerName { changed_name: String },
+    UpdateEmail { new_email: String },
 }
 
 #[cfg(test)]

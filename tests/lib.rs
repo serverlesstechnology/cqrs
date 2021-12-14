@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
 use serde::{Deserialize, Serialize};
-use static_assertions::assert_impl_all;
 
 use cqrs_es::mem_store::MemStore;
 use cqrs_es::test::TestFramework;
@@ -154,11 +153,6 @@ impl Query<TestAggregate> for TestView {
 }
 
 pub type TestEventEnvelope = EventEnvelope<TestAggregate>;
-
-assert_impl_all!(aggregate; TestAggregate,Aggregate);
-// assert_impl_all!(event; TestEvent);
-
-assert_impl_all!(memstore; MemStore::<TestAggregate>, EventStore::<TestAggregate>);
 
 fn metadata() -> HashMap<String, String> {
     let now = "2021-03-18T12:32:45.930Z".to_string();

@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::{Aggregate, AggregateError};
 use crate::query::Query;
 use crate::store::EventStore;
 use crate::AggregateContext;
+use crate::{Aggregate, AggregateError};
 
 /// This is the base framework for applying commands to produce events.
 ///

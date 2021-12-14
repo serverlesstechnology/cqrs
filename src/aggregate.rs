@@ -1,5 +1,5 @@
 use serde::de::DeserializeOwned;
-use serde::{Serialize};
+use serde::Serialize;
 
 use crate::{AggregateError, DomainEvent};
 
