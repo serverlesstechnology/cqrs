@@ -4,6 +4,12 @@
 - Move to Rust 2021 edition.
 - Audit and update dependencies.
 
+#### `v0.2.3`
+- Added upcasters to event stores.
+
+#### `v0.2.2`
+- Consolidated repositories to a single trait encompassing all functionality.
+
 #### `v0.2.1`
 - Moved generic persistence logic in from postgres-es package.
 - Added event context information to event envelope.
