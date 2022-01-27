@@ -95,6 +95,16 @@ impl AggregateError {
     }
 }
 
+impl From<&str> for AggregateError {
+    fn from(message: &str) -> Self {
+        AggregateError::UserError(UserErrorPayload {
+            code: None,
+            message: Some(message.to_string()),
+            params: None,
+        })
+    }
+}
+
 impl From<serde_json::error::Error> for AggregateError {
     fn from(err: serde_json::error::Error) -> Self {
         match err.classify() {
