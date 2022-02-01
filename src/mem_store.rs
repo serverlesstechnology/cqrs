@@ -112,7 +112,7 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
         events: Vec<A::Event>,
         context: MemStoreAggregateContext<A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError> {
+    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
         let aggregate_id = context.aggregate_id.as_str();
         let current_sequence = context.current_sequence;
         let wrapped_events = self.wrap_events(aggregate_id, current_sequence, events, metadata);

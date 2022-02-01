@@ -26,7 +26,7 @@ where
         events: Vec<A::Event>,
         context: Self::AC,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError>;
+    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>>;
 
     /// Method to wrap a set of events with the additional metadata needed for persistence and publishing
     fn wrap_events(

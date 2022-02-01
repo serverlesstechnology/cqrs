@@ -10,7 +10,7 @@ use crate::{AggregateError, DomainEvent};
 /// # Examples
 /// ```rust
 /// # use cqrs_es::doc::{CustomerEvent, CustomerCommand};
-/// # use cqrs_es::{Aggregate, AggregateError};
+/// # use cqrs_es::{Aggregate, AggregateError, UserErrorPayload};
 /// # use serde::{Serialize,Deserialize};
 /// #[derive(Default,Serialize,Deserialize)]
 /// struct Customer {
@@ -21,14 +21,16 @@ use crate::{AggregateError, DomainEvent};
 /// impl Aggregate for Customer {
 ///     type Command = CustomerCommand;
 ///     type Event = CustomerEvent;
+///     type Error = UserErrorPayload;
+///
 ///
 ///     fn aggregate_type() -> &'static str { "customer" }
 ///
-///     fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
+///     fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError<UserErrorPayload>> {
 ///         match command {
 ///             CustomerCommand::AddCustomerName{changed_name} => {
 ///                 if self.name.is_some() {
-///                     return Err(AggregateError::new("a name has already been added"));
+///                     return Err(AggregateError::new_user_error("a name has already been added"));
 ///                 }
 ///                 Ok(vec![CustomerEvent::NameAdded{changed_name}])
 ///             }
@@ -59,6 +61,9 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// Specifies the published events representing some change in state of the Aggregate.
     /// This is most easily accomplished with an enum;
     type Event: DomainEvent;
+    /// The error returned when a command fails due to business logic.
+    /// Usually used to provide feedback to the user as to the nature of why the command was refused.
+    type Error: std::error::Error;
     /// The aggregate type is used as the identifier for this aggregate and its events upon
     /// serialization. The value returned should be unique.
     fn aggregate_type() -> &'static str;
@@ -86,7 +91,10 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     ///     }
     /// }
     /// ```
-    fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError>;
+    fn handle(
+        &self,
+        command: Self::Command,
+    ) -> Result<Vec<Self::Event>, AggregateError<Self::Error>>;
     /// This is used to update the aggregate's state once an event has been committed.
     /// When event sourcing is used all previous events are loaded and applied (using this method)
     /// in order to populate the state of the aggregate instance.

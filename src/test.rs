@@ -97,7 +97,7 @@ pub struct AggregateResultValidator<A>
 where
     A: Aggregate,
 {
-    result: Result<Vec<A::Event>, AggregateError>,
+    result: Result<Vec<A::Event>, AggregateError<A::Error>>,
 }
 
 impl<A: Aggregate> AggregateResultValidator<A> {
@@ -141,7 +141,7 @@ impl<A: Aggregate> AggregateResultValidator<A> {
             }
             Err(err) => match err {
                 AggregateError::UserError(err) => {
-                    assert_eq!(err.message, Some(error_message.to_string()));
+                    assert_eq!(err.to_string(), error_message.to_string());
                 }
                 _ => {
                     panic!("expected user error but found technical error: {}", err)

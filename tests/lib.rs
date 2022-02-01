@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 
 use cqrs_es::mem_store::MemStore;
 use cqrs_es::test::TestFramework;
-use cqrs_es::Query;
 use cqrs_es::{Aggregate, AggregateError, CqrsFramework, DomainEvent, EventEnvelope, EventStore};
+use cqrs_es::{Query, UserErrorPayload};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TestAggregate {
@@ -19,12 +19,13 @@ pub struct TestAggregate {
 impl Aggregate for TestAggregate {
     type Command = TestCommand;
     type Event = TestEvent;
+    type Error = UserErrorPayload;
 
     fn aggregate_type() -> &'static str {
         "TestAggregate"
     }
 
-    fn handle(&self, command: TestCommand) -> Result<Vec<TestEvent>, AggregateError> {
+    fn handle(&self, command: TestCommand) -> Result<Vec<TestEvent>, AggregateError<Self::Error>> {
         match &command {
             TestCommand::CreateTest(command) => {
                 let event = TestEvent::Created(Created {
@@ -36,7 +37,7 @@ impl Aggregate for TestAggregate {
             TestCommand::ConfirmTest(command) => {
                 for test in &self.tests {
                     if test == &command.test_name {
-                        return Err(AggregateError::new("test already performed"));
+                        return Err(AggregateError::new_user_error("test already performed"));
                     }
                 }
                 let event = TestEvent::Tested(Tested {
@@ -328,7 +329,10 @@ async fn framework_test() {
         )
         .await
         .unwrap_err();
-    assert_eq!(AggregateError::new("test already performed"), err);
+    assert_eq!(
+        AggregateError::new_user_error("test already performed"),
+        err
+    );
 
     assert_eq!(2, delivered_events.read().unwrap().len());
     let stored_event_count = stored_events

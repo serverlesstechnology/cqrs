@@ -5,13 +5,13 @@ use std::fmt;
 
 /// The base error for the framework.
 #[derive(Debug, PartialEq)]
-pub enum AggregateError {
+pub enum AggregateError<T: std::error::Error> {
     /// This is the error returned when a user violates a business rule. The information within
     /// the `UserErrorPayload` should be used to inform the user of their error.
     ///
     /// ### Handling
     /// In a Restful application this should translate to a 400 response status.
-    UserError(UserErrorPayload),
+    UserError(T),
     /// A command has been rejected due to a conflict with another command on the same aggregate
     /// instance. This is handled by optimistic locking in systems backed by an RDBMS.
     ///
@@ -44,9 +44,9 @@ pub struct UserErrorPayload {
     pub params: Option<HashMap<String, String>>,
 }
 
-impl error::Error for AggregateError {}
+impl<T: std::error::Error> error::Error for AggregateError<T> {}
 
-impl fmt::Display for AggregateError {
+impl<T: std::error::Error> fmt::Display for AggregateError<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AggregateError::TechnicalError(message) => write!(f, "{}", message),
@@ -56,24 +56,26 @@ impl fmt::Display for AggregateError {
     }
 }
 
+impl error::Error for UserErrorPayload {}
+
 impl fmt::Display for UserErrorPayload {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "UserError - code: {:?}\n  message: {:?}\n params: {:?}",
-            &self.code, &self.message, &self.params
-        )
+        let message = match &self.message {
+            None => "unknown error",
+            Some(message) => message.as_ref(),
+        };
+        write!(f, "{}", message)
     }
 }
 
-impl AggregateError {
+impl AggregateError<UserErrorPayload> {
     /// A convenience function to construct a simple `UserError` with a user message.
     ///
     /// ```
     /// # use cqrs_es::AggregateError;
-    /// let error = AggregateError::new("user already exists");
+    /// let error = AggregateError::new_user_error("user already exists");
     /// ```
-    pub fn new(msg: &str) -> Self {
+    pub fn new_user_error(msg: &str) -> Self {
         AggregateError::UserError(UserErrorPayload {
             code: None,
             message: Some(msg.to_string()),
@@ -84,9 +86,9 @@ impl AggregateError {
     ///
     /// ```
     /// # use cqrs_es::AggregateError;
-    /// let error = AggregateError::new_with_code("user already exists", "USER_EXISTS");
+    /// let error = AggregateError::new_user_error_with_code("user already exists", "USER_EXISTS");
     /// ```
-    pub fn new_with_code(msg: &str, code: &str) -> Self {
+    pub fn new_user_error_with_code(msg: &str, code: &str) -> Self {
         AggregateError::UserError(UserErrorPayload {
             code: Some(code.to_string()),
             message: Some(msg.to_string()),
@@ -94,24 +96,23 @@ impl AggregateError {
         })
     }
 }
-
-impl From<&str> for AggregateError {
-    fn from(message: &str) -> Self {
-        AggregateError::UserError(UserErrorPayload {
-            code: None,
-            message: Some(message.to_string()),
-            params: None,
-        })
+impl<T: std::error::Error> AggregateError<T> {
+    fn new_technical_error(msg: &str) -> Self {
+        AggregateError::TechnicalError(msg.to_string())
     }
 }
 
-impl From<serde_json::error::Error> for AggregateError {
+impl<T: std::error::Error> From<serde_json::error::Error> for AggregateError<T> {
     fn from(err: serde_json::error::Error) -> Self {
         match err.classify() {
-            serde_json::error::Category::Syntax => AggregateError::new("invalid json"),
+            serde_json::error::Category::Syntax => {
+                AggregateError::new_technical_error("invalid json")
+            }
             serde_json::error::Category::Io
             | serde_json::error::Category::Data
-            | serde_json::error::Category::Eof => AggregateError::new("fail"),
+            | serde_json::error::Category::Eof => {
+                AggregateError::new_technical_error(&err.to_string())
+            }
         }
     }
 }

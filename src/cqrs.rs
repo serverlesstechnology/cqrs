@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 use crate::query::Query;
 use crate::store::EventStore;
-use crate::AggregateContext;
-use crate::{Aggregate, AggregateError};
+use crate::Aggregate;
+use crate::{AggregateContext, AggregateError};
 
 /// This is the base framework for applying commands to produce events.
 ///
@@ -76,7 +76,7 @@ where
         &self,
         aggregate_id: &str,
         command: A::Command,
-    ) -> Result<(), AggregateError> {
+    ) -> Result<(), AggregateError<A::Error>> {
         self.execute_with_metadata(aggregate_id, command, HashMap::new())
             .await
     }
@@ -108,7 +108,7 @@ where
         aggregate_id: &str,
         command: A::Command,
         metadata: HashMap<String, String>,
-    ) -> Result<(), AggregateError> {
+    ) -> Result<(), AggregateError<A::Error>> {
         let aggregate_context = self.store.load_aggregate(aggregate_id).await;
         let aggregate = aggregate_context.aggregate();
         let resultant_events = aggregate.handle(command)?;

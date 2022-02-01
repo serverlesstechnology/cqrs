@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{Aggregate, AggregateError, DomainEvent};
+use crate::{Aggregate, AggregateError, DomainEvent, UserErrorPayload};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum MyEvents {
@@ -24,15 +24,21 @@ pub struct MyAggregate;
 impl Aggregate for MyAggregate {
     type Command = MyCommands;
     type Event = MyEvents;
+    type Error = UserErrorPayload;
 
     fn aggregate_type() -> &'static str {
         todo!()
     }
 
-    fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
+    fn handle(
+        &self,
+        command: Self::Command,
+    ) -> Result<Vec<Self::Event>, AggregateError<UserErrorPayload>> {
         match command {
             MyCommands::DoSomething => Ok(vec![MyEvents::SomethingWasDone]),
-            MyCommands::BadCommand => Err(AggregateError::new("the expected error message")),
+            MyCommands::BadCommand => {
+                Err(AggregateError::new_user_error("the expected error message"))
+            }
         }
     }
 
@@ -49,16 +55,20 @@ pub struct Customer {
 impl Aggregate for Customer {
     type Command = CustomerCommand;
     type Event = CustomerEvent;
+    type Error = UserErrorPayload;
 
     fn aggregate_type() -> &'static str {
         "customer"
     }
 
-    fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
+    fn handle(
+        &self,
+        command: Self::Command,
+    ) -> Result<Vec<Self::Event>, AggregateError<Self::Error>> {
         match command {
             CustomerCommand::AddCustomerName { changed_name } => {
                 if self.name.as_str() != "" {
-                    return Err(AggregateError::new(
+                    return Err(AggregateError::new_user_error(
                         "a name has already been added for this customer",
                     ));
                 }
