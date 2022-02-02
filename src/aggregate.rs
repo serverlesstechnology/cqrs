@@ -30,7 +30,7 @@ use crate::{AggregateError, DomainEvent};
 ///         match command {
 ///             CustomerCommand::AddCustomerName{changed_name} => {
 ///                 if self.name.is_some() {
-///                     return Err(AggregateError::new_user_error("a name has already been added"));
+///                     return Err("a name has already been added".into());
 ///                 }
 ///                 Ok(vec![CustomerEvent::NameAdded{changed_name}])
 ///             }

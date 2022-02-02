@@ -36,9 +36,7 @@ impl Aggregate for MyAggregate {
     ) -> Result<Vec<Self::Event>, AggregateError<UserErrorPayload>> {
         match command {
             MyCommands::DoSomething => Ok(vec![MyEvents::SomethingWasDone]),
-            MyCommands::BadCommand => {
-                Err(AggregateError::new_user_error("the expected error message"))
-            }
+            MyCommands::BadCommand => Err("the expected error message".into()),
         }
     }
 
@@ -68,9 +66,7 @@ impl Aggregate for Customer {
         match command {
             CustomerCommand::AddCustomerName { changed_name } => {
                 if self.name.as_str() != "" {
-                    return Err(AggregateError::new_user_error(
-                        "a name has already been added for this customer",
-                    ));
+                    return Err("a name has already been added for this customer".into());
                 }
                 Ok(vec![CustomerEvent::NameAdded { changed_name }])
             }

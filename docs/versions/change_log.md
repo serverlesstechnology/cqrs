@@ -1,8 +1,11 @@
 # Change log
 
 #### `v0.2.5`
-> [v0.2.4 ==> v0.2.5 migration guide](change_log.md).
-- The payload for user errors in the aggregate is now configurable 
+> See the [v0.2.4 ==> v0.2.5 migration guide](change_log.md) for more details.
+
+- The payload for user errors in the aggregate is now configurable.
+- Additional enumerations for `AggregateError`.
+- Unexpected errors now return with the root cause rather than just the message.
 
 #### `v0.2.4`
 - Move to Rust 2021 edition.

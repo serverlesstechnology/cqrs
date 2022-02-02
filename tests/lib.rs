@@ -37,7 +37,7 @@ impl Aggregate for TestAggregate {
             TestCommand::ConfirmTest(command) => {
                 for test in &self.tests {
                     if test == &command.test_name {
-                        return Err(AggregateError::new_user_error("test already performed"));
+                        return Err("test already performed".into());
                     }
                 }
                 let event = TestEvent::Tested(Tested {
@@ -329,10 +329,12 @@ async fn framework_test() {
         )
         .await
         .unwrap_err();
-    assert_eq!(
-        AggregateError::new_user_error("test already performed"),
-        err
-    );
+    match err {
+        AggregateError::UserError(payload) => {
+            assert_eq!("test already performed", payload.message.unwrap().as_str())
+        }
+        _ => panic!("not the expected error"),
+    };
 
     assert_eq!(2, delivered_events.read().unwrap().len());
     let stored_event_count = stored_events
