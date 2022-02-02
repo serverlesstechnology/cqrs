@@ -1,5 +1,9 @@
 # Change log
 
+#### `v0.2.5`
+> [v0.2.4 ==> v0.2.5 migration guide](change_log.md).
+- The payload for user errors in the aggregate is now configurable 
+
 #### `v0.2.4`
 - Move to Rust 2021 edition.
 - Audit and update dependencies.

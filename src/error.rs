@@ -96,6 +96,7 @@ impl AggregateError<UserErrorPayload> {
         })
     }
 }
+
 impl<T: std::error::Error> AggregateError<T> {
     fn new_technical_error(msg: &str) -> Self {
         AggregateError::TechnicalError(msg.to_string())
