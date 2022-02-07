@@ -18,7 +18,7 @@ Together these provide a number of benefits:
 Things that could be helpful:
 - [User guide](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
 - [Demo application](https://github.com/serverlesstechnology/cqrs-demo) using the warp http server.
-- [Change log](https://github.com/serverlesstechnology/cqrs/blob/master/versions/change_log.md)
+- [Change log](https://github.com/serverlesstechnology/cqrs/blob/master/docs/versions/change_log.md)
 
 
 [![Crates.io](https://img.shields.io/crates/v/cqrs-es)](https://crates.io/crates/cqrs-es)
