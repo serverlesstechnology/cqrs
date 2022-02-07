@@ -76,11 +76,13 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// *All business logic should be placed here*.
     ///
     /// ```ignore
-    /// fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError> {
+    /// # use cqrs_es::{AggregateError,UserErrorPayload};
+    /// # use cqrs_es::doc::{CustomerCommand,CustomerEvent};
+    /// fn handle(&self, command: CustomerCommand) -> Result<Vec<CustomerEvent>, AggregateError<UserErrorPayload>> {
     ///     match command {
     ///         CustomerCommand::AddCustomerName{changed_name} => {
     ///             if self.name.is_some() {
-    ///                 return Err(AggregateError::new("a name has already been added"));
+    ///                 return Err("a name has already been added".into());
     ///             }
     ///             Ok(vec![CustomerEvent::NameAdded{changed_name}])
     ///         }

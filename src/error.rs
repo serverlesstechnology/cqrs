@@ -41,8 +41,7 @@ pub enum AggregateError<T: std::error::Error> {
     TechnicalError(Box<dyn std::error::Error + Send + Sync + 'static>),
 }
 
-/// Payload for an `AggregateError::UserError`, somewhat modeled on the errors produced by the
-/// [`validator`](https://github.com/Keats/validator) package. This payload implements `Serialize`
+/// Simple payload for an `AggregateError::UserError`. This payload implements `Serialize`
 /// with the intention of allowing the user to return this object as the response payload.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct UserErrorPayload {
