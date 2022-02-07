@@ -1,7 +1,7 @@
 # Change log
 
 #### `v0.2.5`
-> See the [v0.2.4 ==> v0.2.5 migration guide](change_log.md) for more details.
+> See the [v0.2.4 ==> v0.2.5 migration guide](migration_0_2_5.md) for more details.
 
 - The payload for user errors in the aggregate is now configurable.
 - Additional enumerations for `AggregateError`.
