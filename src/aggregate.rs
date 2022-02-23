@@ -37,8 +37,8 @@ use crate::{AggregateError, DomainEvent};
 ///                 Ok(vec![CustomerEvent::NameAdded{changed_name}])
 ///             }
 ///
-///             CustomerCommand::UpdateEmail{..} => {
-///                 Ok(Default::default())
+///             CustomerCommand::UpdateEmail { new_email } => {
+///                 Ok(vec![CustomerEvent::EmailUpdated { new_email }])
 ///             }
 ///         }
 ///     }
@@ -90,8 +90,8 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     ///             Ok(vec![CustomerEvent::NameAdded{changed_name}])
     ///         }
     ///
-    ///         CustomerCommand::UpdateEmail{..} => {
-    ///             Ok(Default::default())
+    ///         CustomerCommand::UpdateEmail { new_email } => {
+    ///             Ok(vec![CustomerEvent::EmailUpdated { new_email }])
     ///         }
     ///     }
     /// }

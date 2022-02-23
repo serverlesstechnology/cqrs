@@ -12,10 +12,12 @@ use crate::{AggregateContext, AggregateError};
 /// changes are made only after loading the entire `Aggregate` in order to ensure that the full
 /// context is understood.
 /// With event-sourcing this means:
-/// 1. loading all previous events for the aggregate instance
-/// 1. applying these events, in order, to a new `Aggregate`
-/// 1. using the recreated `Aggregate` to handle an inbound `Command`
-/// 1. persisting any generated events or rolling back on an error
+/// 1. Loading all previous events for the aggregate instance.
+/// 1. Applying these events, in order, to a new `Aggregate` in order to reach the correct state.
+/// 1. Using the recreated `Aggregate` to handle an inbound `Command` producing events or an error
+/// (see `handle` method in this trait).
+/// 1. Applying any generated events to the `Aggregate` (see `apply` method in this trait).
+/// 1. Persisting any generated events or rolling back in the event of an error.
 ///
 /// To manage these tasks we use a `CqrsFramework`.
 ///
@@ -65,12 +67,20 @@ where
     /// An error while processing will result in no events committed and
     /// an AggregateError being returned.
     ///
-    /// If successful the events produced will be applied to the configured `QueryProcessor`s.
+    /// If successful the events produced will be persisted in the backing `EventStore`
+    /// before being applied to any configured `QueryProcessor`s.
     ///
-    /// ```ignore
+    /// ```
+    /// # use cqrs_es::CqrsFramework;
+    /// # use cqrs_es::doc::{MyAggregate,MyCommands};
+    /// # use cqrs_es::mem_store::MemStore;
+    /// # use std::collections::HashMap;
+    /// # use chrono;
+    /// # async fn test(cqrs: CqrsFramework<MyAggregate,MemStore<MyAggregate>>) {
     /// let command = MyCommands::DoSomething;
     ///
     /// cqrs.execute("agg-id-F39A0C", command).await;
+    /// # }
     /// ```
     pub async fn execute(
         &self,
@@ -94,14 +104,22 @@ where
     /// An error while processing will result in no events committed and
     /// an AggregateError being returned.
     ///
-    /// If successful the events produced will be applied to the configured `QueryProcessor`s.
+    /// If successful the events produced will be persisted in the backing `EventStore`
+    /// before being applied to any configured `QueryProcessor`s.
     ///
-    /// ```ignore
+    /// ```
+    /// # use cqrs_es::CqrsFramework;
+    /// # use cqrs_es::doc::{MyAggregate,MyCommands};
+    /// # use cqrs_es::mem_store::MemStore;
+    /// # use std::collections::HashMap;
+    /// # use chrono;
+    /// # async fn test(cqrs: CqrsFramework<MyAggregate,MemStore<MyAggregate>>) {
     /// let command = MyCommands::DoSomething;
     /// let mut metadata = HashMap::new();
-    /// metadata.insert("time".to_string(), chrono::Utc::now().to_rfc3339())
+    /// metadata.insert("time".to_string(), chrono::Utc::now().to_rfc3339());
     ///
     /// cqrs.execute_with_metadata("agg-id-F39A0C", command, metadata).await;
+    /// # }
     /// ```
     pub async fn execute_with_metadata(
         &self,

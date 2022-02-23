@@ -74,7 +74,9 @@ impl Aggregate for Customer {
                 }
                 Ok(vec![CustomerEvent::NameAdded { changed_name }])
             }
-            CustomerCommand::UpdateEmail { .. } => Ok(Default::default()),
+            CustomerCommand::UpdateEmail { new_email } => {
+                Ok(vec![CustomerEvent::EmailUpdated { new_email }])
+            }
         }
     }
 
