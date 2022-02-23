@@ -80,7 +80,7 @@ pub mod mem_store;
 ///     .when(CustomerCommand::AddCustomerName {
 ///             changed_name: "John Doe".to_string()
 ///         })
-///     .then_expect_error("a name has already been added for this customer");
+///     .then_expect_error_message("a name has already been added for this customer");
 /// # }
 /// ```
 pub mod test;

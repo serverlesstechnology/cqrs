@@ -132,6 +132,30 @@ impl<A: Aggregate> AggregateResultValidator<A> {
         };
         assert_eq!(&events[..], &expected_events[..]);
     }
+
+    /// Deprecated: please use `then_expect_error_message` instead.
+    /// This function will be re-purposed in v0.3.0
+    ///
+    #[deprecated(
+        since = "0.2.6",
+        note = "please use `then_expect_error_message` instead"
+    )]
+    pub fn then_expect_error(self, error_message: &str) {
+        match self.result {
+            Ok(events) => {
+                panic!("expected error, received events: '{:?}'", events);
+            }
+            Err(err) => match err {
+                AggregateError::UserError(err) => {
+                    assert_eq!(err.to_string(), error_message.to_string());
+                }
+                _ => {
+                    panic!("expected user error but found technical error: {}", err)
+                }
+            },
+        };
+    }
+
     /// Verifies that an `AggregateError` with the expected message is produced with the command.
     ///
     /// ```
@@ -142,9 +166,9 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     ///     .given_no_previous_events()
     ///     .when(MyCommands::BadCommand);
     ///
-    /// validator.then_expect_error("the expected error message");
+    /// validator.then_expect_error_message("the expected error message");
     /// ```
-    pub fn then_expect_error(self, error_message: &str) {
+    pub fn then_expect_error_message(self, error_message: &str) {
         match self.result {
             Ok(events) => {
                 panic!("expected error, received events: '{:?}'", events);

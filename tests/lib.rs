@@ -241,7 +241,7 @@ fn test_framework_test() {
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
         }))
-        .then_expect_error("test already performed")
+        .then_expect_error_message("test already performed")
 }
 
 #[test]
@@ -275,7 +275,7 @@ fn test_framework_failure_test_b() {
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
         }))
-        .then_expect_error("some error message")
+        .then_expect_error_message("some error message")
 }
 
 #[tokio::test]
