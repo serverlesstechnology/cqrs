@@ -56,16 +56,17 @@ pub mod mem_store;
 /// A `TestFramework` should be used to build a comprehensive set of aggregate tests to verify
 /// your application logic.
 ///
-/// ```
+/// ```rust
 /// # use cqrs_es::test::TestFramework;
 /// # use cqrs_es::doc::{Customer, CustomerEvent, CustomerCommand};
+/// # async fn test() {
 /// type CustomerTestFramework = TestFramework<Customer>;
 ///
 /// CustomerTestFramework::default()
 ///     .given_no_previous_events()
 ///     .when(CustomerCommand::AddCustomerName{
 ///             changed_name: "John Doe".to_string()
-///         })
+///         }).await
 ///     .then_expect_events(vec![
 ///         CustomerEvent::NameAdded{
 ///             changed_name: "John Doe".to_string()
@@ -78,7 +79,8 @@ pub mod mem_store;
 ///         }])
 ///     .when(CustomerCommand::AddCustomerName {
 ///             changed_name: "John Doe".to_string()
-///         })
-///     .then_expect_error("a name has already been added for this customer")
+///         }).await
+///     .then_expect_error("a name has already been added for this customer");
+/// # }
 /// ```
 pub mod test;

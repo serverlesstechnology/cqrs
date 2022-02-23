@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 use crate::{Aggregate, AggregateError, DomainEvent, UserErrorPayload};
@@ -21,6 +22,8 @@ pub enum MyCommands {
 }
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct MyAggregate;
+
+#[async_trait]
 impl Aggregate for MyAggregate {
     type Command = MyCommands;
     type Event = MyEvents;
@@ -30,7 +33,7 @@ impl Aggregate for MyAggregate {
         todo!()
     }
 
-    fn handle(
+    async fn handle(
         &self,
         command: Self::Command,
     ) -> Result<Vec<Self::Event>, AggregateError<UserErrorPayload>> {
@@ -50,6 +53,7 @@ pub struct Customer {
     pub email: String,
 }
 
+#[async_trait]
 impl Aggregate for Customer {
     type Command = CustomerCommand;
     type Event = CustomerEvent;
@@ -59,7 +63,7 @@ impl Aggregate for Customer {
         "customer"
     }
 
-    fn handle(
+    async fn handle(
         &self,
         command: Self::Command,
     ) -> Result<Vec<Self::Event>, AggregateError<Self::Error>> {
@@ -129,20 +133,21 @@ mod doc_tests {
 
     type CustomerTestFramework = TestFramework<Customer>;
 
-    #[test]
-    fn test_add_name() {
+    #[tokio::test]
+    async fn test_add_name() {
         CustomerTestFramework::default()
             .given_no_previous_events()
             .when(CustomerCommand::AddCustomerName {
                 changed_name: "John Doe".to_string(),
             })
+            .await
             .then_expect_events(vec![CustomerEvent::NameAdded {
                 changed_name: "John Doe".to_string(),
             }]);
     }
 
-    #[test]
-    fn test_add_name_again() {
+    #[tokio::test]
+    async fn test_add_name_again() {
         CustomerTestFramework::default()
             .given(vec![CustomerEvent::NameAdded {
                 changed_name: "John Doe".to_string(),
@@ -150,6 +155,7 @@ mod doc_tests {
             .when(CustomerCommand::AddCustomerName {
                 changed_name: "John Doe".to_string(),
             })
+            .await
             .then_expect_error("a name has already been added for this customer");
     }
 }

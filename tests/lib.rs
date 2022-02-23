@@ -16,6 +16,7 @@ pub struct TestAggregate {
     tests: Vec<String>,
 }
 
+#[async_trait]
 impl Aggregate for TestAggregate {
     type Command = TestCommand;
     type Event = TestEvent;
@@ -25,7 +26,10 @@ impl Aggregate for TestAggregate {
         "TestAggregate"
     }
 
-    fn handle(&self, command: TestCommand) -> Result<Vec<TestEvent>, AggregateError<Self::Error>> {
+    async fn handle(
+        &self,
+        command: TestCommand,
+    ) -> Result<Vec<TestEvent>, AggregateError<Self::Error>> {
         match &command {
             TestCommand::CreateTest(command) => {
                 let event = TestEvent::Created(Created {
@@ -214,8 +218,8 @@ async fn test_mem_store() {
 
 type ThisTestFramework = TestFramework<TestAggregate>;
 
-#[test]
-fn test_framework_test() {
+#[tokio::test]
+async fn test_framework_test() {
     let test_name = "test A";
     let test_framework = ThisTestFramework::default();
 
@@ -226,6 +230,7 @@ fn test_framework_test() {
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
         }))
+        .await
         .then_expect_events(vec![TestEvent::Tested(Tested {
             test_name: test_name.to_string(),
         })]);
@@ -237,12 +242,13 @@ fn test_framework_test() {
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
         }))
+        .await
         .then_expect_error("test already performed")
 }
 
-#[test]
+#[tokio::test]
 #[should_panic]
-fn test_framework_failure_test() {
+async fn test_framework_failure_test() {
     let test_name = "test A";
     let test_framework = ThisTestFramework::default();
 
@@ -253,14 +259,15 @@ fn test_framework_failure_test() {
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
         }))
+        .await
         .then_expect_events(vec![TestEvent::Tested(Tested {
             test_name: test_name.to_string(),
         })]);
 }
 
-#[test]
+#[tokio::test]
 #[should_panic]
-fn test_framework_failure_test_b() {
+async fn test_framework_failure_test_b() {
     let test_name = "test A";
     let test_framework = ThisTestFramework::default();
 
@@ -271,6 +278,7 @@ fn test_framework_failure_test_b() {
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
         }))
+        .await
         .then_expect_error("some error message")
 }
 

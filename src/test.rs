@@ -82,12 +82,12 @@ where
     ///
     /// let validator = executor.when(MyCommands::DoSomething);
     /// ```
-    pub fn when(self, command: A::Command) -> AggregateResultValidator<A> {
+    pub async fn when(self, command: A::Command) -> AggregateResultValidator<A> {
         let mut aggregate = A::default();
         for event in self.events {
             aggregate.apply(event);
         }
-        let result = aggregate.handle(command);
+        let result = aggregate.handle(command).await;
         AggregateResultValidator { result }
     }
 }
@@ -105,13 +105,16 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     ///
     /// ```
     /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents};
+    /// # async fn test() {
     /// use cqrs_es::test::TestFramework;
     ///
     /// let validator = TestFramework::<MyAggregate>::default()
     ///     .given_no_previous_events()
-    ///     .when(MyCommands::DoSomething);
+    ///     .when(MyCommands::DoSomething)
+    ///     .await;
     ///
     /// validator.then_expect_events(vec![MyEvents::SomethingWasDone]);
+    /// # }
     /// ```
     pub fn then_expect_events(self, expected_events: Vec<A::Event>) {
         let events = match self.result {
@@ -126,13 +129,16 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     ///
     /// ```
     /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents};
+    /// # async fn test() {
     /// use cqrs_es::test::TestFramework;
     ///
     /// let validator = TestFramework::<MyAggregate>::default()
     ///     .given_no_previous_events()
-    ///     .when(MyCommands::BadCommand);
+    ///     .when(MyCommands::BadCommand)
+    ///     .await;
     ///
     /// validator.then_expect_error("the expected error message");
+    /// # }
     /// ```
     pub fn then_expect_error(self, error_message: &str) {
         match self.result {

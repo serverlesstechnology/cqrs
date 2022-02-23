@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -12,12 +13,14 @@ use crate::{AggregateError, DomainEvent};
 /// # use cqrs_es::doc::{CustomerEvent, CustomerCommand};
 /// # use cqrs_es::{Aggregate, AggregateError, UserErrorPayload};
 /// # use serde::{Serialize,Deserialize};
+/// # use async_trait::async_trait;
 /// #[derive(Default,Serialize,Deserialize)]
 /// struct Customer {
 ///     name: Option<String>,
 ///     email: Option<String>,
 /// }
 ///
+/// # #[async_trait]
 /// impl Aggregate for Customer {
 ///     type Command = CustomerCommand;
 ///     type Event = CustomerEvent;
@@ -26,7 +29,7 @@ use crate::{AggregateError, DomainEvent};
 ///
 ///     fn aggregate_type() -> &'static str { "customer" }
 ///
-///     fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError<UserErrorPayload>> {
+///     async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError<UserErrorPayload>> {
 ///         match command {
 ///             CustomerCommand::AddCustomerName{changed_name} => {
 ///                 if self.name.is_some() {
@@ -54,6 +57,7 @@ use crate::{AggregateError, DomainEvent};
 ///     }
 /// }
 /// ```
+#[async_trait]
 pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// Specifies the inbound command used to make changes in the state of the Aggregate.
     /// This is most easily accomplished with an enum;
@@ -93,7 +97,7 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     ///     }
     /// }
     /// ```
-    fn handle(
+    async fn handle(
         &self,
         command: Self::Command,
     ) -> Result<Vec<Self::Event>, AggregateError<Self::Error>>;
