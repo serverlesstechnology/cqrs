@@ -218,8 +218,8 @@ async fn test_mem_store() {
 
 type ThisTestFramework = TestFramework<TestAggregate>;
 
-#[tokio::test]
-async fn test_framework_test() {
+#[test]
+fn test_framework_test() {
     let test_name = "test A";
     let test_framework = ThisTestFramework::default();
 
@@ -230,7 +230,6 @@ async fn test_framework_test() {
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
         }))
-        .await
         .then_expect_events(vec![TestEvent::Tested(Tested {
             test_name: test_name.to_string(),
         })]);
@@ -242,13 +241,12 @@ async fn test_framework_test() {
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
         }))
-        .await
         .then_expect_error("test already performed")
 }
 
-#[tokio::test]
+#[test]
 #[should_panic]
-async fn test_framework_failure_test() {
+fn test_framework_failure_test() {
     let test_name = "test A";
     let test_framework = ThisTestFramework::default();
 
@@ -259,15 +257,14 @@ async fn test_framework_failure_test() {
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
         }))
-        .await
         .then_expect_events(vec![TestEvent::Tested(Tested {
             test_name: test_name.to_string(),
         })]);
 }
 
-#[tokio::test]
+#[test]
 #[should_panic]
-async fn test_framework_failure_test_b() {
+fn test_framework_failure_test_b() {
     let test_name = "test A";
     let test_framework = ThisTestFramework::default();
 
@@ -278,7 +275,6 @@ async fn test_framework_failure_test_b() {
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
         }))
-        .await
         .then_expect_error("some error message")
 }
 

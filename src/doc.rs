@@ -133,21 +133,20 @@ mod doc_tests {
 
     type CustomerTestFramework = TestFramework<Customer>;
 
-    #[tokio::test]
-    async fn test_add_name() {
+    #[test]
+    fn test_add_name() {
         CustomerTestFramework::default()
             .given_no_previous_events()
             .when(CustomerCommand::AddCustomerName {
                 changed_name: "John Doe".to_string(),
             })
-            .await
             .then_expect_events(vec![CustomerEvent::NameAdded {
                 changed_name: "John Doe".to_string(),
             }]);
     }
 
-    #[tokio::test]
-    async fn test_add_name_again() {
+    #[test]
+    fn test_add_name_again() {
         CustomerTestFramework::default()
             .given(vec![CustomerEvent::NameAdded {
                 changed_name: "John Doe".to_string(),
@@ -155,7 +154,6 @@ mod doc_tests {
             .when(CustomerCommand::AddCustomerName {
                 changed_name: "John Doe".to_string(),
             })
-            .await
             .then_expect_error("a name has already been added for this customer");
     }
 }

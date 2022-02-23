@@ -82,14 +82,22 @@ where
     ///
     /// let validator = executor.when(MyCommands::DoSomething);
     /// ```
-    pub async fn when(self, command: A::Command) -> AggregateResultValidator<A> {
-        let mut aggregate = A::default();
-        for event in self.events {
-            aggregate.apply(event);
-        }
-        let result = aggregate.handle(command).await;
+    pub fn when(self, command: A::Command) -> AggregateResultValidator<A> {
+        let result = when::<A>(self.events, command);
         AggregateResultValidator { result }
     }
+}
+
+#[tokio::main]
+async fn when<A: Aggregate>(
+    events: Vec<A::Event>,
+    command: A::Command,
+) -> Result<Vec<A::Event>, AggregateError<A::Error>> {
+    let mut aggregate = A::default();
+    for event in events {
+        aggregate.apply(event);
+    }
+    aggregate.handle(command).await
 }
 
 /// Validation object for the `TestFramework` package.
@@ -110,8 +118,7 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     ///
     /// let validator = TestFramework::<MyAggregate>::default()
     ///     .given_no_previous_events()
-    ///     .when(MyCommands::DoSomething)
-    ///     .await;
+    ///     .when(MyCommands::DoSomething);
     ///
     /// validator.then_expect_events(vec![MyEvents::SomethingWasDone]);
     /// # }
@@ -129,16 +136,13 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     ///
     /// ```
     /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents};
-    /// # async fn test() {
     /// use cqrs_es::test::TestFramework;
     ///
     /// let validator = TestFramework::<MyAggregate>::default()
     ///     .given_no_previous_events()
-    ///     .when(MyCommands::BadCommand)
-    ///     .await;
+    ///     .when(MyCommands::BadCommand);
     ///
     /// validator.then_expect_error("the expected error message");
-    /// # }
     /// ```
     pub fn then_expect_error(self, error_message: &str) {
         match self.result {

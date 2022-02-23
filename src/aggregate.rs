@@ -20,12 +20,11 @@ use crate::{AggregateError, DomainEvent};
 ///     email: Option<String>,
 /// }
 ///
-/// # #[async_trait]
+/// #[async_trait]
 /// impl Aggregate for Customer {
 ///     type Command = CustomerCommand;
 ///     type Event = CustomerEvent;
 ///     type Error = UserErrorPayload;
-///
 ///
 ///     fn aggregate_type() -> &'static str { "customer" }
 ///
@@ -82,7 +81,7 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// ```ignore
     /// # use cqrs_es::{AggregateError,UserErrorPayload};
     /// # use cqrs_es::doc::{CustomerCommand,CustomerEvent};
-    /// fn handle(&self, command: CustomerCommand) -> Result<Vec<CustomerEvent>, AggregateError<UserErrorPayload>> {
+    /// async fn handle(&self, command: CustomerCommand) -> Result<Vec<CustomerEvent>, AggregateError<UserErrorPayload>> {
     ///     match command {
     ///         CustomerCommand::AddCustomerName{changed_name} => {
     ///             if self.name.is_some() {
@@ -105,7 +104,7 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// When event sourcing is used all previous events are loaded and applied (using this method)
     /// in order to populate the state of the aggregate instance.
     ///
-    /// *No business logic should be placed here*, this is only for updating state.
+    /// *No business logic should be placed here*, this is only used for updating the aggregate state.
     ///
     /// ```ignore
     /// fn apply(&mut self, event: Self::Event) {
