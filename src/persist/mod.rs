@@ -1,7 +1,9 @@
-//! Common persistence mechanisms to be used with one of the repository crates:
-//! - postgres-es
-//! - mysql-es
-//! - dynamodb-es
+//! Common persistence mechanisms.
+//!
+//! This module is used alongside one of the available repository crates:
+//! - [postgres-es](https://crates.io/crates/postgres-es)
+//! - [mysql-es](https://crates.io/crates/mysql-es)
+//! - [dynamo-es](https://crates.io/crates/dynamo-es)
 //!
 //!
 //!

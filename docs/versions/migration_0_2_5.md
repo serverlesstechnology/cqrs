@@ -8,7 +8,7 @@ The `UserErrorPayload` struct is still available as a reference implementation.
 
 As part of the aggregate implementation two changes are needed.
 - You must specify the error type, using the `UserErrorPayload` that originally was required will simplify this.
-- The signagure for `handle` now includes the custom error as part of the error result.
+- The signature for `handle` now includes the custom error as part of the error result.
 ```rust
     impl Aggregate for TestAggregate {
         type Error = UserErrorPayload;

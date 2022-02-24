@@ -1,8 +1,12 @@
 # Change log
 
 #### `v0.2.6`
+> See the [v0.2.5 ==> v0.2.6 migration guide](migration_0_2_6.md) for more details.
+
 - Published a beta edition of [dynamo-es](https://crates.io/crates/dynamo-es) crate providing an underlying persistence layer based on [AWS' DyanomoDb](https://aws.amazon.com/dynamodb/).
 - The `handle` method within the `Aggregate` trait is now async. This will greatly simplify calling asynchronous clients and services from the aggregate logic.
+- Deprecation of common peristence crate [persist-es](https://crates.io/crates/persist-es), all logic has moved to the
+`persist` module of [cqrs-es](https://crates.io/crates/cqrs-es).
 - The event and snapshot table names are now configurable in the persistence packages.
 - Corrected a bug that caused [mysql-es](https://crates.io/crates/mysql-es) to return the wrong error when an optimistic lock violation was encountered.
 - In `AggregateTestExecutor` the method `then_expect_error_message` was added to replace the now deprecated `then_expect_error`.
