@@ -134,10 +134,7 @@ where
     A: Aggregate,
 {
     async fn dispatch(&self, query_instance_id: &str, events: &[EventEnvelope<A>]) {
-        match self
-            .apply_events(&query_instance_id.to_string(), events)
-            .await
-        {
+        match self.apply_events(query_instance_id, events).await {
             Ok(_) => {}
             Err(err) => self.handle_error(err),
         };

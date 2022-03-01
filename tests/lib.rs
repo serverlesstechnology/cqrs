@@ -22,8 +22,8 @@ impl Aggregate for TestAggregate {
     type Event = TestEvent;
     type Error = UserErrorPayload;
 
-    fn aggregate_type() -> &'static str {
-        "TestAggregate"
+    fn aggregate_type() -> String {
+        "TestAggregate".to_string()
     }
 
     async fn handle(
@@ -107,16 +107,16 @@ pub struct SomethingElse {
 }
 
 impl DomainEvent for TestEvent {
-    fn event_type(&self) -> &'static str {
+    fn event_type(&self) -> String {
         match self {
-            TestEvent::Created(_) => "Created",
-            TestEvent::Tested(_) => "Tested",
-            TestEvent::SomethingElse(_) => "SomethingElse",
+            TestEvent::Created(_) => "Created".to_string(),
+            TestEvent::Tested(_) => "Tested".to_string(),
+            TestEvent::SomethingElse(_) => "SomethingElse".to_string(),
         }
     }
 
-    fn event_version(&self) -> &'static str {
-        "1.0"
+    fn event_version(&self) -> String {
+        "1.0".to_string()
     }
 }
 

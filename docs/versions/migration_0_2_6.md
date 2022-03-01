@@ -36,3 +36,7 @@ in the Aggregate command handler.
 The `then_expect_error` method on `AggregateTestExecutor` has been deprecated in order to be repurposed in v0.3.0, 
 please use `then_expect_error_message` instead.
 
+### String replaces `&'static str` in interfaces
+
+The `Aggregate` and `DomainEvent` interfaces had methods producing `&'static str`, in all cases these should not return 
+a String.

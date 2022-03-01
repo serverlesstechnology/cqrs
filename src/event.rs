@@ -50,9 +50,9 @@ pub trait DomainEvent:
     Serialize + DeserializeOwned + Clone + PartialEq + fmt::Debug + Sync + Send
 {
     /// A name specifying the event, used for event upcasting.
-    fn event_type(&self) -> &'static str;
+    fn event_type(&self) -> String;
     /// A version of the `event_type`, use for event upcasting.
-    fn event_version(&self) -> &'static str;
+    fn event_version(&self) -> String;
 }
 
 /// `EventEnvelope` is a data structure that encapsulates an event with along with it's pertinent
@@ -108,8 +108,8 @@ impl<A: Aggregate> EventEnvelope<A> {
             aggregate_id,
             sequence,
             aggregate_type,
-            event_type: payload.event_type().to_string(),
-            event_version: payload.event_version().to_string(),
+            event_type: payload.event_type(),
+            event_version: payload.event_version(),
             payload,
             metadata: Default::default(),
         }
@@ -127,8 +127,8 @@ impl<A: Aggregate> EventEnvelope<A> {
             aggregate_id,
             sequence,
             aggregate_type,
-            event_type: payload.event_type().to_string(),
-            event_version: payload.event_version().to_string(),
+            event_type: payload.event_type(),
+            event_version: payload.event_version(),
             payload,
             metadata,
         }

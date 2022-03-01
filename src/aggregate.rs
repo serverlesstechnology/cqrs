@@ -26,7 +26,7 @@ use crate::{AggregateError, DomainEvent};
 ///     type Event = CustomerEvent;
 ///     type Error = UserErrorPayload;
 ///
-///     fn aggregate_type() -> &'static str { "customer" }
+///     fn aggregate_type() -> String { "customer".to_string() }
 ///
 ///     async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError<UserErrorPayload>> {
 ///         match command {
@@ -69,7 +69,7 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     type Error: std::error::Error;
     /// The aggregate type is used as the identifier for this aggregate and its events upon
     /// serialization. The value returned should be unique.
-    fn aggregate_type() -> &'static str;
+    fn aggregate_type() -> String;
     /// This method consumes and processes the fired command. During operation the aggregate
     /// will be populated with the current state.
     ///

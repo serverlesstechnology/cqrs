@@ -129,14 +129,14 @@ pub(crate) mod test {
     }
 
     impl DomainEvent for TestEvents {
-        fn event_type(&self) -> &'static str {
+        fn event_type(&self) -> String {
             match self {
-                TestEvents::Started => "Started",
-                TestEvents::SomethingWasDone => "SomethingWasDone",
+                TestEvents::Started => "Started".to_string(),
+                TestEvents::SomethingWasDone => "SomethingWasDone".to_string(),
             }
         }
-        fn event_version(&self) -> &'static str {
-            EVENT_VERSION
+        fn event_version(&self) -> String {
+            EVENT_VERSION.to_string()
         }
     }
 
@@ -157,8 +157,8 @@ pub(crate) mod test {
         type Event = TestEvents;
         type Error = UserErrorPayload;
 
-        fn aggregate_type() -> &'static str {
-            "TestAggregate"
+        fn aggregate_type() -> String {
+            "TestAggregate".to_string()
         }
         async fn handle(
             &self,
@@ -369,8 +369,8 @@ pub(crate) mod test {
     }
 
     pub(crate) fn test_serialized_event(seq: usize, event: TestEvents) -> SerializedEvent {
-        let event_type = event.event_type().to_string();
-        let event_version = event.event_version().to_string();
+        let event_type = event.event_type();
+        let event_version = event.event_version();
         let payload = serde_json::to_value(&event).unwrap();
         SerializedEvent::new(
             TEST_AGGREGATE_ID.to_string(),

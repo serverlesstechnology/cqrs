@@ -8,10 +8,10 @@ pub enum MyEvents {
     SomethingWasDone,
 }
 impl DomainEvent for MyEvents {
-    fn event_type(&self) -> &'static str {
+    fn event_type(&self) -> String {
         todo!()
     }
-    fn event_version(&self) -> &'static str {
+    fn event_version(&self) -> String {
         todo!()
     }
 }
@@ -29,7 +29,7 @@ impl Aggregate for MyAggregate {
     type Event = MyEvents;
     type Error = UserErrorPayload;
 
-    fn aggregate_type() -> &'static str {
+    fn aggregate_type() -> String {
         todo!()
     }
 
@@ -59,8 +59,8 @@ impl Aggregate for Customer {
     type Event = CustomerEvent;
     type Error = UserErrorPayload;
 
-    fn aggregate_type() -> &'static str {
-        "customer"
+    fn aggregate_type() -> String {
+        "customer".to_string()
     }
 
     async fn handle(
@@ -109,15 +109,15 @@ pub enum CustomerEvent {
 }
 
 impl DomainEvent for CustomerEvent {
-    fn event_type(&self) -> &'static str {
+    fn event_type(&self) -> String {
         match self {
-            CustomerEvent::NameAdded { .. } => "NameAdded",
-            CustomerEvent::EmailUpdated { .. } => "EmailUpdated",
+            CustomerEvent::NameAdded { .. } => "NameAdded".to_string(),
+            CustomerEvent::EmailUpdated { .. } => "EmailUpdated".to_string(),
         }
     }
 
-    fn event_version(&self) -> &'static str {
-        "1.0"
+    fn event_version(&self) -> String {
+        "1.0".to_string()
     }
 }
 
