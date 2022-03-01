@@ -71,10 +71,6 @@ where
     pub sequence: usize,
     /// The type of aggregate the event applies to.
     pub aggregate_type: String,
-    /// The type of event.
-    pub event_type: String,
-    /// The event version.
-    pub event_version: String,
     /// The event payload with all business information.
     pub payload: A::Event,
     /// Additional metadata for use in auditing, logging or debugging purposes.
@@ -87,8 +83,6 @@ impl<A: Aggregate> Clone for EventEnvelope<A> {
             aggregate_id: self.aggregate_id.clone(),
             sequence: self.sequence,
             aggregate_type: self.aggregate_type.clone(),
-            event_type: self.event_type.clone(),
-            event_version: self.event_version.clone(),
             payload: self.payload.clone(),
             metadata: self.metadata.clone(),
         }
@@ -108,8 +102,6 @@ impl<A: Aggregate> EventEnvelope<A> {
             aggregate_id,
             sequence,
             aggregate_type,
-            event_type: payload.event_type(),
-            event_version: payload.event_version(),
             payload,
             metadata: Default::default(),
         }
@@ -127,8 +119,6 @@ impl<A: Aggregate> EventEnvelope<A> {
             aggregate_id,
             sequence,
             aggregate_type,
-            event_type: payload.event_type(),
-            event_version: payload.event_version(),
             payload,
             metadata,
         }

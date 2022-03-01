@@ -146,7 +146,7 @@ mod test {
         TEST_AGGREGATE_ID,
     };
     use crate::persist::{EventStoreAggregateContext, PersistedEventStore, PersistenceError};
-    use crate::EventStore;
+    use crate::{DomainEvent, EventStore};
 
     #[tokio::test]
     async fn load() {
@@ -158,8 +158,8 @@ mod test {
         let events = store.load(TEST_AGGREGATE_ID).await;
         let event = events.get(0).unwrap();
         assert_eq!(1, event.sequence);
-        assert_eq!("SomethingWasDone", event.event_type);
-        assert_eq!(EVENT_VERSION, event.event_version);
+        assert_eq!("SomethingWasDone", event.payload.event_type());
+        assert_eq!(EVENT_VERSION, event.payload.event_version());
     }
 
     #[tokio::test]

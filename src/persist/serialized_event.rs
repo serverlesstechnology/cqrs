@@ -58,8 +58,6 @@ impl<A: Aggregate> TryFrom<SerializedEvent> for EventEnvelope<A> {
             aggregate_id: event.aggregate_id,
             sequence: event.sequence,
             aggregate_type: event.aggregate_type,
-            event_type: event.event_type,
-            event_version: event.event_version,
             payload,
             metadata,
         })
