@@ -74,12 +74,18 @@ where
 {
     type AC = EventStoreAggregateContext<A>;
 
-    async fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>> {
+    async fn load(
+        &self,
+        aggregate_id: &str,
+    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
         PersistedEventStore::load_from_repo(&self.repo, aggregate_id, &self.event_upcasters).await
     }
 
-    async fn load_aggregate(&self, aggregate_id: &str) -> EventStoreAggregateContext<A> {
-        let committed_events = self.load(aggregate_id).await;
+    async fn load_aggregate(
+        &self,
+        aggregate_id: &str,
+    ) -> Result<EventStoreAggregateContext<A>, AggregateError<A::Error>> {
+        let committed_events = self.load(aggregate_id).await?;
         let mut aggregate = A::default();
         let mut current_sequence = 0;
         for envelope in committed_events {
@@ -87,11 +93,11 @@ where
             let event = envelope.payload;
             aggregate.apply(event);
         }
-        EventStoreAggregateContext {
+        Ok(EventStoreAggregateContext {
             aggregate_id: aggregate_id.to_string(),
             aggregate,
             current_sequence,
-        }
+        })
     }
 
     async fn commit(
@@ -118,22 +124,9 @@ where
         repo: &R,
         aggregate_id: &str,
         upcasters: &Option<Vec<Box<dyn EventUpcaster>>>,
-    ) -> Vec<EventEnvelope<A>> {
-        match repo.get_events::<A>(aggregate_id).await {
-            Ok(serialized_events) => {
-                match deserialize_events(serialized_events, upcasters) {
-                    Ok(events) => events,
-                    Err(_err) => {
-                        // TODO: improved error handling (planned for v0.3.0)
-                        Default::default()
-                    }
-                }
-            }
-            Err(_err) => {
-                // TODO: improved error handling (planned for v0.3.0)
-                Default::default()
-            }
-        }
+    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
+        let serialized_events = repo.get_events::<A>(aggregate_id).await?;
+        Ok(deserialize_events(serialized_events, upcasters)?)
     }
 }
 
@@ -146,7 +139,7 @@ mod test {
         TEST_AGGREGATE_ID,
     };
     use crate::persist::{EventStoreAggregateContext, PersistedEventStore, PersistenceError};
-    use crate::{DomainEvent, EventStore};
+    use crate::{AggregateError, DomainEvent, EventStore};
 
     #[tokio::test]
     async fn load() {
@@ -155,7 +148,7 @@ mod test {
             TestEvents::SomethingWasDone,
         )]));
         let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo);
-        let events = store.load(TEST_AGGREGATE_ID).await;
+        let events = store.load(TEST_AGGREGATE_ID).await.unwrap();
         let event = events.get(0).unwrap();
         assert_eq!(1, event.sequence);
         assert_eq!("SomethingWasDone", event.payload.event_type());
@@ -166,15 +159,18 @@ mod test {
     async fn load_error() {
         let repo = MockRepo::with_events(Err(PersistenceError::OptimisticLockError));
         let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo);
-        let events = store.load(TEST_AGGREGATE_ID).await;
-        assert_eq!(0, events.len())
+        let result = store.load(TEST_AGGREGATE_ID).await;
+        match result {
+            Err(AggregateError::AggregateConflict) => {}
+            _ => panic!("expected technical error"),
+        }
     }
 
     #[tokio::test]
     async fn load_aggregate_new() {
         let repo = MockRepo::with_events(Ok(vec![]));
         let store = PersistedEventStore::new(repo);
-        let agg_context = store.load_aggregate(TEST_AGGREGATE_ID).await;
+        let agg_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
         assert_eq!(0, agg_context.current_sequence);
         assert_eq!(TEST_AGGREGATE_ID, agg_context.aggregate_id);
         assert_eq!(TestAggregate::default(), agg_context.aggregate);
@@ -187,7 +183,7 @@ mod test {
             test_serialized_event(2, TestEvents::SomethingWasDone),
         ]));
         let store = PersistedEventStore::new(repo);
-        let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await;
+        let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
         assert_eq!(2, snapshot_context.current_sequence);
         assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
         assert_eq!(
@@ -198,13 +194,15 @@ mod test {
         );
     }
 
-    // TODO: better error handling needed, this panic could cause problems with non-severless systems
     #[tokio::test]
-    #[should_panic]
     async fn load_aggregate_error() {
-        let repo = MockRepo::with_snapshot(Err(PersistenceError::OptimisticLockError));
+        let repo = MockRepo::with_events(Err(PersistenceError::OptimisticLockError));
         let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo);
-        store.load_aggregate(TEST_AGGREGATE_ID).await;
+        let result = store.load_aggregate(TEST_AGGREGATE_ID).await;
+        match result {
+            Err(AggregateError::AggregateConflict) => {}
+            _ => panic!("expected aggregate conflict"),
+        }
     }
 
     #[tokio::test]

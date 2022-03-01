@@ -127,7 +127,7 @@ where
         command: A::Command,
         metadata: HashMap<String, String>,
     ) -> Result<(), AggregateError<A::Error>> {
-        let aggregate_context = self.store.load_aggregate(aggregate_id).await;
+        let aggregate_context = self.store.load_aggregate(aggregate_id).await?;
         let aggregate = aggregate_context.aggregate();
         let resultant_events = aggregate.handle(command).await?;
         let committed_events = self

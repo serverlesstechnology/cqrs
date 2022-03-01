@@ -17,9 +17,15 @@ where
     type AC: AggregateContext<A>;
 
     /// Load all events for a particular `aggregate_id`
-    async fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>>;
+    async fn load(
+        &self,
+        aggregate_id: &str,
+    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>>;
     /// Load aggregate at current state
-    async fn load_aggregate(&self, aggregate_id: &str) -> Self::AC;
+    async fn load_aggregate(
+        &self,
+        aggregate_id: &str,
+    ) -> Result<Self::AC, AggregateError<A::Error>>;
     /// Commit new events
     async fn commit(
         &self,

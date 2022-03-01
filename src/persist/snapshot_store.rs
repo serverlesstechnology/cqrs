@@ -64,22 +64,21 @@ where
 {
     type AC = SnapshotStoreAggregateContext<A>;
 
-    async fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>> {
+    async fn load(
+        &self,
+        aggregate_id: &str,
+    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
         PersistedEventStore::load_from_repo(&self.repo, aggregate_id, &self.event_upcasters).await
     }
-    async fn load_aggregate(&self, aggregate_id: &str) -> SnapshotStoreAggregateContext<A> {
-        match self.repo.get_snapshot::<A>(aggregate_id).await {
-            Ok(snapshot) => match snapshot {
-                Some(snapshot) => {
-                    // TODO: improved error handling (planned for v0.3.0)
-                    snapshot.try_into().expect("snapshot can be deserialized")
-                }
-                None => SnapshotStoreAggregateContext::new(aggregate_id),
-            },
-            Err(e) => {
-                // TODO: improved error handling (planned for v0.3.0)
-                panic!("{}", e);
-            }
+
+    async fn load_aggregate(
+        &self,
+        aggregate_id: &str,
+    ) -> Result<SnapshotStoreAggregateContext<A>, AggregateError<A::Error>> {
+        let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
+        match snapshot {
+            Some(snapshot) => Ok(snapshot.try_into()?),
+            None => Ok(SnapshotStoreAggregateContext::new(aggregate_id)),
         }
     }
 
@@ -259,7 +258,7 @@ pub(crate) mod test {
             TestEvents::SomethingWasDone,
         )]));
         let store = PersistedSnapshotStore::<MockRepo, TestAggregate>::new(repo);
-        let events = store.load(TEST_AGGREGATE_ID).await;
+        let events = store.load(TEST_AGGREGATE_ID).await.unwrap();
         let event = events.get(0).unwrap();
         assert_eq!(1, event.sequence);
         assert_eq!("SomethingWasDone", event.payload.event_type());
@@ -270,15 +269,18 @@ pub(crate) mod test {
     async fn load_error() {
         let repo = MockRepo::with_events(Err(PersistenceError::OptimisticLockError));
         let store = PersistedSnapshotStore::<MockRepo, TestAggregate>::new(repo);
-        let events = store.load(TEST_AGGREGATE_ID).await;
-        assert_eq!(0, events.len())
+        let result = store.load(TEST_AGGREGATE_ID).await.unwrap_err();
+        match result {
+            AggregateError::AggregateConflict => {}
+            _ => panic!("expected technical error"),
+        }
     }
 
     #[tokio::test]
     async fn load_aggregate_new() {
         let repo = MockRepo::with_snapshot(Ok(None));
         let store = PersistedSnapshotStore::new(repo);
-        let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await;
+        let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
         assert_eq!(0, snapshot_context.current_snapshot);
         assert_eq!(0, snapshot_context.current_sequence);
         assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
@@ -297,7 +299,7 @@ pub(crate) mod test {
             current_snapshot: 2,
         })));
         let store = PersistedSnapshotStore::new(repo);
-        let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await;
+        let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
         assert_eq!(2, snapshot_context.current_snapshot);
         assert_eq!(3, snapshot_context.current_sequence);
         assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
@@ -309,13 +311,15 @@ pub(crate) mod test {
         );
     }
 
-    // TODO: better error handling needed, this panic could cause problems with non-severless systems
     #[tokio::test]
-    #[should_panic]
     async fn load_aggregate_error() {
         let repo = MockRepo::with_snapshot(Err(PersistenceError::OptimisticLockError));
         let store = PersistedSnapshotStore::<MockRepo, TestAggregate>::new(repo);
-        store.load_aggregate(TEST_AGGREGATE_ID).await;
+        let result = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap_err();
+        match result {
+            AggregateError::AggregateConflict => {}
+            _ => panic!("expected technical error"),
+        }
     }
 
     #[tokio::test]

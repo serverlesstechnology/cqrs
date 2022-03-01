@@ -56,7 +56,10 @@ impl<A: Aggregate> MemStore<A> {
         Arc::clone(&self.events)
     }
 
-    fn load_commited_events(&self, aggregate_id: String) -> Vec<EventEnvelope<A>> {
+    fn load_commited_events(
+        &self,
+        aggregate_id: String,
+    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
         // uninteresting unwrap: this will not be used in production, for tests only
         let event_map = self.events.read().unwrap();
         let mut committed_events: Vec<EventEnvelope<A>> = Vec::new();
@@ -68,8 +71,9 @@ impl<A: Aggregate> MemStore<A> {
                 }
             }
         };
-        committed_events
+        Ok(committed_events)
     }
+
     fn aggregate_id(&self, events: &[EventEnvelope<A>]) -> String {
         // uninteresting unwrap: this is not a struct for production use
         let &first_event = events.iter().peekable().peek().unwrap();
@@ -81,18 +85,24 @@ impl<A: Aggregate> MemStore<A> {
 impl<A: Aggregate> EventStore<A> for MemStore<A> {
     type AC = MemStoreAggregateContext<A>;
 
-    async fn load(&self, aggregate_id: &str) -> Vec<EventEnvelope<A>> {
-        let events = self.load_commited_events(aggregate_id.to_string());
+    async fn load(
+        &self,
+        aggregate_id: &str,
+    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
+        let events = self.load_commited_events(aggregate_id.to_string())?;
         println!(
             "loading: {} events for aggregate ID '{}'",
             &events.len(),
             &aggregate_id
         );
-        events
+        Ok(events)
     }
 
-    async fn load_aggregate(&self, aggregate_id: &str) -> MemStoreAggregateContext<A> {
-        let committed_events = self.load(aggregate_id).await;
+    async fn load_aggregate(
+        &self,
+        aggregate_id: &str,
+    ) -> Result<MemStoreAggregateContext<A>, AggregateError<A::Error>> {
+        let committed_events = self.load(aggregate_id).await?;
         let mut aggregate = A::default();
         let mut current_sequence = 0;
         for envelope in committed_events {
@@ -100,11 +110,11 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
             let event = envelope.payload;
             aggregate.apply(event);
         }
-        MemStoreAggregateContext {
+        Ok(MemStoreAggregateContext {
             aggregate_id: aggregate_id.to_string(),
             aggregate,
             current_sequence,
-        }
+        })
     }
 
     async fn commit(
@@ -121,7 +131,7 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
             return Ok(Vec::default());
         }
         let aggregate_id = self.aggregate_id(&wrapped_events);
-        let mut new_events = self.load_commited_events(aggregate_id.to_string());
+        let mut new_events = self.load_commited_events(aggregate_id.to_string()).unwrap();
         for event in &wrapped_events {
             new_events.push(event.clone());
         }
