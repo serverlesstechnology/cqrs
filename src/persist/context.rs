@@ -9,47 +9,11 @@ pub struct EventStoreAggregateContext<A: Aggregate> {
     pub aggregate: A,
     /// The last committed event sequence number for this aggregate instance.
     pub current_sequence: usize,
-}
-
-impl<A: Aggregate> SnapshotStoreAggregateContext<A> {
-    /// Creates a new, default context with the given aggregate id.
-    pub fn new(aggregate_id: &str) -> Self {
-        Self {
-            aggregate_id: aggregate_id.to_string(),
-            aggregate: Default::default(),
-            current_sequence: 0,
-            current_snapshot: 0,
-        }
-    }
+    /// The last committed snapshot version for this aggregate instance.
+    pub current_snapshot: Option<usize>,
 }
 
 impl<A: Aggregate> AggregateContext<A> for EventStoreAggregateContext<A> {
-    fn aggregate(&self) -> &A {
-        &self.aggregate
-    }
-}
-
-/// Holds context for the snapshot-sourced implementation PostgresSnapshotStore.
-/// This is only used internally within the `EventStore`.
-#[derive(Debug, PartialEq)]
-pub struct SnapshotStoreAggregateContext<A>
-where
-    A: Aggregate,
-{
-    /// The aggregate ID of the aggregate instance that has been loaded.
-    pub aggregate_id: String,
-    /// The current state of the aggregate instance.
-    pub aggregate: A,
-    /// The last committed event sequence number for this aggregate instance.
-    pub current_sequence: usize,
-    /// The last committed snapshot version for this aggregate instance.
-    pub current_snapshot: usize,
-}
-
-impl<A> AggregateContext<A> for SnapshotStoreAggregateContext<A>
-where
-    A: Aggregate,
-{
     fn aggregate(&self) -> &A {
         &self.aggregate
     }

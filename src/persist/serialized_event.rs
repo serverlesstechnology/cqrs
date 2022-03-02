@@ -4,7 +4,7 @@ use std::convert::TryFrom;
 use crate::{Aggregate, DomainEvent, EventEnvelope};
 use serde_json::Value;
 
-use crate::persist::{EventUpcaster, PersistenceError, SnapshotStoreAggregateContext};
+use crate::persist::{EventStoreAggregateContext, EventUpcaster, PersistenceError};
 
 /// A serialized version of an event with metadata.
 /// Used by repositories to store and load events from a database.
@@ -134,7 +134,7 @@ pub struct SerializedSnapshot {
     pub current_snapshot: usize,
 }
 
-impl<A: Aggregate> TryFrom<SerializedSnapshot> for SnapshotStoreAggregateContext<A> {
+impl<A: Aggregate> TryFrom<SerializedSnapshot> for EventStoreAggregateContext<A> {
     type Error = PersistenceError;
 
     fn try_from(snapshot: SerializedSnapshot) -> Result<Self, Self::Error> {
@@ -143,7 +143,7 @@ impl<A: Aggregate> TryFrom<SerializedSnapshot> for SnapshotStoreAggregateContext
             aggregate_id: snapshot.aggregate_id,
             aggregate,
             current_sequence: snapshot.current_sequence,
-            current_snapshot: snapshot.current_snapshot,
+            current_snapshot: Some(snapshot.current_snapshot),
         })
     }
 }

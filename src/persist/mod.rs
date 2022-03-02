@@ -7,13 +7,12 @@
 //!
 //!
 //!
-pub use context::{EventStoreAggregateContext, QueryContext, SnapshotStoreAggregateContext};
+pub use context::{EventStoreAggregateContext, QueryContext};
 pub use error::PersistenceError;
-pub use event_store::PersistedEventStore;
+pub use event_store::{PersistedEventStore, SourceOfTruth};
 pub use queries::GenericQuery;
 pub use repository::{PersistedEventRepository, ViewRepository};
 pub use serialized_event::{SerializedEvent, SerializedSnapshot};
-pub use snapshot_store::PersistedSnapshotStore;
 pub use upcaster::{
     EventUpcaster, SemanticVersion, SemanticVersionError, SemanticVersionEventUpcaster,
     SemanticVersionEventUpcasterFunc,

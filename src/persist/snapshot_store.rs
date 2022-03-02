@@ -1,109 +1,97 @@
-use std::collections::HashMap;
-use std::convert::TryInto;
-use std::marker::PhantomData;
+// /// Storage engine using a database backing.
+// /// This is an snapshot-sourced `EventStore`, meaning it uses the serialized aggregate as the
+// /// primary source of truth for the state of the aggregate.
+// ///
+// /// The individual events are also persisted but are used only for updating queries.
+// ///
+// /// For a event-sourced `EventStore` see [`PersistedEventStore`](struct.PersistedEventStore.html).
+// ///
+// pub struct PersistedSnapshotStore<R, A>
+// where
+//     R: PersistedEventRepository,
+//     A: Aggregate + Send + Sync,
+// {
+//     repo: R,
+//     event_upcasters: Option<Vec<Box<dyn EventUpcaster>>>,
+//     _phantom: PhantomData<A>,
+// }
 
-use async_trait::async_trait;
+// impl<R, A> PersistedSnapshotStore<R, A>
+// where
+//     R: PersistedEventRepository,
+//     A: Aggregate + Send + Sync,
+// {
+//     /// Creates a new `PostgresSnapshotStore` from the provided database connection pool,
+//     /// an `EventStore` used for configuring a new cqrs framework.
+//     ///
+//     /// ```
+//     /// # use cqrs_es::doc::MyAggregate;
+//     /// # use cqrs_es::CqrsFramework;
+//     /// # use cqrs_es::persist::doc::{MyDatabaseConnection, MyEventRepository};
+//     /// # use cqrs_es::persist::PersistedSnapshotStore;
+//     /// # fn config(my_db_connection: MyDatabaseConnection) {
+//     /// let repo = MyEventRepository::new(my_db_connection);
+//     /// let store = PersistedSnapshotStore::<MyEventRepository,MyAggregate>::new(repo);
+//     /// let cqrs = CqrsFramework::new(store, vec![]);
+//     /// # }
+//     /// ```
+//     pub fn new(snapshot_repo: R) -> Self {
+//         PersistedSnapshotStore {
+//             repo: snapshot_repo,
+//             event_upcasters: None,
+//             _phantom: PhantomData,
+//         }
+//     }
+// }
 
-use crate::persist::serialized_event::serialize_events;
-use crate::persist::{
-    EventUpcaster, PersistedEventRepository, PersistedEventStore, SnapshotStoreAggregateContext,
-};
-use crate::{Aggregate, AggregateError, EventEnvelope, EventStore};
-
-/// Storage engine using a database backing.
-/// This is an snapshot-sourced `EventStore`, meaning it uses the serialized aggregate as the
-/// primary source of truth for the state of the aggregate.
-///
-/// The individual events are also persisted but are used only for updating queries.
-///
-/// For a event-sourced `EventStore` see [`PersistedEventStore`](struct.PersistedEventStore.html).
-///
-pub struct PersistedSnapshotStore<R, A>
-where
-    R: PersistedEventRepository,
-    A: Aggregate + Send + Sync,
-{
-    repo: R,
-    event_upcasters: Option<Vec<Box<dyn EventUpcaster>>>,
-    _phantom: PhantomData<A>,
-}
-
-impl<R, A> PersistedSnapshotStore<R, A>
-where
-    R: PersistedEventRepository,
-    A: Aggregate + Send + Sync,
-{
-    /// Creates a new `PostgresSnapshotStore` from the provided database connection pool,
-    /// an `EventStore` used for configuring a new cqrs framework.
-    ///
-    /// ```
-    /// # use cqrs_es::doc::MyAggregate;
-    /// # use cqrs_es::CqrsFramework;
-    /// # use cqrs_es::persist::doc::{MyDatabaseConnection, MyEventRepository};
-    /// # use cqrs_es::persist::PersistedSnapshotStore;
-    /// # fn config(my_db_connection: MyDatabaseConnection) {
-    /// let repo = MyEventRepository::new(my_db_connection);
-    /// let store = PersistedSnapshotStore::<MyEventRepository,MyAggregate>::new(repo);
-    /// let cqrs = CqrsFramework::new(store, vec![]);
-    /// # }
-    /// ```
-    pub fn new(snapshot_repo: R) -> Self {
-        PersistedSnapshotStore {
-            repo: snapshot_repo,
-            event_upcasters: None,
-            _phantom: PhantomData,
-        }
-    }
-}
-
-#[async_trait]
-impl<R, A> EventStore<A> for PersistedSnapshotStore<R, A>
-where
-    R: PersistedEventRepository,
-    A: Aggregate + Send + Sync,
-{
-    type AC = SnapshotStoreAggregateContext<A>;
-
-    async fn load(
-        &self,
-        aggregate_id: &str,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        PersistedEventStore::load_from_repo(&self.repo, aggregate_id, &self.event_upcasters).await
-    }
-
-    async fn load_aggregate(
-        &self,
-        aggregate_id: &str,
-    ) -> Result<SnapshotStoreAggregateContext<A>, AggregateError<A::Error>> {
-        let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
-        match snapshot {
-            Some(snapshot) => Ok(snapshot.try_into()?),
-            None => Ok(SnapshotStoreAggregateContext::new(aggregate_id)),
-        }
-    }
-
-    async fn commit(
-        &self,
-        events: Vec<A::Event>,
-        mut context: SnapshotStoreAggregateContext<A>,
-        metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        for event in events.clone() {
-            context.aggregate.apply(event);
-        }
-        let aggregate_id = context.aggregate_id.clone();
-        let next_snapshot = context.current_snapshot + 1;
-        let seq = context.current_sequence;
-        let wrapped_events = self.wrap_events(&aggregate_id, seq, events, metadata);
-        let serialized_events = serialize_events(&wrapped_events)?;
-        let payload = serde_json::to_value(context.aggregate)?;
-        let snapshot_update = Some((aggregate_id, payload, next_snapshot));
-        self.repo
-            .persist::<A>(&serialized_events, snapshot_update)
-            .await?;
-        Ok(wrapped_events)
-    }
-}
+// #[async_trait]
+// impl<R, A> EventStore<A> for PersistedSnapshotStore<R, A>
+// where
+//     R: PersistedEventRepository,
+//     A: Aggregate + Send + Sync,
+// {
+//     type AC = SnapshotStoreAggregateContext<A>;
+//
+//     async fn load_events(
+//         &self,
+//         aggregate_id: &str,
+//     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
+//         PersistedEventStore::load_from_repo(&self.repo, aggregate_id, &self.event_upcasters).await
+//     }
+//
+//     async fn load_aggregate(
+//         &self,
+//         aggregate_id: &str,
+//     ) -> Result<SnapshotStoreAggregateContext<A>, AggregateError<A::Error>> {
+//         let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
+//         match snapshot {
+//             Some(snapshot) => Ok(snapshot.try_into()?),
+//             None => Ok(SnapshotStoreAggregateContext::new(aggregate_id)),
+//         }
+//     }
+//
+//     async fn commit(
+//         &self,
+//         events: Vec<A::Event>,
+//         mut context: SnapshotStoreAggregateContext<A>,
+//         metadata: HashMap<String, String>,
+//     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
+//         for event in events.clone() {
+//             context.aggregate.apply(event);
+//         }
+//         let aggregate_id = context.aggregate_id.clone();
+//         let next_snapshot = context.current_snapshot + 1;
+//         let seq = context.current_sequence;
+//         let wrapped_events = self.wrap_events(&aggregate_id, seq, events, metadata);
+//         let serialized_events = serialize_events(&wrapped_events)?;
+//         let payload = serde_json::to_value(context.aggregate)?;
+//         let snapshot_update = Some((aggregate_id, payload, next_snapshot));
+//         self.repo
+//             .persist::<A>(&serialized_events, snapshot_update)
+//             .await?;
+//         Ok(wrapped_events)
+//     }
+// }
 
 #[cfg(test)]
 pub(crate) mod test {
@@ -116,9 +104,10 @@ pub(crate) mod test {
     use serde_json::json;
     use serde_json::Value;
 
+    use crate::persist::event_store::SourceOfTruth;
     use crate::persist::{
-        PersistedEventRepository, PersistedSnapshotStore, PersistenceError, SerializedEvent,
-        SerializedSnapshot, SnapshotStoreAggregateContext,
+        EventStoreAggregateContext, PersistedEventRepository, PersistedEventStore,
+        PersistenceError, SerializedEvent, SerializedSnapshot,
     };
 
     #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -257,8 +246,9 @@ pub(crate) mod test {
             1,
             TestEvents::SomethingWasDone,
         )]));
-        let store = PersistedSnapshotStore::<MockRepo, TestAggregate>::new(repo);
-        let events = store.load(TEST_AGGREGATE_ID).await.unwrap();
+        let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo)
+            .with_storage_method(SourceOfTruth::AggregateStore);
+        let events = store.load_events(TEST_AGGREGATE_ID).await.unwrap();
         let event = events.get(0).unwrap();
         assert_eq!(1, event.sequence);
         assert_eq!("SomethingWasDone", event.payload.event_type());
@@ -268,8 +258,9 @@ pub(crate) mod test {
     #[tokio::test]
     async fn load_error() {
         let repo = MockRepo::with_events(Err(PersistenceError::OptimisticLockError));
-        let store = PersistedSnapshotStore::<MockRepo, TestAggregate>::new(repo);
-        let result = store.load(TEST_AGGREGATE_ID).await.unwrap_err();
+        let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo)
+            .with_storage_method(SourceOfTruth::AggregateStore);
+        let result = store.load_events(TEST_AGGREGATE_ID).await.unwrap_err();
         match result {
             AggregateError::AggregateConflict => {}
             _ => panic!("expected technical error"),
@@ -279,9 +270,10 @@ pub(crate) mod test {
     #[tokio::test]
     async fn load_aggregate_new() {
         let repo = MockRepo::with_snapshot(Ok(None));
-        let store = PersistedSnapshotStore::new(repo);
+        let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo)
+            .with_storage_method(SourceOfTruth::AggregateStore);
         let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
-        assert_eq!(0, snapshot_context.current_snapshot);
+        assert_eq!(Some(0), snapshot_context.current_snapshot);
         assert_eq!(0, snapshot_context.current_sequence);
         assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
         assert_eq!(TestAggregate::default(), snapshot_context.aggregate);
@@ -298,9 +290,10 @@ pub(crate) mod test {
             current_sequence: 3,
             current_snapshot: 2,
         })));
-        let store = PersistedSnapshotStore::new(repo);
+        let store =
+            PersistedEventStore::new(repo).with_storage_method(SourceOfTruth::AggregateStore);
         let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
-        assert_eq!(2, snapshot_context.current_snapshot);
+        assert_eq!(Some(2), snapshot_context.current_snapshot);
         assert_eq!(3, snapshot_context.current_sequence);
         assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
         assert_eq!(
@@ -314,10 +307,11 @@ pub(crate) mod test {
     #[tokio::test]
     async fn load_aggregate_error() {
         let repo = MockRepo::with_snapshot(Err(PersistenceError::OptimisticLockError));
-        let store = PersistedSnapshotStore::<MockRepo, TestAggregate>::new(repo);
-        let result = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap_err();
+        let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo)
+            .with_storage_method(SourceOfTruth::AggregateStore);
+        let result = store.load_aggregate(TEST_AGGREGATE_ID).await;
         match result {
-            AggregateError::AggregateConflict => {}
+            Err(AggregateError::AggregateConflict) => {}
             _ => panic!("expected technical error"),
         }
     }
@@ -343,12 +337,14 @@ pub(crate) mod test {
                 aggregate
             );
         }));
-        let store = PersistedSnapshotStore::new(repo);
-        let context = SnapshotStoreAggregateContext {
+        let store =
+            PersistedEventStore::new(repo).with_storage_method(SourceOfTruth::AggregateStore);
+        // let store = PersistedSnapshotStore::new(repo);
+        let context = EventStoreAggregateContext {
             aggregate_id: TEST_AGGREGATE_ID.to_string(),
             aggregate: TestAggregate::default(),
             current_sequence: 0,
-            current_snapshot: 0,
+            current_snapshot: Some(0),
         };
         let event_envelopes = store
             .commit(

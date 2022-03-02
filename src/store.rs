@@ -17,7 +17,7 @@ where
     type AC: AggregateContext<A>;
 
     /// Load all events for a particular `aggregate_id`
-    async fn load(
+    async fn load_events(
         &self,
         aggregate_id: &str,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>>;
@@ -33,33 +33,6 @@ where
         context: Self::AC,
         metadata: HashMap<String, String>,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>>;
-
-    /// Method to wrap a set of events with the additional metadata needed for persistence and publishing
-    fn wrap_events(
-        &self,
-        aggregate_id: &str,
-        current_sequence: usize,
-        resultant_events: Vec<A::Event>,
-        base_metadata: HashMap<String, String>,
-    ) -> Vec<EventEnvelope<A>> {
-        let mut sequence = current_sequence;
-        let mut wrapped_events: Vec<EventEnvelope<A>> = Vec::new();
-        for payload in resultant_events {
-            sequence += 1;
-            let aggregate_type = A::aggregate_type().to_string();
-            let aggregate_id: String = aggregate_id.to_string();
-            let sequence = sequence;
-            let metadata = base_metadata.clone();
-            wrapped_events.push(EventEnvelope::new_with_metadata(
-                aggregate_id,
-                sequence,
-                aggregate_type,
-                payload,
-                metadata,
-            ));
-        }
-        wrapped_events
-    }
 }
 
 /// Returns the aggregate and context around it that is needed when committing events

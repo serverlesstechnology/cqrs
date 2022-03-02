@@ -1,6 +1,10 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
+use crate::persist::{
+    PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
+};
 use crate::{Aggregate, AggregateError, DomainEvent, UserErrorPayload};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -157,5 +161,39 @@ mod doc_tests {
                 changed_name: "John Doe".to_string(),
             })
             .then_expect_error_message("a name has already been added for this customer");
+    }
+}
+
+pub struct MyRepository;
+#[async_trait]
+impl PersistedEventRepository for MyRepository {
+    async fn get_events<A: Aggregate>(
+        &self,
+        _aggregate_id: &str,
+    ) -> Result<Vec<SerializedEvent>, PersistenceError> {
+        todo!()
+    }
+
+    async fn get_last_events<A: Aggregate>(
+        &self,
+        _aggregate_id: &str,
+        _number_events: usize,
+    ) -> Result<Vec<SerializedEvent>, PersistenceError> {
+        todo!()
+    }
+
+    async fn get_snapshot<A: Aggregate>(
+        &self,
+        _aggregate_id: &str,
+    ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
+        todo!()
+    }
+
+    async fn persist<A: Aggregate>(
+        &self,
+        _events: &[SerializedEvent],
+        _snapshot_update: Option<(String, Value, usize)>,
+    ) -> Result<(), PersistenceError> {
+        todo!()
     }
 }
