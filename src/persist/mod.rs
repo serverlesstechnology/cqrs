@@ -24,7 +24,6 @@ mod event_store;
 mod queries;
 mod repository;
 mod serialized_event;
-mod snapshot_store;
 mod upcaster;
 
 // Documentation items
