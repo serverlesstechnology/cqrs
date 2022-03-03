@@ -24,6 +24,58 @@ pub enum SourceOfTruth {
     AggregateStore,
 }
 
+impl SourceOfTruth {
+    fn commit_snapshot_with_addl_events(
+        &self,
+        current_sequence: usize,
+        num_events: usize,
+    ) -> usize {
+        match self {
+            SourceOfTruth::EventStore => 0,
+            SourceOfTruth::Snapshot(max_size) => {
+                let next_snapshot_at = max_size - (current_sequence % max_size);
+                if num_events < next_snapshot_at {
+                    0
+                } else {
+                    let addl_events_after_next_snapshot = num_events - next_snapshot_at;
+                    let addl_events_after_next_snapshot_to_apply = addl_events_after_next_snapshot
+                        - (addl_events_after_next_snapshot % max_size);
+                    next_snapshot_at + addl_events_after_next_snapshot_to_apply
+                }
+            }
+            SourceOfTruth::AggregateStore => num_events,
+        }
+    }
+}
+
+#[test]
+fn test_source_of_truth() {
+    assert_eq!(
+        0,
+        SourceOfTruth::EventStore.commit_snapshot_with_addl_events(5, 3)
+    );
+    assert_eq!(
+        3,
+        SourceOfTruth::AggregateStore.commit_snapshot_with_addl_events(5, 3)
+    );
+    assert_eq!(
+        0,
+        SourceOfTruth::Snapshot(5).commit_snapshot_with_addl_events(5, 3)
+    );
+    assert_eq!(
+        3,
+        SourceOfTruth::Snapshot(4).commit_snapshot_with_addl_events(5, 3)
+    );
+    assert_eq!(
+        3,
+        SourceOfTruth::Snapshot(4).commit_snapshot_with_addl_events(5, 4)
+    );
+    assert_eq!(
+        7,
+        SourceOfTruth::Snapshot(4).commit_snapshot_with_addl_events(5, 8)
+    );
+}
+
 /// Storage engine using a database backing.
 /// This defaults to an event-sourced store (i.e., events are the single source of truth),
 /// but can be configured to be aggregate-sourced or use snapshots when a large number of events
@@ -132,7 +184,16 @@ where
                 current_snapshot: None,
             },
             SourceOfTruth::Snapshot(_) => {
-                todo!()
+                let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
+                match snapshot {
+                    Some(snapshot) => snapshot.try_into()?,
+                    None => EventStoreAggregateContext {
+                        aggregate_id: aggregate_id.to_string(),
+                        aggregate: Default::default(),
+                        current_sequence: 0,
+                        current_snapshot: Some(0),
+                    },
+                }
             }
             SourceOfTruth::AggregateStore => {
                 let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
@@ -149,8 +210,19 @@ where
         };
         let events_to_apply = match self.storage {
             SourceOfTruth::EventStore => self.load_events(aggregate_id).await?,
-            SourceOfTruth::Snapshot(_) => {
-                todo!()
+            SourceOfTruth::Snapshot(max_request) => {
+                let mut events = Vec::default();
+                let last_event = context.current_sequence;
+                for ser_event in self
+                    .repo
+                    .get_last_events::<A>(aggregate_id, max_request)
+                    .await?
+                {
+                    if ser_event.sequence > last_event {
+                        events.push(ser_event.try_into()?);
+                    }
+                }
+                events
             }
             SourceOfTruth::AggregateStore => {
                 vec![]
@@ -171,24 +243,34 @@ where
         metadata: HashMap<String, String>,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
         let aggregate_id = context.aggregate_id;
-        let snapshot_update: Option<(Value, usize)> = match self.storage {
-            SourceOfTruth::EventStore => None,
-            SourceOfTruth::Snapshot(_) => {
-                todo!()
-            }
-            SourceOfTruth::AggregateStore => {
-                for event in events.clone() {
-                    context.aggregate.apply(event);
+        let current_sequence = context.current_sequence;
+
+        let commit_snapshot_to_event = self
+            .storage
+            .commit_snapshot_with_addl_events(context.current_sequence, events.len());
+        let snapshot_update: Option<(Value, usize)> = if commit_snapshot_to_event == 0 {
+            None
+        } else {
+            match self.storage {
+                SourceOfTruth::EventStore => None,
+                _ => {
+                    let mut i = 0;
+                    for event in events.clone() {
+                        i += 1;
+                        if i <= commit_snapshot_to_event {
+                            context.aggregate.apply(event);
+                            context.current_sequence += 1;
+                        }
+                    }
+                    let next_snapshot = match context.current_snapshot {
+                        Some(val) => val + 1,
+                        None => 1,
+                    };
+                    let payload = serde_json::to_value(context.aggregate)?;
+                    Some((payload, next_snapshot))
                 }
-                let next_snapshot = match context.current_snapshot {
-                    Some(val) => val + 1,
-                    None => 1,
-                };
-                let payload = serde_json::to_value(context.aggregate)?;
-                Some((payload, next_snapshot))
             }
         };
-        let current_sequence = context.current_sequence;
         let wrapped_events = self.wrap_events(&aggregate_id, current_sequence, events, metadata);
         let serialized_events: Vec<SerializedEvent> = serialize_events(&wrapped_events)?;
         let snapshot_update = snapshot_update.map(|s| (aggregate_id, s.0, s.1));
@@ -241,136 +323,18 @@ where
 }
 
 #[cfg(test)]
-mod event_store_test {
-    use std::collections::HashMap;
-
-    use crate::persist::event_store::aggregate_test::{
-        test_serialized_event, MockRepo, TestAggregate, TestEvents, EVENT_VERSION,
-        TEST_AGGREGATE_ID,
-    };
-    use crate::persist::{EventStoreAggregateContext, PersistedEventStore, PersistenceError};
-    use crate::{AggregateError, DomainEvent, EventStore};
-
-    #[tokio::test]
-    async fn load() {
-        let repo = MockRepo::with_events(Ok(vec![test_serialized_event(
-            1,
-            TestEvents::SomethingWasDone,
-        )]));
-        let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo);
-        let events = store.load_events(TEST_AGGREGATE_ID).await.unwrap();
-        let event = events.get(0).unwrap();
-        assert_eq!(1, event.sequence);
-        assert_eq!("SomethingWasDone", event.payload.event_type());
-        assert_eq!(EVENT_VERSION, event.payload.event_version());
-    }
-
-    #[tokio::test]
-    async fn load_error() {
-        let repo = MockRepo::with_events(Err(PersistenceError::OptimisticLockError));
-        let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo);
-        let result = store.load_events(TEST_AGGREGATE_ID).await;
-        match result {
-            Err(AggregateError::AggregateConflict) => {}
-            _ => panic!("expected technical error"),
-        }
-    }
-
-    #[tokio::test]
-    async fn load_aggregate_new() {
-        let repo = MockRepo::with_events(Ok(vec![]));
-        let store = PersistedEventStore::new(repo);
-        let agg_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
-        assert_eq!(0, agg_context.current_sequence);
-        assert_eq!(TEST_AGGREGATE_ID, agg_context.aggregate_id);
-        assert_eq!(TestAggregate::default(), agg_context.aggregate);
-    }
-
-    #[tokio::test]
-    async fn load_aggregate_existing() {
-        let repo = MockRepo::with_events(Ok(vec![
-            test_serialized_event(1, TestEvents::Started),
-            test_serialized_event(2, TestEvents::SomethingWasDone),
-        ]));
-        let store = PersistedEventStore::new(repo);
-        let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
-        assert_eq!(2, snapshot_context.current_sequence);
-        assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
-        assert_eq!(
-            TestAggregate {
-                something_happened: 1
-            },
-            snapshot_context.aggregate
-        );
-    }
-
-    #[tokio::test]
-    async fn load_aggregate_error() {
-        let repo = MockRepo::with_events(Err(PersistenceError::OptimisticLockError));
-        let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo);
-        let result = store.load_aggregate(TEST_AGGREGATE_ID).await;
-        match result {
-            Err(AggregateError::AggregateConflict) => {}
-            _ => panic!("expected aggregate conflict"),
-        }
-    }
-
-    #[tokio::test]
-    async fn commit() {
-        let repo = MockRepo::with_commit(Box::new(|events, snapshot_update| {
-            assert_eq!(3, events.len());
-            let event = events.get(2).unwrap();
-            assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
-            assert_eq!(3, event.sequence);
-
-            assert!(snapshot_update.is_none());
-        }));
-        let store = PersistedEventStore::new(repo);
-        let context = EventStoreAggregateContext {
-            aggregate_id: TEST_AGGREGATE_ID.to_string(),
-            aggregate: TestAggregate::default(),
-            current_sequence: 0,
-            current_snapshot: None,
-        };
-        let event_envelopes = store
-            .commit(
-                vec![
-                    TestEvents::Started,
-                    TestEvents::SomethingWasDone,
-                    TestEvents::SomethingWasDone,
-                ],
-                context,
-                HashMap::default(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(3, event_envelopes.len());
-        let event = event_envelopes.get(0).unwrap();
-        assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
-        assert_eq!(TestEvents::Started, event.payload);
-        assert_eq!(
-            TestEvents::SomethingWasDone,
-            event_envelopes.get(2).unwrap().payload
-        );
-    }
-}
-
-#[cfg(test)]
-pub(crate) mod aggregate_test {
+mod shared_test {
     use std::collections::HashMap;
     use std::sync::Mutex;
 
-    use crate::{Aggregate, AggregateError, DomainEvent, EventStore, UserErrorPayload};
     use async_trait::async_trait;
     use serde::{Deserialize, Serialize};
-    use serde_json::json;
     use serde_json::Value;
 
-    use crate::persist::event_store::SourceOfTruth;
     use crate::persist::{
-        EventStoreAggregateContext, PersistedEventRepository, PersistedEventStore,
-        PersistenceError, SerializedEvent, SerializedSnapshot,
+        PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
     };
+    use crate::{Aggregate, AggregateError, DomainEvent, UserErrorPayload};
 
     #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
     pub(crate) enum TestEvents {
@@ -431,6 +395,7 @@ pub(crate) mod aggregate_test {
 
     pub(crate) struct MockRepo {
         events_result: Mutex<Option<Result<Vec<SerializedEvent>, PersistenceError>>>,
+        last_events_result: Mutex<Option<Result<Vec<SerializedEvent>, PersistenceError>>>,
         snapshot_result: Mutex<Option<Result<Option<SerializedSnapshot>, PersistenceError>>>,
         persist_check: Mutex<
             Option<Box<dyn FnOnce(&[SerializedEvent], Option<(String, Value, usize)>) + Send>>,
@@ -441,7 +406,19 @@ pub(crate) mod aggregate_test {
         pub(crate) fn with_events(result: Result<Vec<SerializedEvent>, PersistenceError>) -> Self {
             Self {
                 events_result: Mutex::new(Some(result)),
+                last_events_result: Mutex::new(None),
                 snapshot_result: Mutex::new(None),
+                persist_check: Mutex::new(None),
+            }
+        }
+        pub(crate) fn with_last_events(
+            last_events: Result<Vec<SerializedEvent>, PersistenceError>,
+            snapshot: Result<Option<SerializedSnapshot>, PersistenceError>,
+        ) -> Self {
+            Self {
+                events_result: Mutex::new(None),
+                last_events_result: Mutex::new(Some(last_events)),
+                snapshot_result: Mutex::new(Some(snapshot)),
                 persist_check: Mutex::new(None),
             }
         }
@@ -450,6 +427,7 @@ pub(crate) mod aggregate_test {
         ) -> Self {
             Self {
                 events_result: Mutex::new(None),
+                last_events_result: Mutex::new(None),
                 snapshot_result: Mutex::new(Some(result)),
                 persist_check: Mutex::new(None),
             }
@@ -461,6 +439,7 @@ pub(crate) mod aggregate_test {
         ) -> Self {
             Self {
                 events_result: Mutex::new(None),
+                last_events_result: Mutex::new(None),
                 snapshot_result: Mutex::new(None),
                 persist_check: Mutex::new(Some(test_function)),
             }
@@ -480,7 +459,7 @@ pub(crate) mod aggregate_test {
             _aggregate_id: &str,
             _number_events: usize,
         ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-            todo!()
+            self.last_events_result.lock().unwrap().take().unwrap()
         }
         async fn get_snapshot<A: Aggregate>(
             &self,
@@ -502,14 +481,44 @@ pub(crate) mod aggregate_test {
     pub(crate) const TEST_AGGREGATE_ID: &str = "test-aggregate-C";
     pub(crate) const EVENT_VERSION: &'static str = "1.0";
 
+    pub(crate) fn test_serialized_event(seq: usize, event: TestEvents) -> SerializedEvent {
+        let event_type = event.event_type();
+        let event_version = event.event_version();
+        let payload = serde_json::to_value(&event).unwrap();
+        SerializedEvent::new(
+            TEST_AGGREGATE_ID.to_string(),
+            seq,
+            "TestAggregate".to_string(),
+            event_type,
+            event_version,
+            payload,
+            serde_json::to_value(HashMap::<String, String>::new()).unwrap(),
+        )
+    }
+}
+
+#[cfg(test)]
+mod event_store_test {
+    use std::collections::HashMap;
+
+    use crate::persist::event_store::shared_test::{
+        test_serialized_event, MockRepo, TestAggregate, TestEvents, EVENT_VERSION,
+        TEST_AGGREGATE_ID,
+    };
+    use crate::persist::{EventStoreAggregateContext, PersistedEventStore, PersistenceError};
+    use crate::{AggregateError, DomainEvent, EventStore};
+
+    fn store(repo: MockRepo) -> PersistedEventStore<MockRepo, TestAggregate> {
+        PersistedEventStore::new(repo)
+    }
+
     #[tokio::test]
     async fn load() {
         let repo = MockRepo::with_events(Ok(vec![test_serialized_event(
             1,
             TestEvents::SomethingWasDone,
         )]));
-        let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo)
-            .with_storage_method(SourceOfTruth::AggregateStore);
+        let store = store(repo);
         let events = store.load_events(TEST_AGGREGATE_ID).await.unwrap();
         let event = events.get(0).unwrap();
         assert_eq!(1, event.sequence);
@@ -520,8 +529,134 @@ pub(crate) mod aggregate_test {
     #[tokio::test]
     async fn load_error() {
         let repo = MockRepo::with_events(Err(PersistenceError::OptimisticLockError));
-        let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo)
-            .with_storage_method(SourceOfTruth::AggregateStore);
+        let store = store(repo);
+        let result = store.load_events(TEST_AGGREGATE_ID).await;
+        match result {
+            Err(AggregateError::AggregateConflict) => {}
+            _ => panic!("expected technical error"),
+        }
+    }
+
+    #[tokio::test]
+    async fn load_aggregate_new() {
+        let repo = MockRepo::with_events(Ok(vec![]));
+        let store = store(repo);
+        let agg_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
+        assert_eq!(None, agg_context.current_snapshot);
+        assert_eq!(0, agg_context.current_sequence);
+        assert_eq!(TEST_AGGREGATE_ID, agg_context.aggregate_id);
+        assert_eq!(TestAggregate::default(), agg_context.aggregate);
+    }
+
+    #[tokio::test]
+    async fn load_aggregate_existing() {
+        let repo = MockRepo::with_events(Ok(vec![
+            test_serialized_event(1, TestEvents::Started),
+            test_serialized_event(2, TestEvents::SomethingWasDone),
+        ]));
+        let store = store(repo);
+        let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
+        assert_eq!(None, snapshot_context.current_snapshot);
+        assert_eq!(2, snapshot_context.current_sequence);
+        assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
+        assert_eq!(
+            TestAggregate {
+                something_happened: 1
+            },
+            snapshot_context.aggregate
+        );
+    }
+
+    #[tokio::test]
+    async fn load_aggregate_error() {
+        let repo = MockRepo::with_events(Err(PersistenceError::OptimisticLockError));
+        let store = store(repo);
+        let result = store.load_aggregate(TEST_AGGREGATE_ID).await;
+        match result {
+            Err(AggregateError::AggregateConflict) => {}
+            _ => panic!("expected aggregate conflict"),
+        }
+    }
+
+    #[tokio::test]
+    async fn commit() {
+        let repo = MockRepo::with_commit(Box::new(|events, snapshot_update| {
+            assert_eq!(3, events.len());
+            let event = events.get(2).unwrap();
+            assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
+            assert_eq!(3, event.sequence);
+
+            assert!(snapshot_update.is_none());
+        }));
+        let store = store(repo);
+        let context = EventStoreAggregateContext {
+            aggregate_id: TEST_AGGREGATE_ID.to_string(),
+            aggregate: TestAggregate::default(),
+            current_sequence: 0,
+            current_snapshot: None,
+        };
+        let event_envelopes = store
+            .commit(
+                vec![
+                    TestEvents::Started,
+                    TestEvents::SomethingWasDone,
+                    TestEvents::SomethingWasDone,
+                ],
+                context,
+                HashMap::default(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(3, event_envelopes.len());
+        let event = event_envelopes.get(0).unwrap();
+        assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
+        assert_eq!(TestEvents::Started, event.payload);
+        assert_eq!(
+            TestEvents::SomethingWasDone,
+            event_envelopes.get(2).unwrap().payload
+        );
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod snapshotted_store_test {
+    use std::collections::HashMap;
+
+    use serde_json::json;
+
+    use crate::persist::event_store::shared_test::{
+        test_serialized_event, MockRepo, TestAggregate, TestEvents, EVENT_VERSION,
+        TEST_AGGREGATE_ID,
+    };
+    use crate::persist::event_store::SourceOfTruth;
+    use crate::persist::{
+        EventStoreAggregateContext, PersistedEventStore, PersistenceError, SerializedSnapshot,
+    };
+    use crate::{AggregateError, DomainEvent, EventStore};
+
+    fn store(repo: MockRepo) -> PersistedEventStore<MockRepo, TestAggregate> {
+        PersistedEventStore::<MockRepo, TestAggregate>::new(repo)
+            .with_storage_method(SourceOfTruth::Snapshot(2))
+    }
+
+    #[tokio::test]
+    async fn load() {
+        let repo = MockRepo::with_events(Ok(vec![test_serialized_event(
+            1,
+            TestEvents::SomethingWasDone,
+        )]));
+        let store = store(repo);
+        let events = store.load_events(TEST_AGGREGATE_ID).await.unwrap();
+        let event = events.get(0).unwrap();
+        assert_eq!(1, event.sequence);
+        assert_eq!("SomethingWasDone", event.payload.event_type());
+        assert_eq!(EVENT_VERSION, event.payload.event_version());
+    }
+
+    #[tokio::test]
+    async fn load_error() {
+        let repo = MockRepo::with_events(Err(PersistenceError::OptimisticLockError));
+        let store = store(repo);
         let result = store.load_events(TEST_AGGREGATE_ID).await.unwrap_err();
         match result {
             AggregateError::AggregateConflict => {}
@@ -531,9 +666,8 @@ pub(crate) mod aggregate_test {
 
     #[tokio::test]
     async fn load_aggregate_new() {
-        let repo = MockRepo::with_snapshot(Ok(None));
-        let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo)
-            .with_storage_method(SourceOfTruth::AggregateStore);
+        let repo = MockRepo::with_last_events(Ok(vec![]), Ok(None));
+        let store = store(repo);
         let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
         assert_eq!(Some(0), snapshot_context.current_snapshot);
         assert_eq!(0, snapshot_context.current_sequence);
@@ -543,24 +677,26 @@ pub(crate) mod aggregate_test {
 
     #[tokio::test]
     async fn load_aggregate_existing() {
-        let repo = MockRepo::with_snapshot(Ok(Some(SerializedSnapshot {
-            aggregate_id: TEST_AGGREGATE_ID.to_string(),
-            aggregate: serde_json::to_value(TestAggregate {
-                something_happened: 3,
-            })
-            .unwrap(),
-            current_sequence: 3,
-            current_snapshot: 2,
-        })));
-        let store =
-            PersistedEventStore::new(repo).with_storage_method(SourceOfTruth::AggregateStore);
+        let repo = MockRepo::with_last_events(
+            Ok(vec![test_serialized_event(4, TestEvents::SomethingWasDone)]),
+            Ok(Some(SerializedSnapshot {
+                aggregate_id: TEST_AGGREGATE_ID.to_string(),
+                aggregate: serde_json::to_value(TestAggregate {
+                    something_happened: 3,
+                })
+                .unwrap(),
+                current_sequence: 3,
+                current_snapshot: 2,
+            })),
+        );
+        let store = store(repo);
         let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
         assert_eq!(Some(2), snapshot_context.current_snapshot);
-        assert_eq!(3, snapshot_context.current_sequence);
+        assert_eq!(4, snapshot_context.current_sequence);
         assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
         assert_eq!(
             TestAggregate {
-                something_happened: 3
+                something_happened: 4
             },
             snapshot_context.aggregate
         );
@@ -569,8 +705,7 @@ pub(crate) mod aggregate_test {
     #[tokio::test]
     async fn load_aggregate_error() {
         let repo = MockRepo::with_snapshot(Err(PersistenceError::OptimisticLockError));
-        let store = PersistedEventStore::<MockRepo, TestAggregate>::new(repo)
-            .with_storage_method(SourceOfTruth::AggregateStore);
+        let store = store(repo);
         let result = store.load_aggregate(TEST_AGGREGATE_ID).await;
         match result {
             Err(AggregateError::AggregateConflict) => {}
@@ -579,7 +714,65 @@ pub(crate) mod aggregate_test {
     }
 
     #[tokio::test]
-    async fn commit() {
+    async fn commit_one_event() {
+        let repo = MockRepo::with_commit(Box::new(|events, snapshot_update| {
+            assert_eq!(1, events.len());
+            let event = events.get(0).unwrap();
+            assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
+            assert_eq!(1, event.sequence);
+
+            assert_eq!(None, snapshot_update);
+        }));
+        let store = store(repo);
+        let context = EventStoreAggregateContext {
+            aggregate_id: TEST_AGGREGATE_ID.to_string(),
+            aggregate: TestAggregate::default(),
+            current_sequence: 0,
+            current_snapshot: Some(0),
+        };
+        let event_envelopes = store
+            .commit(vec![TestEvents::Started], context, HashMap::default())
+            .await
+            .unwrap();
+        assert_eq!(1, event_envelopes.len());
+        let event = event_envelopes.get(0).unwrap();
+        assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
+        assert_eq!(TestEvents::Started, event.payload);
+    }
+
+    #[tokio::test]
+    async fn commit_one_event_with_previous() {
+        let repo = MockRepo::with_commit(Box::new(|events, snapshot_update| {
+            assert_eq!(1, events.len());
+            let event = events.get(0).unwrap();
+            assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
+            assert_eq!(3, event.sequence);
+
+            assert_eq!(None, snapshot_update);
+        }));
+        let store = store(repo);
+        let context = EventStoreAggregateContext {
+            aggregate_id: TEST_AGGREGATE_ID.to_string(),
+            aggregate: TestAggregate::default(),
+            current_sequence: 2,
+            current_snapshot: Some(1),
+        };
+        let event_envelopes = store
+            .commit(
+                vec![TestEvents::SomethingWasDone],
+                context,
+                HashMap::default(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(1, event_envelopes.len());
+        let event = event_envelopes.get(0).unwrap();
+        assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
+        assert_eq!(TestEvents::SomethingWasDone, event.payload);
+    }
+
+    #[tokio::test]
+    async fn commit_three_events() {
         let repo = MockRepo::with_commit(Box::new(|events, snapshot_update| {
             assert_eq!(3, events.len());
             let event = events.get(2).unwrap();
@@ -594,14 +787,12 @@ pub(crate) mod aggregate_test {
             assert_eq!(1, snapshot_version);
             assert_eq!(
                 json!(TestAggregate {
-                    something_happened: 2
+                    something_happened: 1
                 }),
                 aggregate
             );
         }));
-        let store =
-            PersistedEventStore::new(repo).with_storage_method(SourceOfTruth::AggregateStore);
-        // let store = PersistedSnapshotStore::new(repo);
+        let store = store(repo);
         let context = EventStoreAggregateContext {
             aggregate_id: TEST_AGGREGATE_ID.to_string(),
             aggregate: TestAggregate::default(),
@@ -630,18 +821,242 @@ pub(crate) mod aggregate_test {
         );
     }
 
-    pub(crate) fn test_serialized_event(seq: usize, event: TestEvents) -> SerializedEvent {
-        let event_type = event.event_type();
-        let event_version = event.event_version();
-        let payload = serde_json::to_value(&event).unwrap();
-        SerializedEvent::new(
-            TEST_AGGREGATE_ID.to_string(),
-            seq,
-            "TestAggregate".to_string(),
-            event_type,
-            event_version,
-            payload,
-            serde_json::to_value(HashMap::<String, String>::new()).unwrap(),
-        )
+    #[tokio::test]
+    async fn commit_two_with_existing() {
+        let repo = MockRepo::with_commit(Box::new(|events, snapshot_update| {
+            assert_eq!(2, events.len());
+            let event = events.get(1).unwrap();
+            assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
+            assert_eq!(3, event.sequence);
+
+            let snapshot_update = snapshot_update.unwrap();
+            let aggregate_id = snapshot_update.0;
+            let aggregate = snapshot_update.1;
+            let snapshot_version = snapshot_update.2;
+            assert_eq!(TEST_AGGREGATE_ID, aggregate_id.as_str());
+            assert_eq!(2, snapshot_version);
+            assert_eq!(
+                json!(TestAggregate {
+                    something_happened: 1
+                }),
+                aggregate
+            );
+        }));
+        let store = store(repo);
+        let context = EventStoreAggregateContext {
+            aggregate_id: TEST_AGGREGATE_ID.to_string(),
+            aggregate: TestAggregate::default(),
+            current_sequence: 1,
+            current_snapshot: Some(1),
+        };
+        let event_envelopes = store
+            .commit(
+                vec![TestEvents::SomethingWasDone, TestEvents::SomethingWasDone],
+                context,
+                HashMap::default(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(2, event_envelopes.len());
+        let first_event = event_envelopes.get(0).unwrap();
+        assert_eq!(TEST_AGGREGATE_ID, first_event.aggregate_id);
+        assert_eq!(TestEvents::SomethingWasDone, first_event.payload);
+        let last_event = event_envelopes.get(1).unwrap();
+        assert_eq!(TEST_AGGREGATE_ID, last_event.aggregate_id);
+        assert_eq!(TestEvents::SomethingWasDone, last_event.payload);
+    }
+
+    #[tokio::test]
+    async fn commit_five() {
+        let repo = MockRepo::with_commit(Box::new(|events, snapshot_update| {
+            assert_eq!(5, events.len());
+            let event = events.get(4).unwrap();
+            assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
+            assert_eq!(5, event.sequence);
+
+            let snapshot_update = snapshot_update.unwrap();
+            let aggregate_id = snapshot_update.0;
+            let aggregate = snapshot_update.1;
+            let snapshot_version = snapshot_update.2;
+            assert_eq!(TEST_AGGREGATE_ID, aggregate_id.as_str());
+            assert_eq!(1, snapshot_version);
+            assert_eq!(
+                json!(TestAggregate {
+                    something_happened: 3
+                }),
+                aggregate
+            );
+        }));
+        let store = store(repo);
+        let context = EventStoreAggregateContext {
+            aggregate_id: TEST_AGGREGATE_ID.to_string(),
+            aggregate: TestAggregate::default(),
+            current_sequence: 0,
+            current_snapshot: Some(0),
+        };
+        let event_envelopes = store
+            .commit(
+                vec![
+                    TestEvents::Started,
+                    TestEvents::SomethingWasDone,
+                    TestEvents::SomethingWasDone,
+                    TestEvents::SomethingWasDone,
+                    TestEvents::SomethingWasDone,
+                ],
+                context,
+                HashMap::default(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(5, event_envelopes.len());
+        let first_event = event_envelopes.get(0).unwrap();
+        assert_eq!(TEST_AGGREGATE_ID, first_event.aggregate_id);
+        assert_eq!(TestEvents::Started, first_event.payload);
+        let last_event = event_envelopes.get(4).unwrap();
+        assert_eq!(TEST_AGGREGATE_ID, last_event.aggregate_id);
+        assert_eq!(TestEvents::SomethingWasDone, last_event.payload);
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod aggregate_store_test {
+    use std::collections::HashMap;
+
+    use serde_json::json;
+
+    use crate::persist::event_store::shared_test::{
+        test_serialized_event, MockRepo, TestAggregate, TestEvents, EVENT_VERSION,
+        TEST_AGGREGATE_ID,
+    };
+    use crate::persist::event_store::SourceOfTruth;
+    use crate::persist::{
+        EventStoreAggregateContext, PersistedEventStore, PersistenceError, SerializedSnapshot,
+    };
+    use crate::{AggregateError, DomainEvent, EventStore};
+
+    fn store(repo: MockRepo) -> PersistedEventStore<MockRepo, TestAggregate> {
+        PersistedEventStore::<MockRepo, TestAggregate>::new(repo)
+            .with_storage_method(SourceOfTruth::AggregateStore)
+    }
+
+    #[tokio::test]
+    async fn load() {
+        let repo = MockRepo::with_events(Ok(vec![test_serialized_event(
+            1,
+            TestEvents::SomethingWasDone,
+        )]));
+        let store = store(repo);
+        let events = store.load_events(TEST_AGGREGATE_ID).await.unwrap();
+        let event = events.get(0).unwrap();
+        assert_eq!(1, event.sequence);
+        assert_eq!("SomethingWasDone", event.payload.event_type());
+        assert_eq!(EVENT_VERSION, event.payload.event_version());
+    }
+
+    #[tokio::test]
+    async fn load_error() {
+        let repo = MockRepo::with_events(Err(PersistenceError::OptimisticLockError));
+        let store = store(repo);
+        let result = store.load_events(TEST_AGGREGATE_ID).await.unwrap_err();
+        match result {
+            AggregateError::AggregateConflict => {}
+            _ => panic!("expected technical error"),
+        }
+    }
+
+    #[tokio::test]
+    async fn load_aggregate_new() {
+        let repo = MockRepo::with_snapshot(Ok(None));
+        let store = store(repo);
+        let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
+        assert_eq!(Some(0), snapshot_context.current_snapshot);
+        assert_eq!(0, snapshot_context.current_sequence);
+        assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
+        assert_eq!(TestAggregate::default(), snapshot_context.aggregate);
+    }
+
+    #[tokio::test]
+    async fn load_aggregate_existing() {
+        let repo = MockRepo::with_snapshot(Ok(Some(SerializedSnapshot {
+            aggregate_id: TEST_AGGREGATE_ID.to_string(),
+            aggregate: serde_json::to_value(TestAggregate {
+                something_happened: 3,
+            })
+            .unwrap(),
+            current_sequence: 3,
+            current_snapshot: 2,
+        })));
+        let store = store(repo);
+        let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
+        assert_eq!(Some(2), snapshot_context.current_snapshot);
+        assert_eq!(3, snapshot_context.current_sequence);
+        assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
+        assert_eq!(
+            TestAggregate {
+                something_happened: 3
+            },
+            snapshot_context.aggregate
+        );
+    }
+
+    #[tokio::test]
+    async fn load_aggregate_error() {
+        let repo = MockRepo::with_snapshot(Err(PersistenceError::OptimisticLockError));
+        let store = store(repo);
+        let result = store.load_aggregate(TEST_AGGREGATE_ID).await;
+        match result {
+            Err(AggregateError::AggregateConflict) => {}
+            _ => panic!("expected technical error"),
+        }
+    }
+
+    #[tokio::test]
+    async fn commit() {
+        let repo = MockRepo::with_commit(Box::new(|events, snapshot_update| {
+            assert_eq!(3, events.len());
+            let event = events.get(2).unwrap();
+            assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
+            assert_eq!(3, event.sequence);
+
+            let snapshot_update = snapshot_update.unwrap();
+            let aggregate_id = snapshot_update.0;
+            let aggregate = snapshot_update.1;
+            let snapshot_version = snapshot_update.2;
+            assert_eq!(TEST_AGGREGATE_ID, aggregate_id.as_str());
+            assert_eq!(1, snapshot_version);
+            assert_eq!(
+                json!(TestAggregate {
+                    something_happened: 2
+                }),
+                aggregate
+            );
+        }));
+        let store = store(repo);
+        let context = EventStoreAggregateContext {
+            aggregate_id: TEST_AGGREGATE_ID.to_string(),
+            aggregate: TestAggregate::default(),
+            current_sequence: 0,
+            current_snapshot: Some(0),
+        };
+        let event_envelopes = store
+            .commit(
+                vec![
+                    TestEvents::Started,
+                    TestEvents::SomethingWasDone,
+                    TestEvents::SomethingWasDone,
+                ],
+                context,
+                HashMap::default(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(3, event_envelopes.len());
+        let event = event_envelopes.get(0).unwrap();
+        assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
+        assert_eq!(TestEvents::Started, event.payload);
+        assert_eq!(
+            TestEvents::SomethingWasDone,
+            event_envelopes.get(2).unwrap().payload
+        );
     }
 }

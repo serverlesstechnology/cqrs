@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::convert::TryFrom;
 
 use crate::{Aggregate, DomainEvent, EventEnvelope};
@@ -46,21 +45,6 @@ impl SerializedEvent {
             payload,
             metadata,
         }
-    }
-}
-
-impl<A: Aggregate> TryFrom<SerializedEvent> for EventEnvelope<A> {
-    type Error = PersistenceError;
-    fn try_from(event: SerializedEvent) -> Result<Self, Self::Error> {
-        let payload: A::Event = serde_json::from_value(event.payload)?;
-        let metadata: HashMap<String, String> = serde_json::from_value(event.metadata)?;
-        Ok(Self {
-            aggregate_id: event.aggregate_id,
-            sequence: event.sequence,
-            aggregate_type: event.aggregate_type,
-            payload,
-            metadata,
-        })
     }
 }
 
@@ -138,12 +122,28 @@ impl<A: Aggregate> TryFrom<SerializedSnapshot> for EventStoreAggregateContext<A>
     type Error = PersistenceError;
 
     fn try_from(snapshot: SerializedSnapshot) -> Result<Self, Self::Error> {
-        let aggregate = serde_json::from_value(snapshot.aggregate)?;
+        let aggregate = serde_json::from_value(snapshot.aggregate.clone())?;
         Ok(Self {
             aggregate_id: snapshot.aggregate_id,
             aggregate,
             current_sequence: snapshot.current_sequence,
             current_snapshot: Some(snapshot.current_snapshot),
+        })
+    }
+}
+
+impl<A: Aggregate> TryFrom<SerializedEvent> for EventEnvelope<A> {
+    type Error = PersistenceError;
+
+    fn try_from(event: SerializedEvent) -> Result<Self, Self::Error> {
+        let payload = serde_json::from_value(event.payload)?;
+        let metadata = serde_json::from_value(event.metadata)?;
+        Ok(Self {
+            aggregate_id: event.aggregate_id,
+            sequence: event.sequence,
+            aggregate_type: event.aggregate_type,
+            payload,
+            metadata,
         })
     }
 }
