@@ -13,6 +13,17 @@ pub struct EventStoreAggregateContext<A: Aggregate> {
     pub current_snapshot: Option<usize>,
 }
 
+impl<A: Aggregate> EventStoreAggregateContext<A> {
+    pub(crate) fn context_for(aggregate_id: &str, _is_event_source: bool) -> Self {
+        Self {
+            aggregate_id: aggregate_id.to_string(),
+            aggregate: A::default(),
+            current_sequence: 0,
+            current_snapshot: None,
+        }
+    }
+}
+
 impl<A: Aggregate> AggregateContext<A> for EventStoreAggregateContext<A> {
     fn aggregate(&self) -> &A {
         &self.aggregate

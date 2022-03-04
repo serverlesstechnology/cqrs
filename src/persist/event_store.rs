@@ -169,7 +169,11 @@ where
         &self,
         aggregate_id: &str,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        PersistedEventStore::load_from_repo(&self.repo, aggregate_id, &self.event_upcasters).await
+        let serialized_events = self.repo.get_events::<A>(aggregate_id).await?;
+        Ok(deserialize_events(
+            serialized_events,
+            &self.event_upcasters,
+        )?)
     }
 
     async fn load_aggregate(
@@ -177,52 +181,25 @@ where
         aggregate_id: &str,
     ) -> Result<EventStoreAggregateContext<A>, AggregateError<A::Error>> {
         let mut context: EventStoreAggregateContext<A> = match self.storage {
-            SourceOfTruth::EventStore => EventStoreAggregateContext {
-                aggregate_id: aggregate_id.to_string(),
-                aggregate: A::default(),
-                current_sequence: 0,
-                current_snapshot: None,
-            },
-            SourceOfTruth::Snapshot(_) => {
-                let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
-                match snapshot {
-                    Some(snapshot) => snapshot.try_into()?,
-                    None => EventStoreAggregateContext {
-                        aggregate_id: aggregate_id.to_string(),
-                        aggregate: Default::default(),
-                        current_sequence: 0,
-                        current_snapshot: Some(0),
-                    },
-                }
+            SourceOfTruth::EventStore => {
+                EventStoreAggregateContext::context_for(aggregate_id, true)
             }
-            SourceOfTruth::AggregateStore => {
+            _ => {
                 let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
                 match snapshot {
                     Some(snapshot) => snapshot.try_into()?,
-                    None => EventStoreAggregateContext {
-                        aggregate_id: aggregate_id.to_string(),
-                        aggregate: Default::default(),
-                        current_sequence: 0,
-                        current_snapshot: Some(0),
-                    },
+                    None => EventStoreAggregateContext::context_for(aggregate_id, false),
                 }
             }
         };
         let events_to_apply = match self.storage {
             SourceOfTruth::EventStore => self.load_events(aggregate_id).await?,
             SourceOfTruth::Snapshot(_) => {
-                let mut events = Vec::default();
-                let last_event = context.current_sequence;
-                for ser_event in self
+                let serialized_events = self
                     .repo
                     .get_last_events::<A>(aggregate_id, context.current_sequence)
-                    .await?
-                {
-                    if ser_event.sequence > last_event {
-                        events.push(ser_event.try_into()?);
-                    }
-                }
-                events
+                    .await?;
+                deserialize_events(serialized_events, &self.event_upcasters)?
             }
             SourceOfTruth::AggregateStore => {
                 vec![]
@@ -239,11 +216,11 @@ where
     async fn commit(
         &self,
         events: Vec<A::Event>,
-        mut context: EventStoreAggregateContext<A>,
+        context: EventStoreAggregateContext<A>,
         metadata: HashMap<String, String>,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        let aggregate_id = context.aggregate_id;
-        let current_sequence = context.current_sequence;
+        let aggregate_id = context.aggregate_id.clone();
+        let last_sequence = context.current_sequence;
 
         let commit_snapshot_to_event = self
             .storage
@@ -253,25 +230,10 @@ where
         } else {
             match self.storage {
                 SourceOfTruth::EventStore => None,
-                _ => {
-                    let mut i = 0;
-                    for event in events.clone() {
-                        i += 1;
-                        if i <= commit_snapshot_to_event {
-                            context.aggregate.apply(event);
-                            context.current_sequence += 1;
-                        }
-                    }
-                    let next_snapshot = match context.current_snapshot {
-                        Some(val) => val + 1,
-                        None => 1,
-                    };
-                    let payload = serde_json::to_value(context.aggregate)?;
-                    Some((payload, next_snapshot))
-                }
+                _ => Self::update_snapshot_with_events(&events, context, commit_snapshot_to_event)?,
             }
         };
-        let wrapped_events = self.wrap_events(&aggregate_id, current_sequence, events, metadata);
+        let wrapped_events = self.wrap_events(&aggregate_id, last_sequence, events, metadata);
         let serialized_events: Vec<SerializedEvent> = serialize_events(&wrapped_events)?;
         let snapshot_update = snapshot_update.map(|s| (aggregate_id, s.0, s.1));
         self.repo
@@ -283,26 +245,45 @@ where
 
 impl<R, A> PersistedEventStore<R, A>
 where
+    A: Aggregate + Send + Sync,
+    R: PersistedEventRepository,
+{
+    fn update_snapshot_with_events(
+        events: &Vec<<A as Aggregate>::Event>,
+        mut context: EventStoreAggregateContext<A>,
+        commit_snapshot_to_event: usize,
+    ) -> Result<Option<(Value, usize)>, AggregateError<A::Error>> {
+        let mut i = 0;
+        for event in events.clone() {
+            i += 1;
+            if i <= commit_snapshot_to_event {
+                context.aggregate.apply(event);
+                context.current_sequence += 1;
+            }
+        }
+        let next_snapshot = match context.current_snapshot {
+            Some(val) => val + 1,
+            None => 1,
+        };
+        let payload = serde_json::to_value(context.aggregate)?;
+        Ok(Some((payload, next_snapshot)))
+    }
+}
+
+impl<R, A> PersistedEventStore<R, A>
+where
     R: PersistedEventRepository,
     A: Aggregate + Send + Sync,
 {
-    pub(crate) async fn load_from_repo(
-        repo: &R,
-        aggregate_id: &str,
-        upcasters: &Option<Vec<Box<dyn EventUpcaster>>>,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        let serialized_events = repo.get_events::<A>(aggregate_id).await?;
-        Ok(deserialize_events(serialized_events, upcasters)?)
-    }
     /// Method to wrap a set of events with the additional metadata needed for persistence and publishing
     fn wrap_events(
         &self,
         aggregate_id: &str,
-        current_sequence: usize,
+        last_sequence: usize,
         resultant_events: Vec<A::Event>,
         base_metadata: HashMap<String, String>,
     ) -> Vec<EventEnvelope<A>> {
-        let mut sequence = current_sequence;
+        let mut sequence = last_sequence;
         let mut wrapped_events: Vec<EventEnvelope<A>> = Vec::new();
         for payload in resultant_events {
             sequence += 1;
@@ -669,7 +650,7 @@ pub(crate) mod snapshotted_store_test {
         let repo = MockRepo::with_last_events(Ok(vec![]), Ok(None));
         let store = store(repo);
         let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
-        assert_eq!(Some(0), snapshot_context.current_snapshot);
+        assert_eq!(None, snapshot_context.current_snapshot);
         assert_eq!(0, snapshot_context.current_sequence);
         assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
         assert_eq!(TestAggregate::default(), snapshot_context.aggregate);
@@ -969,7 +950,7 @@ pub(crate) mod aggregate_store_test {
         let repo = MockRepo::with_snapshot(Ok(None));
         let store = store(repo);
         let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
-        assert_eq!(Some(0), snapshot_context.current_snapshot);
+        assert_eq!(None, snapshot_context.current_snapshot);
         assert_eq!(0, snapshot_context.current_sequence);
         assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
         assert_eq!(TestAggregate::default(), snapshot_context.aggregate);
