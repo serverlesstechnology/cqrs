@@ -50,11 +50,10 @@ where
     /// might. Adding an error handler allows the user to choose whether to
     /// panic the application, log the error or otherwise register the issue.
     ///
-    /// This is not required for usage but without an error handler any error encountered
-    /// by the query repository will simply be ignored,
-    /// so it is *strongly* recommended.
+    /// Use of an error handler is *strongly* recommended since without one any error encountered
+    /// by the query repository will simply be ignored.
     ///
-    /// _An error handler that panics on any error._
+    /// _Example: An error handler that panics on any error._
     /// ```
     /// # use cqrs_es::doc::MyAggregate;
     /// # use cqrs_es::persist::GenericQuery;
@@ -69,8 +68,6 @@ where
 
     /// Loads and deserializes a view based on the provided view id.
     /// Use this method to load a materialized view when requested by a user.
-    ///
-    /// This is an asynchronous method so don't forget to `await`.
     ///
     /// ```
     /// # use cqrs_es::doc::MyAggregate;

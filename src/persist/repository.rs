@@ -16,7 +16,7 @@ pub trait PersistedEventRepository: Send + Sync {
     async fn get_last_events<A: Aggregate>(
         &self,
         aggregate_id: &str,
-        number_events: usize,
+        last_sequence: usize,
     ) -> Result<Vec<SerializedEvent>, PersistenceError>;
 
     /// Returns the current snapshot for an aggregate instance.

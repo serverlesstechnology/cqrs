@@ -210,12 +210,12 @@ where
         };
         let events_to_apply = match self.storage {
             SourceOfTruth::EventStore => self.load_events(aggregate_id).await?,
-            SourceOfTruth::Snapshot(max_request) => {
+            SourceOfTruth::Snapshot(_) => {
                 let mut events = Vec::default();
                 let last_event = context.current_sequence;
                 for ser_event in self
                     .repo
-                    .get_last_events::<A>(aggregate_id, max_request)
+                    .get_last_events::<A>(aggregate_id, context.current_sequence)
                     .await?
                 {
                     if ser_event.sequence > last_event {
