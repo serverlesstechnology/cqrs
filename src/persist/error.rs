@@ -38,7 +38,7 @@ impl<T: std::error::Error> From<PersistenceError> for AggregateError<T> {
             PersistenceError::DeserializationError(error) => {
                 AggregateError::DeserializationError(error)
             }
-            PersistenceError::UnknownError(error) => AggregateError::TechnicalError(error),
+            PersistenceError::UnknownError(error) => AggregateError::UnexpectedError(error),
         }
     }
 }

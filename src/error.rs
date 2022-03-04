@@ -39,7 +39,7 @@ pub enum AggregateError<T: std::error::Error> {
     /// In a Restful application this usually translates to a 500 or 503 response status.
     ///
     /// In a production system this may indicate a serious error and should be investigated.
-    TechnicalError(Box<dyn std::error::Error + Send + Sync + 'static>),
+    UnexpectedError(Box<dyn std::error::Error + Send + Sync + 'static>),
 }
 
 /// Simple payload for an `AggregateError::UserError`. This payload implements `Serialize`
@@ -63,7 +63,7 @@ impl<T: std::error::Error> fmt::Display for AggregateError<T> {
             AggregateError::AggregateConflict => write!(f, "aggregate conflict"),
             AggregateError::DeserializationError(error) => write!(f, "{}", error),
             AggregateError::DatabaseConnectionError(error) => write!(f, "{}", error),
-            AggregateError::TechnicalError(error) => write!(f, "{}", error),
+            AggregateError::UnexpectedError(error) => write!(f, "{}", error),
         }
     }
 }
@@ -113,7 +113,7 @@ impl<T: std::error::Error> From<serde_json::error::Error> for AggregateError<T> 
                 AggregateError::DeserializationError(Box::new(err))
             }
             serde_json::error::Category::Io | serde_json::error::Category::Eof => {
-                AggregateError::TechnicalError(Box::new(err))
+                AggregateError::UnexpectedError(Box::new(err))
             }
         }
     }
