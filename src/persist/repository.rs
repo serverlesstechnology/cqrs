@@ -41,10 +41,7 @@ where
     A: Aggregate,
 {
     /// Returns the current view instance.
-    async fn load(
-        &self,
-        query_instance_id: &str,
-    ) -> Result<Option<(V, QueryContext)>, PersistenceError>;
+    async fn load(&self, view_id: &str) -> Result<Option<(V, QueryContext)>, PersistenceError>;
 
     /// Updates the view instance.
     async fn update_view(&self, view: V, context: QueryContext) -> Result<(), PersistenceError>;

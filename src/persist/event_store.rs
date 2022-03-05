@@ -249,12 +249,12 @@ where
     R: PersistedEventRepository,
 {
     fn update_snapshot_with_events(
-        events: &Vec<<A as Aggregate>::Event>,
+        events: &[<A as Aggregate>::Event],
         mut context: EventStoreAggregateContext<A>,
         commit_snapshot_to_event: usize,
     ) -> Result<Option<(Value, usize)>, AggregateError<A::Error>> {
         let mut i = 0;
-        for event in events.clone() {
+        for event in events.iter().cloned() {
             i += 1;
             if i <= commit_snapshot_to_event {
                 context.aggregate.apply(event);

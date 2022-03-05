@@ -184,6 +184,3 @@ impl<A: Aggregate> AggregateResultValidator<A> {
         };
     }
 }
-
-#[cfg(test)]
-mod test_framework_tests {}

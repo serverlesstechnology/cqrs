@@ -77,8 +77,8 @@ where
     /// let view = query.load("customer-B24DA0").await;
     /// # }
     /// ```
-    pub async fn load(&self, query_instance_id: &str) -> Option<V> {
-        match self.view_repository.load(query_instance_id).await {
+    pub async fn load(&self, view_id: &str) -> Option<V> {
+        match self.view_repository.load(view_id).await {
             Ok(option) => option.map(|(view, _)| view),
             Err(e) => {
                 self.handle_error(e);
@@ -87,13 +87,10 @@ where
         }
     }
 
-    async fn load_mut(
-        &self,
-        query_instance_id: String,
-    ) -> Result<(V, QueryContext), PersistenceError> {
-        match self.view_repository.load(&query_instance_id).await? {
+    async fn load_mut(&self, view_id: String) -> Result<(V, QueryContext), PersistenceError> {
+        match self.view_repository.load(&view_id).await? {
             None => {
-                let view_context = QueryContext::new(query_instance_id, 0);
+                let view_context = QueryContext::new(view_id, 0);
                 Ok((Default::default(), view_context))
             }
             Some((view, context)) => Ok((view, context)),
@@ -102,10 +99,10 @@ where
 
     pub(crate) async fn apply_events(
         &self,
-        query_instance_id: &str,
+        view_id: &str,
         events: &[EventEnvelope<A>],
     ) -> Result<(), PersistenceError> {
-        let (mut view, view_context) = self.load_mut(query_instance_id.to_string()).await?;
+        let (mut view, view_context) = self.load_mut(view_id.to_string()).await?;
         for event in events {
             view.update(event);
         }
@@ -130,8 +127,8 @@ where
     V: View<A>,
     A: Aggregate,
 {
-    async fn dispatch(&self, query_instance_id: &str, events: &[EventEnvelope<A>]) {
-        match self.apply_events(query_instance_id, events).await {
+    async fn dispatch(&self, view_id: &str, events: &[EventEnvelope<A>]) {
+        match self.apply_events(view_id, events).await {
             Ok(_) => {}
             Err(err) => self.handle_error(err),
         };

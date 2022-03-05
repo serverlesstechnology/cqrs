@@ -30,7 +30,7 @@ impl MyViewRepository {
 impl ViewRepository<MyView, MyAggregate> for MyViewRepository {
     async fn load(
         &self,
-        _query_instance_id: &str,
+        _view_id: &str,
     ) -> Result<Option<(MyView, QueryContext)>, PersistenceError> {
         todo!()
     }
