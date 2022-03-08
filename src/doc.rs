@@ -13,10 +13,12 @@ pub enum MyEvents {
 }
 impl DomainEvent for MyEvents {
     fn event_type(&self) -> String {
-        todo!()
+        match self {
+            MyEvents::SomethingWasDone => "SomethingWasDone".to_string()
+        }
     }
     fn event_version(&self) -> String {
-        todo!()
+        "0.1.0".to_string()
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
@@ -34,7 +36,7 @@ impl Aggregate for MyAggregate {
     type Error = UserErrorPayload;
 
     fn aggregate_type() -> String {
-        todo!()
+        "MyAggregate".to_string()
     }
 
     async fn handle(
@@ -64,7 +66,7 @@ impl Aggregate for Customer {
     type Error = UserErrorPayload;
 
     fn aggregate_type() -> String {
-        "customer".to_string()
+        "Customer".to_string()
     }
 
     async fn handle(
@@ -76,7 +78,7 @@ impl Aggregate for Customer {
                 if self.name.as_str() != "" {
                     return Err("a name has already been added for this customer".into());
                 }
-                Ok(vec![CustomerEvent::NameAdded { changed_name }])
+                Ok(vec![CustomerEvent::NameAdded { name: changed_name }])
             }
             CustomerCommand::UpdateEmail { new_email } => {
                 Ok(vec![CustomerEvent::EmailUpdated { new_email }])
@@ -86,7 +88,7 @@ impl Aggregate for Customer {
 
     fn apply(&mut self, event: Self::Event) {
         match event {
-            CustomerEvent::NameAdded { changed_name } => {
+            CustomerEvent::NameAdded { name: changed_name } => {
                 self.name = changed_name;
             }
             CustomerEvent::EmailUpdated { new_email } => {
@@ -108,7 +110,7 @@ impl Default for Customer {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum CustomerEvent {
-    NameAdded { changed_name: String },
+    NameAdded { name: String },
     EmailUpdated { new_email: String },
 }
 
@@ -147,7 +149,7 @@ mod doc_tests {
                 changed_name: "John Doe".to_string(),
             })
             .then_expect_events(vec![CustomerEvent::NameAdded {
-                changed_name: "John Doe".to_string(),
+                name: "John Doe".to_string(),
             }]);
     }
 
@@ -155,7 +157,7 @@ mod doc_tests {
     fn test_add_name_again() {
         CustomerTestFramework::default()
             .given(vec![CustomerEvent::NameAdded {
-                changed_name: "John Doe".to_string(),
+                name: "John Doe".to_string(),
             }])
             .when(CustomerCommand::AddCustomerName {
                 changed_name: "John Doe".to_string(),

@@ -70,7 +70,7 @@ pub mod persist;
 ///         })
 ///     .then_expect_events(vec![
 ///         CustomerEvent::NameAdded{
-///             changed_name: "John Doe".to_string()
+///             name: "John Doe".to_string()
 ///         }]);
 /// # }
 /// ```

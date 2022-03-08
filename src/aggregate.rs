@@ -34,7 +34,7 @@ use crate::{AggregateError, DomainEvent};
 ///                 if self.name.is_some() {
 ///                     return Err("a name has already been added".into());
 ///                 }
-///                 Ok(vec![CustomerEvent::NameAdded{changed_name}])
+///                 Ok(vec![CustomerEvent::NameAdded{name:changed_name}])
 ///             }
 ///
 ///             CustomerCommand::UpdateEmail { new_email } => {
@@ -45,7 +45,7 @@ use crate::{AggregateError, DomainEvent};
 ///
 ///     fn apply(&mut self, event: Self::Event) {
 ///         match event {
-///             CustomerEvent::NameAdded{changed_name} => {
+///             CustomerEvent::NameAdded{name: changed_name} => {
 ///                 self.name = Some(changed_name);
 ///             }
 ///
