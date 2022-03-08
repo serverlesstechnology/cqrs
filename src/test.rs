@@ -133,27 +133,37 @@ impl<A: Aggregate> AggregateResultValidator<A> {
         assert_eq!(&events[..], &expected_events[..]);
     }
 
-    /// Deprecated: please use `then_expect_error_message` instead.
-    /// This function will be re-purposed in v0.3.0
+    /// Verifies that the result is a `UserError` and returns the internal error payload for
+    /// further validation.
     ///
-    #[deprecated(
-        since = "0.2.6",
-        note = "please use `then_expect_error_message` instead"
-    )]
-    pub fn then_expect_error(self, error_message: &str) {
+    /// ```
+    /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents};
+    /// use cqrs_es::UserErrorPayload;
+    /// use cqrs_es::test::TestFramework;
+    ///
+    /// let validator = TestFramework::<MyAggregate>::default()
+    ///     .given_no_previous_events()
+    ///     .when(MyCommands::BadCommand);
+    ///
+    /// let expected: UserErrorPayload = UserErrorPayload {
+    ///         message: Some("the expected error message".to_string()),
+    ///         code: None,
+    ///         params: None,
+    /// };
+    /// assert_eq!(expected,validator.then_expect_error());
+    /// ```
+    pub fn then_expect_error(self) -> A::Error {
         match self.result {
             Ok(events) => {
                 panic!("expected error, received events: '{:?}'", events);
             }
             Err(err) => match err {
-                AggregateError::UserError(err) => {
-                    assert_eq!(err.to_string(), error_message.to_string());
-                }
+                AggregateError::UserError(err) => err,
                 _ => {
                     panic!("expected user error but found technical error: {}", err)
                 }
             },
-        };
+        }
     }
 
     /// Verifies that an `AggregateError` with the expected message is produced with the command.

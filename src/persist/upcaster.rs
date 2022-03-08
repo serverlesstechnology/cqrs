@@ -63,13 +63,17 @@ impl FromStr for SemanticVersion {
 
     fn from_str(event_version: &str) -> Result<Self, Self::Err> {
         let split_version: Vec<&str> = event_version.split('.').collect();
-        if split_version.len() < 3 {
-            return Err(SemanticVersionError);
-        }
+        let patch = if split_version.len() < 3 {
+            0
+        } else {
+            u32::from_str(split_version.get(2).unwrap())?
+        };
+        let minor_version = if split_version.len() < 2 {
+            0
+        } else {
+            u32::from_str(split_version.get(1).unwrap())?
+        };
         let major_version = u32::from_str(split_version.get(0).unwrap())?;
-        let minor_version = u32::from_str(split_version.get(1).unwrap())?;
-        // TODO: account for '_', '-', additional values, etc.
-        let patch = u32::from_str(split_version.get(2).unwrap())?;
         Ok(Self {
             major_version,
             minor_version,
@@ -217,6 +221,14 @@ mod test {
     #[test]
     fn parse_version() {
         assert_eq!(
+            semantic_version(2, 0, 0),
+            SemanticVersion::from_str("2").unwrap()
+        );
+        assert_eq!(
+            semantic_version(2, 3, 0),
+            SemanticVersion::from_str("2.3").unwrap()
+        );
+        assert_eq!(
             semantic_version(2, 3, 4),
             SemanticVersion::from_str("2.3.4").unwrap()
         );
@@ -228,9 +240,6 @@ mod test {
             Err(SemanticVersionError),
             SemanticVersion::from_str("not_a_version")
         );
-        // TODO: support missing minor version/patch
-        assert_eq!(Err(SemanticVersionError), SemanticVersion::from_str("2.3"));
-        assert_eq!(Err(SemanticVersionError), SemanticVersion::from_str("2"));
     }
 
     #[test]
@@ -254,7 +263,7 @@ mod test {
     #[test]
     #[should_panic]
     fn semantic_version_upcaster_invalid_version() {
-        SemanticVersionEventUpcaster::new("EventX", "2", test_upcast());
+        SemanticVersionEventUpcaster::new("EventX", "not_a_version", test_upcast());
     }
 
     #[test]
