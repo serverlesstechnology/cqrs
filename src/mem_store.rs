@@ -159,14 +159,12 @@ impl<A: Aggregate> MemStore<A> {
         let mut wrapped_events: Vec<EventEnvelope<A>> = Vec::new();
         for payload in resultant_events {
             sequence += 1;
-            let aggregate_type = A::aggregate_type().to_string();
             let aggregate_id: String = aggregate_id.to_string();
             let sequence = sequence;
             let metadata = base_metadata.clone();
             wrapped_events.push(EventEnvelope::new_with_metadata(
                 aggregate_id,
                 sequence,
-                aggregate_type,
                 payload,
                 metadata,
             ));

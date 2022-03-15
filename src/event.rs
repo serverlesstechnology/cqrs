@@ -69,8 +69,6 @@ where
     pub aggregate_id: String,
     /// The sequence number for an aggregate instance.
     pub sequence: usize,
-    /// The type of aggregate the event applies to.
-    pub aggregate_type: String,
     /// The event payload with all business information.
     pub payload: A::Event,
     /// Additional metadata for use in auditing, logging or debugging purposes.
@@ -82,7 +80,6 @@ impl<A: Aggregate> Clone for EventEnvelope<A> {
         EventEnvelope {
             aggregate_id: self.aggregate_id.clone(),
             sequence: self.sequence,
-            aggregate_type: self.aggregate_type.clone(),
             payload: self.payload.clone(),
             metadata: self.metadata.clone(),
         }
@@ -92,16 +89,10 @@ impl<A: Aggregate> Clone for EventEnvelope<A> {
 impl<A: Aggregate> EventEnvelope<A> {
     /// A convenience function for packaging an event in an `EventEnvelope`, used for
     /// testing `QueryProcessor`s.
-    pub fn new(
-        aggregate_id: String,
-        sequence: usize,
-        aggregate_type: String,
-        payload: A::Event,
-    ) -> Self {
+    pub fn new(aggregate_id: String, sequence: usize, payload: A::Event) -> Self {
         EventEnvelope {
             aggregate_id,
             sequence,
-            aggregate_type,
             payload,
             metadata: Default::default(),
         }
@@ -111,14 +102,12 @@ impl<A: Aggregate> EventEnvelope<A> {
     pub fn new_with_metadata(
         aggregate_id: String,
         sequence: usize,
-        aggregate_type: String,
         payload: A::Event,
         metadata: HashMap<String, String>,
     ) -> Self {
         EventEnvelope {
             aggregate_id,
             sequence,
-            aggregate_type,
             payload,
             metadata,
         }
