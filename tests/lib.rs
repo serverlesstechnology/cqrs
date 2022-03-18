@@ -286,7 +286,7 @@ async fn framework_test() {
     let delivered_events = Default::default();
     let view = TestView::new(Arc::clone(&delivered_events));
 
-    let cqrs = CqrsFramework::new(event_store, vec![Arc::new(view)]);
+    let cqrs = CqrsFramework::new(event_store, vec![Box::new(view)]);
     let uuid = uuid::Uuid::new_v4().to_string();
     let id = uuid.clone();
     let metadata = metadata();

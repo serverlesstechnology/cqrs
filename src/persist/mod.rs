@@ -7,7 +7,7 @@
 //!
 //!
 //!
-pub use context::{EventStoreAggregateContext, QueryContext};
+pub use context::{EventStoreAggregateContext, ViewContext};
 pub use error::PersistenceError;
 pub use event_store::PersistedEventStore;
 pub use queries::GenericQuery;

@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::sync::Arc;
 
 use crate::query::Query;
 use crate::store::EventStore;
@@ -27,7 +26,7 @@ where
     ES: EventStore<A>,
 {
     store: ES,
-    query_processors: Vec<Arc<dyn Query<A>>>,
+    query_processors: Vec<Box<dyn Query<A>>>,
 }
 
 impl<A, ES> CqrsFramework<A, ES>
@@ -50,7 +49,7 @@ where
     /// let store = MemStore::<MyAggregate>::default();
     /// let cqrs = CqrsFramework::new(store, vec![]);
     /// ```
-    pub fn new(store: ES, query_processors: Vec<Arc<dyn Query<A>>>) -> CqrsFramework<A, ES>
+    pub fn new(store: ES, query_processors: Vec<Box<dyn Query<A>>>) -> CqrsFramework<A, ES>
     where
         A: Aggregate,
         ES: EventStore<A>,

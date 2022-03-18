@@ -1,6 +1,6 @@
 use crate::doc::MyAggregate;
 use crate::persist::{
-    PersistedEventRepository, PersistenceError, QueryContext, SerializedEvent, SerializedSnapshot,
+    PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot, ViewContext,
     ViewRepository,
 };
 use crate::{Aggregate, EventEnvelope, View};
@@ -28,17 +28,21 @@ impl MyViewRepository {
 
 #[async_trait]
 impl ViewRepository<MyView, MyAggregate> for MyViewRepository {
-    async fn load(
+    async fn load(&self, _view_id: &str) -> Result<Option<MyView>, PersistenceError> {
+        todo!()
+    }
+
+    async fn load_with_context(
         &self,
         _view_id: &str,
-    ) -> Result<Option<(MyView, QueryContext)>, PersistenceError> {
+    ) -> Result<Option<(MyView, ViewContext)>, PersistenceError> {
         todo!()
     }
 
     async fn update_view(
         &self,
         _view: MyView,
-        _context: QueryContext,
+        _context: ViewContext,
     ) -> Result<(), PersistenceError> {
         todo!()
     }

@@ -1,8 +1,9 @@
 use std::marker::PhantomData;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use crate::persist::{PersistenceError, QueryContext, ViewRepository};
+use crate::persist::{PersistenceError, ViewContext, ViewRepository};
 use crate::{Aggregate, EventEnvelope, Query, View};
 
 /// A simple query and view repository. This is used both to act as a `Query` for processing events
@@ -13,7 +14,7 @@ where
     V: View<A>,
     A: Aggregate,
 {
-    view_repository: R,
+    view_repository: Arc<R>,
     error_handler: Option<Box<ErrorHandler>>,
     phantom: PhantomData<(V, A)>,
 }
@@ -29,15 +30,16 @@ where
     /// Creates a new `GenericQuery` using the provided `ViewRepository`.
     ///
     /// ```
+    /// # use std::sync::Arc;
     /// # use cqrs_es::doc::MyAggregate;
     /// # use cqrs_es::persist::doc::{MyDatabaseConnection, MyView, MyViewRepository};
     /// # use cqrs_es::persist::GenericQuery;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
-    /// let repo = MyViewRepository::new(my_db_connection);
+    /// let repo = Arc::new(MyViewRepository::new(my_db_connection));
     /// let query = GenericQuery::<MyViewRepository, MyView, MyAggregate>::new(repo);
     /// # }
     /// ```
-    pub fn new(view_repository: R) -> Self {
+    pub fn new(view_repository: Arc<R>) -> Self {
         GenericQuery {
             view_repository,
             error_handler: None,
@@ -78,7 +80,7 @@ where
     /// # }
     /// ```
     pub async fn load(&self, view_id: &str) -> Option<V> {
-        match self.view_repository.load(view_id).await {
+        match self.view_repository.load_with_context(view_id).await {
             Ok(option) => option.map(|(view, _)| view),
             Err(e) => {
                 self.handle_error(e);
@@ -87,10 +89,10 @@ where
         }
     }
 
-    async fn load_mut(&self, view_id: String) -> Result<(V, QueryContext), PersistenceError> {
-        match self.view_repository.load(&view_id).await? {
+    async fn load_mut(&self, view_id: String) -> Result<(V, ViewContext), PersistenceError> {
+        match self.view_repository.load_with_context(&view_id).await? {
             None => {
-                let view_context = QueryContext::new(view_id, 0);
+                let view_context = ViewContext::new(view_id, 0);
                 Ok((Default::default(), view_context))
             }
             Some((view, context)) => Ok((view, context)),

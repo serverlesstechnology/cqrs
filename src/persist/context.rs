@@ -31,14 +31,14 @@ impl<A: Aggregate> AggregateContext<A> for EventStoreAggregateContext<A> {
 }
 
 /// A data structure maintaining context when updating views.
-pub struct QueryContext {
+pub struct ViewContext {
     /// Unique identifier of the view instance that is being modified.
     pub view_instance_id: String,
     /// The current version of the view instance, used for optimistic locking.
     pub version: i64,
 }
 
-impl QueryContext {
+impl ViewContext {
     /// Convenience function to create a new QueryContext.
     pub fn new(view_instance_id: String, version: i64) -> Self {
         Self {

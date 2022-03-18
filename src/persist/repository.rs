@@ -1,4 +1,4 @@
-use crate::persist::{PersistenceError, QueryContext, SerializedEvent, SerializedSnapshot};
+use crate::persist::{PersistenceError, SerializedEvent, SerializedSnapshot, ViewContext};
 use crate::{Aggregate, View};
 use async_trait::async_trait;
 use serde_json::Value;
@@ -41,8 +41,16 @@ where
     A: Aggregate,
 {
     /// Returns the current view instance.
-    async fn load(&self, view_id: &str) -> Result<Option<(V, QueryContext)>, PersistenceError>;
+    async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError>;
 
-    /// Updates the view instance.
-    async fn update_view(&self, view: V, context: QueryContext) -> Result<(), PersistenceError>;
+    /// Returns the current view instance and context, used by the `GenericQuery` to update
+    /// views with committed events.
+    async fn load_with_context(
+        &self,
+        view_id: &str,
+    ) -> Result<Option<(V, ViewContext)>, PersistenceError>;
+
+    /// Updates the view instance and context, used by the `GenericQuery` to update
+    /// views with committed events.
+    async fn update_view(&self, view: V, context: ViewContext) -> Result<(), PersistenceError>;
 }
