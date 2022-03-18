@@ -1,6 +1,6 @@
-## Migrating guide to v0.2.5
+## Migrating guide to v0.3.0
 
-> v0.2.5 ==> v0.2.6
+> v0.2.5 ==> v0.3.0
 
 ### The `handle` method within the `Aggregate` trait is now async
 Logic within the command handler can now use asynchronous clients and services directly. 
@@ -28,6 +28,10 @@ E.g.,
 // use persist_es::{GenericQuery,ViewRepository};
 use cqrs_es::persist::{GenericQuery,ViewRepository};
 ```
+
+### Changes to persisted tables
+Significant changes to event, snapshot and test view tables have been made.
+See individual persistence packages for details of each.
 
 ### Aggregate test fixtures
 A Tokio thread runner has been added to the test fixtures so these should not need any changes due to the change

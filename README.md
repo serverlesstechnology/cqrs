@@ -14,7 +14,6 @@ Together these provide a number of benefits:
 - Ability to create views that more accurately model our business environment.
 - A horizontally scalable read path.
 
-
 Things that could be helpful:
 - [User guide](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
 - [Demo application](https://github.com/serverlesstechnology/cqrs-demo) using the warp http server.
