@@ -55,11 +55,15 @@ pub trait DomainEvent:
     fn event_version(&self) -> String;
 }
 
-/// `EventEnvelope` is a data structure that encapsulates an event with along with it's pertinent
-/// information. All of the associated data will be transported and persisted together.
+/// `EventEnvelope` is a data structure that encapsulates an event with its pertinent
+/// information.
+/// All of the associated data will be transported and persisted together and will be available
+/// for queries.
 ///
 /// Within any system an event must be unique based on its' `aggregate_type`, `aggregate_id` and
 /// `sequence`.
+/// Thus an `EventEnvelope` provides a uniqueness value along with an event `payload` and
+/// `metadata`.
 #[derive(Debug)]
 pub struct EventEnvelope<A>
 where
@@ -87,8 +91,12 @@ impl<A: Aggregate> Clone for EventEnvelope<A> {
 }
 
 impl<A: Aggregate> EventEnvelope<A> {
-    /// A convenience function for packaging an event in an `EventEnvelope`, used for
-    /// testing `QueryProcessor`s.
+    /// A convenience function for packaging an event in an `EventEnvelope`.
+    /// This is provided to simplify testing `Query`s but should not be used with application logic.
+    #[deprecated(
+        since = "0.3.1",
+        note = "this convenience method will be removed in V0.4.0, EventEnvelope fields will remain public"
+    )]
     pub fn new(aggregate_id: String, sequence: usize, payload: A::Event) -> Self {
         EventEnvelope {
             aggregate_id,
@@ -99,6 +107,10 @@ impl<A: Aggregate> EventEnvelope<A> {
     }
     /// A convenience function for packaging an event in an `EventEnvelope`, used for
     /// testing `QueryProcessor`s. This version allows custom metadata to also be processed.
+    #[deprecated(
+        since = "0.3.1",
+        note = "this convenience method will be removed in V0.4.0, EventEnvelope fields will remain public"
+    )]
     pub fn new_with_metadata(
         aggregate_id: String,
         sequence: usize,

@@ -35,7 +35,9 @@ where
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>>;
 }
 
-/// Returns the aggregate and context around it that is needed when committing events
+/// Returns the aggregate and context around it that is needed when committing events.
+/// This is used internally within an `EventStore` to persist an aggregate instance and events
+/// with the correct context after it has been loaded and modified.
 pub trait AggregateContext<A>
 where
     A: Aggregate,

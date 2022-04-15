@@ -44,6 +44,10 @@ pub enum AggregateError<T: std::error::Error> {
 
 /// Simple payload for an `AggregateError::UserError`. This payload implements `Serialize`
 /// with the intention of allowing the user to return this object as the response payload.
+#[deprecated(
+    since = "0.3.1",
+    note = "user should implement a custom error for the aggregate"
+)]
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct UserErrorPayload {
     /// An optional code to indicate the a user-defined error.

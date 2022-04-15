@@ -66,7 +66,7 @@ pub mod persist;
 /// CustomerTestFramework::default()
 ///     .given_no_previous_events()
 ///     .when(CustomerCommand::AddCustomerName{
-///             changed_name: "John Doe".to_string()
+///             name: "John Doe".to_string()
 ///         })
 ///     .then_expect_events(vec![
 ///         CustomerEvent::NameAdded{

@@ -74,7 +74,7 @@ impl Aggregate for Customer {
         command: Self::Command,
     ) -> Result<Vec<Self::Event>, AggregateError<Self::Error>> {
         match command {
-            CustomerCommand::AddCustomerName { changed_name } => {
+            CustomerCommand::AddCustomerName { name: changed_name } => {
                 if self.name.as_str() != "" {
                     return Err("a name has already been added for this customer".into());
                 }
@@ -129,7 +129,7 @@ impl DomainEvent for CustomerEvent {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum CustomerCommand {
-    AddCustomerName { changed_name: String },
+    AddCustomerName { name: String },
     UpdateEmail { new_email: String },
 }
 
@@ -146,7 +146,7 @@ mod doc_tests {
         CustomerTestFramework::default()
             .given_no_previous_events()
             .when(CustomerCommand::AddCustomerName {
-                changed_name: "John Doe".to_string(),
+                name: "John Doe".to_string(),
             })
             .then_expect_events(vec![CustomerEvent::NameAdded {
                 name: "John Doe".to_string(),
@@ -160,7 +160,7 @@ mod doc_tests {
                 name: "John Doe".to_string(),
             }])
             .when(CustomerCommand::AddCustomerName {
-                changed_name: "John Doe".to_string(),
+                name: "John Doe".to_string(),
             })
             .then_expect_error_message("a name has already been added for this customer");
     }

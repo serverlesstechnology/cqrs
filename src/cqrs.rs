@@ -37,9 +37,8 @@ where
     /// Creates new framework for dispatching commands using the provided elements.
     /// Takes an `EventStore` and a vector of queries.
     ///
-    /// For a simple in-memory `EventStore` suitable for testing see
-    /// [MemStore](mem_store/struct.MemStore.html) or for production use a persistent event store
-    /// such as found in [postgres-es](https://crates.io/crates/postgres-es).
+    /// For a simple in-memory `EventStore` suitable for experimentation or testing see
+    /// [MemStore](mem_store/struct.MemStore.html).
     ///
     /// ```
     /// # use cqrs_es::doc::MyAggregate;
@@ -49,6 +48,12 @@ where
     /// let store = MemStore::<MyAggregate>::default();
     /// let cqrs = CqrsFramework::new(store, vec![]);
     /// ```
+    /// For production uses a persistent event store
+    /// using a backing database is needed, such as in the available persistence crates:
+    /// - [PostgreSQL](https://www.postgresql.org/) - [postgres-es](https://crates.io/crates/postgres-es)
+    /// - [MySQL](https://www.mysql.com/) - [mysql-es](https://crates.io/crates/mysql-es)
+    /// - [DynamoDb](https://aws.amazon.com/dynamodb/) - [dynamo-es](https://crates.io/crates/dynamo-es)
+    ///
     pub fn new(store: ES, query_processors: Vec<Box<dyn Query<A>>>) -> CqrsFramework<A, ES>
     where
         A: Aggregate,
