@@ -78,16 +78,29 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     ///
     /// *All business logic should be placed here*.
     ///
-    /// ```ignore
-    /// # use cqrs_es::{AggregateError,UserErrorPayload};
-    /// # use cqrs_es::doc::{CustomerCommand,CustomerEvent};
+    /// ```rust
+    /// use cqrs_es::{Aggregate, AggregateError, UserErrorPayload};
+    /// # use serde::{Serialize, Deserialize, de::DeserializeOwned};
+    /// # use cqrs_es::doc::{CustomerCommand, CustomerEvent};
+    /// # use async_trait::async_trait;
+    /// #[derive(Default,Serialize,Deserialize)]
+    /// # struct Customer {
+    /// #     name: Option<String>,
+    /// #     email: Option<String>,
+    /// # }
+    /// # #[async_trait]
+    /// # impl Aggregate for Customer {
+    /// #     type Command = CustomerCommand;
+    /// #     type Event = CustomerEvent;
+    /// #     type Error = UserErrorPayload;
+    /// #     fn aggregate_type() -> String { "customer".to_string() }
     /// async fn handle(&self, command: CustomerCommand) -> Result<Vec<CustomerEvent>, AggregateError<UserErrorPayload>> {
     ///     match command {
     ///         CustomerCommand::AddCustomerName{changed_name} => {
     ///             if self.name.is_some() {
     ///                 return Err("a name has already been added".into());
     ///             }
-    ///             Ok(vec![CustomerEvent::NameAdded{changed_name}])
+    ///             Ok(vec![CustomerEvent::NameAdded{ name: changed_name}])
     ///         }
     ///
     ///         CustomerCommand::UpdateEmail { new_email } => {
@@ -95,6 +108,8 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     ///         }
     ///     }
     /// }
+    /// # fn apply(&mut self, event: Self::Event) {}
+    /// # }
     /// ```
     async fn handle(
         &self,
@@ -106,11 +121,29 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     ///
     /// *No business logic should be placed here*, this is only used for updating the aggregate state.
     ///
-    /// ```ignore
+    /// ```rust
+    /// # use serde::{Serialize, Deserialize, de::DeserializeOwned};
+    /// # use cqrs_es::doc::{CustomerCommand, CustomerEvent};
+    /// use cqrs_es::{Aggregate, AggregateError, UserErrorPayload};
+    /// use async_trait::async_trait;
+    /// #[derive(Default,Serialize,Deserialize)]
+    /// # struct Customer {
+    /// #     name: Option<String>,
+    /// #     email: Option<String>,
+    /// # }
+    /// # #[async_trait]
+    /// # impl Aggregate for Customer {
+    /// #     type Command = CustomerCommand;
+    /// #     type Event = CustomerEvent;
+    /// #     type Error = UserErrorPayload;
+    /// #     fn aggregate_type() -> String { "customer".to_string() }
+    /// # async fn handle(&self, command: CustomerCommand) -> Result<Vec<CustomerEvent>, AggregateError<UserErrorPayload>> {
+    /// # Ok(vec![])
+    /// # }
     /// fn apply(&mut self, event: Self::Event) {
     ///     match event {
-    ///         CustomerEvent::NameAdded{changed_name} => {
-    ///             self.name = Some(changed_name);
+    ///         CustomerEvent::NameAdded{name} => {
+    ///             self.name = Some(name);
     ///         }
     ///
     ///         CustomerEvent::EmailUpdated{new_email} => {
@@ -118,6 +151,7 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     ///         }
     ///     }
     /// }
+    /// # }
     /// ```
     fn apply(&mut self, event: Self::Event);
 }
