@@ -1,5 +1,10 @@
 # Change log
 
+#### `v0.3.1`
+- Removed the `timestamp` field from the database tables. This field is not needed by the framework or repositories and its use in examples led to confusion.
+- Deprecated UserErrorPayload, this will be removed in v0.4.0. User should create a custom error for their aggregate.
+- Deprecated helper methods on `EventEnvelope`. These methods will be removed in v0.4.0 however the fields on `EventEnvelope` will remain public.
+
 #### `v0.3.0`
 > See the [v0.2.5 ==> v0.3.0 migration guide](migration_0_3_0.md) for more details.
 
