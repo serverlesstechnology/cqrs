@@ -330,12 +330,12 @@ where
             let aggregate_id: String = aggregate_id.to_string();
             let sequence = sequence;
             let metadata = base_metadata.clone();
-            wrapped_events.push(EventEnvelope::new_with_metadata(
+            wrapped_events.push(EventEnvelope {
                 aggregate_id,
                 sequence,
                 payload,
                 metadata,
-            ));
+            });
         }
         wrapped_events
     }

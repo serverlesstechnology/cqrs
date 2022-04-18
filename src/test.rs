@@ -137,19 +137,14 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     /// further validation.
     ///
     /// ```
-    /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents};
-    /// use cqrs_es::UserErrorPayload;
+    /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents, MyUserError};
     /// use cqrs_es::test::TestFramework;
     ///
     /// let validator = TestFramework::<MyAggregate>::default()
     ///     .given_no_previous_events()
     ///     .when(MyCommands::BadCommand);
     ///
-    /// let expected: UserErrorPayload = UserErrorPayload {
-    ///         message: Some("the expected error message".to_string()),
-    ///         code: None,
-    ///         params: None,
-    /// };
+    /// let expected = MyUserError("the expected error message".to_string());
     /// assert_eq!(expected,validator.then_expect_error());
     /// ```
     pub fn then_expect_error(self) -> A::Error {

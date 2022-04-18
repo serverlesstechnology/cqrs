@@ -1,13 +1,14 @@
 use async_trait::async_trait;
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use std::sync::{Arc, RwLock};
 
 use serde::{Deserialize, Serialize};
 
 use cqrs_es::mem_store::MemStore;
 use cqrs_es::test::TestFramework;
+use cqrs_es::Query;
 use cqrs_es::{Aggregate, AggregateError, CqrsFramework, DomainEvent, EventEnvelope, EventStore};
-use cqrs_es::{Query, UserErrorPayload};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TestAggregate {
@@ -15,12 +16,27 @@ pub struct TestAggregate {
     description: String,
     tests: Vec<String>,
 }
+#[derive(Debug)]
+pub struct TestError(String);
+impl Display for TestError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for TestError {}
+
+impl From<&str> for TestError {
+    fn from(msg: &str) -> Self {
+        Self(msg.to_string())
+    }
+}
 
 #[async_trait]
 impl Aggregate for TestAggregate {
     type Command = TestCommand;
     type Event = TestEvent;
-    type Error = UserErrorPayload;
+    type Error = TestError;
 
     fn aggregate_type() -> String {
         "TestAggregate".to_string()
@@ -41,7 +57,7 @@ impl Aggregate for TestAggregate {
             TestCommand::ConfirmTest(command) => {
                 for test in &self.tests {
                     if test == &command.test_name {
-                        return Err("test already performed".into());
+                        return Err(AggregateError::UserError("test already performed".into()));
                     }
                 }
                 let event = TestEvent::Tested(Tested {
@@ -335,7 +351,7 @@ async fn framework_test() {
         .unwrap_err();
     match err {
         AggregateError::UserError(payload) => {
-            assert_eq!("test already performed", payload.message.unwrap().as_str())
+            assert_eq!("test already performed", payload.0.as_str())
         }
         _ => panic!("not the expected error"),
     };

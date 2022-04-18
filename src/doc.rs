@@ -1,11 +1,12 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::fmt::{Display, Formatter};
 
 use crate::persist::{
     PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
 };
-use crate::{Aggregate, AggregateError, DomainEvent, UserErrorPayload};
+use crate::{Aggregate, AggregateError, DomainEvent};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum MyEvents {
@@ -33,7 +34,7 @@ pub struct MyAggregate;
 impl Aggregate for MyAggregate {
     type Command = MyCommands;
     type Event = MyEvents;
-    type Error = UserErrorPayload;
+    type Error = MyUserError;
 
     fn aggregate_type() -> String {
         "MyAggregate".to_string()
@@ -42,10 +43,12 @@ impl Aggregate for MyAggregate {
     async fn handle(
         &self,
         command: Self::Command,
-    ) -> Result<Vec<Self::Event>, AggregateError<UserErrorPayload>> {
+    ) -> Result<Vec<Self::Event>, AggregateError<Self::Error>> {
         match command {
             MyCommands::DoSomething => Ok(vec![MyEvents::SomethingWasDone]),
-            MyCommands::BadCommand => Err("the expected error message".into()),
+            MyCommands::BadCommand => Err(AggregateError::UserError(
+                "the expected error message".into(),
+            )),
         }
     }
 
@@ -59,11 +62,28 @@ pub struct Customer {
     pub email: String,
 }
 
+#[derive(Debug, PartialEq)]
+pub struct MyUserError(pub String);
+
+impl Display for MyUserError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for MyUserError {}
+
+impl From<&str> for MyUserError {
+    fn from(msg: &str) -> Self {
+        Self(msg.to_string())
+    }
+}
+
 #[async_trait]
 impl Aggregate for Customer {
     type Command = CustomerCommand;
     type Event = CustomerEvent;
-    type Error = UserErrorPayload;
+    type Error = MyUserError;
 
     fn aggregate_type() -> String {
         "Customer".to_string()
@@ -76,7 +96,9 @@ impl Aggregate for Customer {
         match command {
             CustomerCommand::AddCustomerName { name: changed_name } => {
                 if self.name.as_str() != "" {
-                    return Err("a name has already been added for this customer".into());
+                    return Err(AggregateError::UserError(
+                        "a name has already been added for this customer".into(),
+                    ));
                 }
                 Ok(vec![CustomerEvent::NameAdded { name: changed_name }])
             }
