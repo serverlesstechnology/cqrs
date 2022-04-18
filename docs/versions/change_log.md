@@ -1,5 +1,8 @@
 # Change log
 
+#### `v0.3.2`
+- Removed deprecated methods and structs from use in examples.
+
 #### `v0.3.1`
 - Removed the `timestamp` field from the database tables. This field is not needed by the framework or repositories and its use in examples led to confusion.
 - Deprecated UserErrorPayload, this will be removed in v0.4.0. User should create a custom error for their aggregate.
