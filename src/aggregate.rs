@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-use crate::{AggregateError, DomainEvent};
+use crate::DomainEvent;
 
 /// In CQRS (and Domain Driven Design) an `Aggregate` is the fundamental component that
 /// encapsulates the state and application logic (aka business rules) for the application.
@@ -10,8 +10,8 @@ use crate::{AggregateError, DomainEvent};
 ///
 /// # Examples
 /// ```rust
-/// # use cqrs_es::doc::{CustomerEvent, CustomerCommand};
-/// # use cqrs_es::{Aggregate, AggregateError, UserErrorPayload};
+/// # use cqrs_es::doc::{CustomerEvent, CustomerError, CustomerCommand};
+/// # use cqrs_es::{Aggregate, AggregateError};
 /// # use serde::{Serialize,Deserialize};
 /// # use async_trait::async_trait;
 /// #[derive(Default,Serialize,Deserialize)]
@@ -24,11 +24,11 @@ use crate::{AggregateError, DomainEvent};
 /// impl Aggregate for Customer {
 ///     type Command = CustomerCommand;
 ///     type Event = CustomerEvent;
-///     type Error = UserErrorPayload;
+///     type Error = CustomerError;
 ///
 ///     fn aggregate_type() -> String { "customer".to_string() }
 ///
-///     async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError<UserErrorPayload>> {
+///     async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, Self::Error> {
 ///         match command {
 ///             CustomerCommand::AddCustomerName{name: changed_name} => {
 ///                 if self.name.is_some() {
@@ -75,9 +75,9 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// *All business logic should be placed here*.
     ///
     /// ```rust
-    /// use cqrs_es::{Aggregate, AggregateError, UserErrorPayload};
+    /// use cqrs_es::{Aggregate, AggregateError};
     /// # use serde::{Serialize, Deserialize, de::DeserializeOwned};
-    /// # use cqrs_es::doc::{CustomerCommand, CustomerEvent};
+    /// # use cqrs_es::doc::{CustomerCommand, CustomerError, CustomerEvent};
     /// # use async_trait::async_trait;
     /// #[derive(Default,Serialize,Deserialize)]
     /// # struct Customer {
@@ -88,9 +88,9 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # impl Aggregate for Customer {
     /// #     type Command = CustomerCommand;
     /// #     type Event = CustomerEvent;
-    /// #     type Error = UserErrorPayload;
+    /// #     type Error = CustomerError;
     /// #     fn aggregate_type() -> String { "customer".to_string() }
-    /// async fn handle(&self, command: CustomerCommand) -> Result<Vec<CustomerEvent>, AggregateError<UserErrorPayload>> {
+    /// async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, Self::Error> {
     ///     match command {
     ///         CustomerCommand::AddCustomerName{name: changed_name} => {
     ///             if self.name.is_some() {
@@ -107,10 +107,7 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # fn apply(&mut self, event: Self::Event) {}
     /// # }
     /// ```
-    async fn handle(
-        &self,
-        command: Self::Command,
-    ) -> Result<Vec<Self::Event>, AggregateError<Self::Error>>;
+    async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, Self::Error>;
     /// This is used to update the aggregate's state once an event has been committed.
     /// Events emitted from the `handle` method will be applied using this method
     /// in order to populate the state of the aggregate instance.
@@ -125,8 +122,8 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     ///
     /// ```rust
     /// # use serde::{Serialize, Deserialize, de::DeserializeOwned};
-    /// # use cqrs_es::doc::{CustomerCommand, CustomerEvent};
-    /// use cqrs_es::{Aggregate, AggregateError, UserErrorPayload};
+    /// # use cqrs_es::doc::{CustomerCommand, CustomerError, CustomerEvent};
+    /// use cqrs_es::{Aggregate, AggregateError};
     /// use async_trait::async_trait;
     /// #[derive(Default,Serialize,Deserialize)]
     /// # struct Customer {
@@ -137,9 +134,9 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # impl Aggregate for Customer {
     /// #     type Command = CustomerCommand;
     /// #     type Event = CustomerEvent;
-    /// #     type Error = UserErrorPayload;
+    /// #     type Error = CustomerError;
     /// #     fn aggregate_type() -> String { "customer".to_string() }
-    /// # async fn handle(&self, command: CustomerCommand) -> Result<Vec<CustomerEvent>, AggregateError<UserErrorPayload>> {
+    /// # async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, Self::Error> {
     /// # Ok(vec![])
     /// # }
     /// fn apply(&mut self, event: Self::Event) {

@@ -344,6 +344,7 @@ where
 #[cfg(test)]
 mod shared_test {
     use std::collections::HashMap;
+    use std::fmt::{Display, Formatter};
     use std::sync::Mutex;
 
     use async_trait::async_trait;
@@ -353,7 +354,7 @@ mod shared_test {
     use crate::persist::{
         PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
     };
-    use crate::{Aggregate, AggregateError, DomainEvent, UserErrorPayload};
+    use crate::{Aggregate, DomainEvent};
 
     #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
     pub(crate) enum TestEvents {
@@ -379,6 +380,23 @@ mod shared_test {
         BadCommand,
     }
 
+    #[derive(Debug)]
+    pub(crate) struct TestError(String);
+
+    impl From<&str> for TestError {
+        fn from(msg: &str) -> Self {
+            TestError(msg.to_string())
+        }
+    }
+
+    impl Display for TestError {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{}", self.0)
+        }
+    }
+
+    impl std::error::Error for TestError {}
+
     #[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
     pub(crate) struct TestAggregate {
         pub(crate) something_happened: usize,
@@ -388,15 +406,12 @@ mod shared_test {
     impl Aggregate for TestAggregate {
         type Command = TestCommands;
         type Event = TestEvents;
-        type Error = UserErrorPayload;
+        type Error = TestError;
 
         fn aggregate_type() -> String {
             "TestAggregate".to_string()
         }
-        async fn handle(
-            &self,
-            command: Self::Command,
-        ) -> Result<Vec<Self::Event>, AggregateError<Self::Error>> {
+        async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, Self::Error> {
             match command {
                 TestCommands::DoSomething => Ok(vec![TestEvents::SomethingWasDone]),
                 TestCommands::BadCommand => Err("the expected error message".into()),

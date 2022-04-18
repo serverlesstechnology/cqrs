@@ -133,7 +133,10 @@ where
     ) -> Result<(), AggregateError<A::Error>> {
         let aggregate_context = self.store.load_aggregate(aggregate_id).await?;
         let aggregate = aggregate_context.aggregate();
-        let resultant_events = aggregate.handle(command).await?;
+        let resultant_events = match aggregate.handle(command).await {
+            Ok(events) => events,
+            Err(err) => return Err(AggregateError::UserError(err)),
+        };
         let committed_events = self
             .store
             .commit(resultant_events, aggregate_context, metadata)

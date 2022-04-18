@@ -6,7 +6,7 @@ use std::fmt::{Display, Formatter};
 use crate::persist::{
     PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
 };
-use crate::{Aggregate, AggregateError, DomainEvent};
+use crate::{Aggregate, DomainEvent};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum MyEvents {
@@ -40,15 +40,10 @@ impl Aggregate for MyAggregate {
         "MyAggregate".to_string()
     }
 
-    async fn handle(
-        &self,
-        command: Self::Command,
-    ) -> Result<Vec<Self::Event>, AggregateError<Self::Error>> {
+    async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, Self::Error> {
         match command {
             MyCommands::DoSomething => Ok(vec![MyEvents::SomethingWasDone]),
-            MyCommands::BadCommand => Err(AggregateError::UserError(
-                "the expected error message".into(),
-            )),
+            MyCommands::BadCommand => Err("the expected error message".into()),
         }
     }
 
@@ -89,16 +84,11 @@ impl Aggregate for Customer {
         "Customer".to_string()
     }
 
-    async fn handle(
-        &self,
-        command: Self::Command,
-    ) -> Result<Vec<Self::Event>, AggregateError<Self::Error>> {
+    async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, Self::Error> {
         match command {
             CustomerCommand::AddCustomerName { name: changed_name } => {
                 if self.name.as_str() != "" {
-                    return Err(AggregateError::UserError(
-                        "a name has already been added for this customer".into(),
-                    ));
+                    return Err("a name has already been added for this customer".into());
                 }
                 Ok(vec![CustomerEvent::NameAdded { name: changed_name }])
             }
@@ -129,6 +119,23 @@ impl Default for Customer {
         }
     }
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct CustomerError(String);
+
+impl From<&str> for CustomerError {
+    fn from(message: &str) -> Self {
+        CustomerError(message.to_string())
+    }
+}
+
+impl Display for CustomerError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for CustomerError {}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum CustomerEvent {

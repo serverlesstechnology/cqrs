@@ -1,8 +1,5 @@
-use std::collections::HashMap;
 use std::error;
 use std::fmt;
-
-use serde::{Deserialize, Serialize};
 
 /// The base error for the framework.
 #[derive(Debug)]
@@ -42,22 +39,6 @@ pub enum AggregateError<T: std::error::Error> {
     UnexpectedError(Box<dyn std::error::Error + Send + Sync + 'static>),
 }
 
-/// Simple payload for an `AggregateError::UserError`. This payload implements `Serialize`
-/// with the intention of allowing the user to return this object as the response payload.
-#[deprecated(
-    since = "0.3.1",
-    note = "user should implement a custom error for the aggregate"
-)]
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct UserErrorPayload {
-    /// An optional code to indicate the a user-defined error.
-    pub code: Option<String>,
-    /// An optional message describing the error, meant to be returned to the user.
-    pub message: Option<String>,
-    /// Optional additional parameters for adding additional context to the error.
-    pub params: Option<HashMap<String, String>>,
-}
-
 impl<T: std::error::Error> error::Error for AggregateError<T> {}
 
 impl<T: std::error::Error> fmt::Display for AggregateError<T> {
@@ -69,44 +50,6 @@ impl<T: std::error::Error> fmt::Display for AggregateError<T> {
             AggregateError::DatabaseConnectionError(error) => write!(f, "{}", error),
             AggregateError::UnexpectedError(error) => write!(f, "{}", error),
         }
-    }
-}
-
-impl<T: std::error::Error> AggregateError<T> {
-    /// A convenience function to construct a simple `AggregateError::UserError` with the given payload.
-    ///
-    /// ```
-    /// # use cqrs_es::{AggregateError, UserErrorPayload};
-    /// let error = AggregateError::new(UserErrorPayload {
-    ///             code: None,
-    ///             message: Some("user already exists".to_string()),
-    ///             params: None,
-    ///         });
-    /// ```
-    pub fn new(error_payload: T) -> Self {
-        AggregateError::UserError(error_payload)
-    }
-}
-
-impl error::Error for UserErrorPayload {}
-
-impl fmt::Display for UserErrorPayload {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let message = match &self.message {
-            None => "unknown error",
-            Some(message) => message.as_ref(),
-        };
-        write!(f, "{}", message)
-    }
-}
-
-impl From<&str> for AggregateError<UserErrorPayload> {
-    fn from(message: &str) -> Self {
-        AggregateError::UserError(UserErrorPayload {
-            code: None,
-            message: Some(message.to_string()),
-            params: None,
-        })
     }
 }
 

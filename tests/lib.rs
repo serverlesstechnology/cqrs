@@ -42,10 +42,7 @@ impl Aggregate for TestAggregate {
         "TestAggregate".to_string()
     }
 
-    async fn handle(
-        &self,
-        command: TestCommand,
-    ) -> Result<Vec<TestEvent>, AggregateError<Self::Error>> {
+    async fn handle(&self, command: TestCommand) -> Result<Vec<TestEvent>, Self::Error> {
         match &command {
             TestCommand::CreateTest(command) => {
                 let event = TestEvent::Created(Created {
@@ -57,7 +54,7 @@ impl Aggregate for TestAggregate {
             TestCommand::ConfirmTest(command) => {
                 for test in &self.tests {
                     if test == &command.test_name {
-                        return Err(AggregateError::UserError("test already performed".into()));
+                        return Err("test already performed".into());
                     }
                 }
                 let event = TestEvent::Tested(Tested {

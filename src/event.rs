@@ -89,39 +89,3 @@ impl<A: Aggregate> Clone for EventEnvelope<A> {
         }
     }
 }
-
-impl<A: Aggregate> EventEnvelope<A> {
-    /// A convenience function for packaging an event in an `EventEnvelope`.
-    /// This is provided to simplify testing `Query`s but should not be used with application logic.
-    #[deprecated(
-        since = "0.3.1",
-        note = "this convenience method will be removed in V0.4.0, EventEnvelope fields will remain public"
-    )]
-    pub fn new(aggregate_id: String, sequence: usize, payload: A::Event) -> Self {
-        EventEnvelope {
-            aggregate_id,
-            sequence,
-            payload,
-            metadata: Default::default(),
-        }
-    }
-    /// A convenience function for packaging an event in an `EventEnvelope`, used for
-    /// testing `QueryProcessor`s. This version allows custom metadata to also be processed.
-    #[deprecated(
-        since = "0.3.1",
-        note = "this convenience method will be removed in V0.4.0, EventEnvelope fields will remain public"
-    )]
-    pub fn new_with_metadata(
-        aggregate_id: String,
-        sequence: usize,
-        payload: A::Event,
-        metadata: HashMap<String, String>,
-    ) -> Self {
-        EventEnvelope {
-            aggregate_id,
-            sequence,
-            payload,
-            metadata,
-        }
-    }
-}

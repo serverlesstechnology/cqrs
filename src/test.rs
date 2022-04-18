@@ -1,7 +1,6 @@
 use std::marker::PhantomData;
 
 use crate::aggregate::Aggregate;
-use crate::AggregateError;
 
 /// A framework for rigorously testing the aggregate logic, one of the ***most important***
 /// parts of any DDD system.
@@ -92,7 +91,7 @@ where
 async fn when<A: Aggregate>(
     events: Vec<A::Event>,
     command: A::Command,
-) -> Result<Vec<A::Event>, AggregateError<A::Error>> {
+) -> Result<Vec<A::Event>, A::Error> {
     let mut aggregate = A::default();
     for event in events {
         aggregate.apply(event);
@@ -105,7 +104,7 @@ pub struct AggregateResultValidator<A>
 where
     A: Aggregate,
 {
-    result: Result<Vec<A::Event>, AggregateError<A::Error>>,
+    result: Result<Vec<A::Event>, A::Error>,
 }
 
 impl<A: Aggregate> AggregateResultValidator<A> {
@@ -152,12 +151,7 @@ impl<A: Aggregate> AggregateResultValidator<A> {
             Ok(events) => {
                 panic!("expected error, received events: '{:?}'", events);
             }
-            Err(err) => match err {
-                AggregateError::UserError(err) => err,
-                _ => {
-                    panic!("expected user error but found technical error: {}", err)
-                }
-            },
+            Err(err) => err,
         }
     }
 
@@ -178,14 +172,7 @@ impl<A: Aggregate> AggregateResultValidator<A> {
             Ok(events) => {
                 panic!("expected error, received events: '{:?}'", events);
             }
-            Err(err) => match err {
-                AggregateError::UserError(err) => {
-                    assert_eq!(err.to_string(), error_message.to_string());
-                }
-                _ => {
-                    panic!("expected user error but found technical error: {}", err)
-                }
-            },
+            Err(err) => assert_eq!(err.to_string(), error_message.to_string()),
         };
     }
 }
