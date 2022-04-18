@@ -13,4 +13,4 @@ phases:
     commands:
       - docker images
       - docker image inspect cqrs
-      - docker run cqrs cargo build
+      - docker run cqrs cargo test
