@@ -234,61 +234,54 @@ type ThisTestFramework = TestFramework<TestAggregate>;
 #[test]
 fn test_framework_test() {
     let test_name = "test A";
-    let test_framework = ThisTestFramework::default();
 
-    test_framework
-        .given(vec![TestEvent::Created(Created {
-            id: "test_id_A".to_string(),
-        })])
-        .when(TestCommand::ConfirmTest(ConfirmTest {
-            test_name: test_name.to_string(),
-        }))
-        .then_expect_events(vec![TestEvent::Tested(Tested {
-            test_name: test_name.to_string(),
-        })]);
+    ThisTestFramework::given(vec![TestEvent::Created(Created {
+        id: "test_id_A".to_string(),
+    })])
+    .when(TestCommand::ConfirmTest(ConfirmTest {
+        test_name: test_name.to_string(),
+    }))
+    .then_expect_events(vec![TestEvent::Tested(Tested {
+        test_name: test_name.to_string(),
+    })]);
 
-    test_framework
-        .given(vec![TestEvent::Tested(Tested {
-            test_name: test_name.to_string(),
-        })])
-        .when(TestCommand::ConfirmTest(ConfirmTest {
-            test_name: test_name.to_string(),
-        }))
-        .then_expect_error_message("test already performed")
+    ThisTestFramework::given(vec![TestEvent::Tested(Tested {
+        test_name: test_name.to_string(),
+    })])
+    .when(TestCommand::ConfirmTest(ConfirmTest {
+        test_name: test_name.to_string(),
+    }))
+    .then_expect_error_message("test already performed")
 }
 
 #[test]
 #[should_panic]
 fn test_framework_failure_test() {
     let test_name = "test A";
-    let test_framework = ThisTestFramework::default();
 
-    test_framework
-        .given(vec![TestEvent::Tested(Tested {
-            test_name: test_name.to_string(),
-        })])
-        .when(TestCommand::ConfirmTest(ConfirmTest {
-            test_name: test_name.to_string(),
-        }))
-        .then_expect_events(vec![TestEvent::Tested(Tested {
-            test_name: test_name.to_string(),
-        })]);
+    ThisTestFramework::given(vec![TestEvent::Tested(Tested {
+        test_name: test_name.to_string(),
+    })])
+    .when(TestCommand::ConfirmTest(ConfirmTest {
+        test_name: test_name.to_string(),
+    }))
+    .then_expect_events(vec![TestEvent::Tested(Tested {
+        test_name: test_name.to_string(),
+    })]);
 }
 
 #[test]
 #[should_panic]
 fn test_framework_failure_test_b() {
     let test_name = "test A";
-    let test_framework = ThisTestFramework::default();
 
-    test_framework
-        .given(vec![TestEvent::Created(Created {
-            id: "test_id_A".to_string(),
-        })])
-        .when(TestCommand::ConfirmTest(ConfirmTest {
-            test_name: test_name.to_string(),
-        }))
-        .then_expect_error_message("some error message")
+    ThisTestFramework::given(vec![TestEvent::Created(Created {
+        id: "test_id_A".to_string(),
+    })])
+    .when(TestCommand::ConfirmTest(ConfirmTest {
+        test_name: test_name.to_string(),
+    }))
+    .then_expect_error_message("some error message")
 }
 
 #[tokio::test]

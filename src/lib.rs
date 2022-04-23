@@ -63,8 +63,7 @@ pub mod persist;
 /// # fn test() {
 /// type CustomerTestFramework = TestFramework<Customer>;
 ///
-/// CustomerTestFramework::default()
-///     .given_no_previous_events()
+/// CustomerTestFramework::given_no_previous_events()
 ///     .when(CustomerCommand::AddCustomerName{
 ///             name: "John Doe".to_string()
 ///         })

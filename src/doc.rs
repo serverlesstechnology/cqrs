@@ -172,8 +172,7 @@ mod doc_tests {
 
     #[test]
     fn test_add_name() {
-        CustomerTestFramework::default()
-            .given_no_previous_events()
+        CustomerTestFramework::given_no_previous_events()
             .when(CustomerCommand::AddCustomerName {
                 name: "John Doe".to_string(),
             })
@@ -184,14 +183,13 @@ mod doc_tests {
 
     #[test]
     fn test_add_name_again() {
-        CustomerTestFramework::default()
-            .given(vec![CustomerEvent::NameAdded {
-                name: "John Doe".to_string(),
-            }])
-            .when(CustomerCommand::AddCustomerName {
-                name: "John Doe".to_string(),
-            })
-            .then_expect_error_message("a name has already been added for this customer");
+        CustomerTestFramework::given(vec![CustomerEvent::NameAdded {
+            name: "John Doe".to_string(),
+        }])
+        .when(CustomerCommand::AddCustomerName {
+            name: "John Doe".to_string(),
+        })
+        .then_expect_error_message("a name has already been added for this customer");
     }
 }
 

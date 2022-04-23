@@ -5,12 +5,6 @@ use crate::aggregate::Aggregate;
 /// A framework for rigorously testing the aggregate logic, one of the ***most important***
 /// parts of any DDD system.
 ///
-/// ```
-/// # use cqrs_es::doc::MyAggregate;
-/// use cqrs_es::test::TestFramework;
-///
-/// let framework = TestFramework::<MyAggregate>::default();
-/// ```
 pub struct TestFramework<A> {
     _phantom: PhantomData<A>,
 }
@@ -25,11 +19,10 @@ where
     /// # use cqrs_es::doc::MyAggregate;
     /// use cqrs_es::test::TestFramework;
     ///
-    /// let executor = TestFramework::<MyAggregate>::default()
-    ///     .given_no_previous_events();
+    /// let executor = TestFramework::<MyAggregate>::given_no_previous_events();
     /// ```
     #[must_use]
-    pub fn given_no_previous_events(&self) -> AggregateTestExecutor<A> {
+    pub fn given_no_previous_events() -> AggregateTestExecutor<A> {
         AggregateTestExecutor { events: Vec::new() }
     }
     /// Initiates an aggregate test with a collection of previous events.
@@ -38,23 +31,11 @@ where
     /// # use cqrs_es::doc::{MyAggregate, MyEvents};
     /// use cqrs_es::test::TestFramework;
     ///
-    /// let executor = TestFramework::<MyAggregate>::default()
-    ///     .given(vec![MyEvents::SomethingWasDone]);
+    /// let executor = TestFramework::<MyAggregate>::given(vec![MyEvents::SomethingWasDone]);
     /// ```
     #[must_use]
-    pub fn given(&self, events: Vec<A::Event>) -> AggregateTestExecutor<A> {
+    pub fn given(events: Vec<A::Event>) -> AggregateTestExecutor<A> {
         AggregateTestExecutor { events }
-    }
-}
-
-impl<A> Default for TestFramework<A>
-where
-    A: Aggregate,
-{
-    fn default() -> Self {
-        TestFramework {
-            _phantom: PhantomData,
-        }
     }
 }
 
@@ -77,7 +58,7 @@ where
     /// # use cqrs_es::doc::{MyAggregate, MyCommands};
     /// use cqrs_es::test::TestFramework;
     ///
-    /// let executor = TestFramework::<MyAggregate>::default().given_no_previous_events();
+    /// let executor = TestFramework::<MyAggregate>::given_no_previous_events();
     ///
     /// let validator = executor.when(MyCommands::DoSomething);
     /// ```
@@ -115,8 +96,7 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     /// # async fn test() {
     /// use cqrs_es::test::TestFramework;
     ///
-    /// let validator = TestFramework::<MyAggregate>::default()
-    ///     .given_no_previous_events()
+    /// let validator = TestFramework::<MyAggregate>::given_no_previous_events()
     ///     .when(MyCommands::DoSomething);
     ///
     /// validator.then_expect_events(vec![MyEvents::SomethingWasDone]);
@@ -139,8 +119,7 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents, MyUserError};
     /// use cqrs_es::test::TestFramework;
     ///
-    /// let validator = TestFramework::<MyAggregate>::default()
-    ///     .given_no_previous_events()
+    /// let validator = TestFramework::<MyAggregate>::given_no_previous_events()
     ///     .when(MyCommands::BadCommand);
     ///
     /// let expected = MyUserError("the expected error message".to_string());
@@ -161,8 +140,7 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents};
     /// use cqrs_es::test::TestFramework;
     ///
-    /// let validator = TestFramework::<MyAggregate>::default()
-    ///     .given_no_previous_events()
+    /// let validator = TestFramework::<MyAggregate>::given_no_previous_events()
     ///     .when(MyCommands::BadCommand);
     ///
     /// validator.then_expect_error_message("the expected error message");
