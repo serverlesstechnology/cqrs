@@ -10,12 +10,12 @@ use crate::{Aggregate, AggregateContext, AggregateError, EventStore};
 ///
 /// Creation and use in a constructing a `CqrsFramework`:
 /// ```
-/// # use cqrs_es::doc::MyAggregate;
+/// # use cqrs_es::doc::{MyAggregate, MyService};
 /// use cqrs_es::CqrsFramework;
 /// use cqrs_es::mem_store::MemStore;
 ///
 /// let store = MemStore::<MyAggregate>::default();
-/// let cqrs = CqrsFramework::new(store, vec![]);
+/// let cqrs = CqrsFramework::new(store, vec![], MyService);
 /// ```
 pub struct MemStore<A: Aggregate + Send + Sync> {
     events: Arc<LockedEventEnvelopeMap<A>>,

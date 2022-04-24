@@ -27,6 +27,7 @@ where
 {
     store: ES,
     query_processors: Vec<Box<dyn Query<A>>>,
+    service: A::Services,
 }
 
 impl<A, ES> CqrsFramework<A, ES>
@@ -41,12 +42,12 @@ where
     /// [MemStore](mem_store/struct.MemStore.html).
     ///
     /// ```
-    /// # use cqrs_es::doc::MyAggregate;
+    /// # use cqrs_es::doc::{MyAggregate, MyService};
     /// use cqrs_es::CqrsFramework;
     /// use cqrs_es::mem_store::MemStore;
     ///
     /// let store = MemStore::<MyAggregate>::default();
-    /// let cqrs = CqrsFramework::new(store, vec![]);
+    /// let cqrs = CqrsFramework::new(store, vec![], MyService);
     /// ```
     /// For production uses a persistent event store
     /// using a backing database is needed, such as in the available persistence crates:
@@ -54,7 +55,11 @@ where
     /// - [MySQL](https://www.mysql.com/) - [mysql-es](https://crates.io/crates/mysql-es)
     /// - [DynamoDb](https://aws.amazon.com/dynamodb/) - [dynamo-es](https://crates.io/crates/dynamo-es)
     ///
-    pub fn new(store: ES, query_processors: Vec<Box<dyn Query<A>>>) -> CqrsFramework<A, ES>
+    pub fn new(
+        store: ES,
+        query_processors: Vec<Box<dyn Query<A>>>,
+        service: A::Services,
+    ) -> CqrsFramework<A, ES>
     where
         A: Aggregate,
         ES: EventStore<A>,
@@ -62,6 +67,7 @@ where
         CqrsFramework {
             store,
             query_processors,
+            service,
         }
     }
     /// This applies a command to an aggregate. Executing a command
@@ -133,7 +139,7 @@ where
     ) -> Result<(), AggregateError<A::Error>> {
         let aggregate_context = self.store.load_aggregate(aggregate_id).await?;
         let aggregate = aggregate_context.aggregate();
-        let resultant_events = match aggregate.handle(command).await {
+        let resultant_events = match aggregate.handle(command, &self.service).await {
             Ok(events) => events,
             Err(err) => return Err(AggregateError::UserError(err)),
         };

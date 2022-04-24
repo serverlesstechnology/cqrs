@@ -93,14 +93,15 @@ where
     /// using events as the single source of truth.
     ///
     /// ```
-    /// # use cqrs_es::doc::MyAggregate;
+    /// # use cqrs_es::doc::{MyAggregate, MyService};
     /// # use cqrs_es::CqrsFramework;
     /// # use cqrs_es::persist::doc::{MyDatabaseConnection, MyEventRepository};
     /// # use cqrs_es::persist::PersistedEventStore;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
     /// let repo = MyEventRepository::new(my_db_connection);
     /// let store = PersistedEventStore::<MyEventRepository,MyAggregate>::new_event_store(repo);
-    /// let cqrs = CqrsFramework::new(store, vec![]);
+    /// let service = MyService;
+    /// let cqrs = CqrsFramework::new(store, vec![], service);
     /// # }
     /// ```
     pub fn new_event_store(repo: R) -> Self {
@@ -118,14 +119,14 @@ where
     /// not used as the source of truth when loading an aggregate.
     ///
     /// ```
-    /// # use cqrs_es::doc::MyAggregate;
+    /// # use cqrs_es::doc::{MyAggregate, MyService};
     /// # use cqrs_es::CqrsFramework;
     /// # use cqrs_es::persist::doc::{MyDatabaseConnection, MyEventRepository};
     /// # use cqrs_es::persist::PersistedEventStore;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
     /// let repo = MyEventRepository::new(my_db_connection);
     /// let store = PersistedEventStore::<MyEventRepository,MyAggregate>::new_aggregate_store(repo);
-    /// let cqrs = CqrsFramework::new(store, vec![]);
+    /// let cqrs = CqrsFramework::new(store, vec![], MyService);
     /// # }
     /// ```
     pub fn new_aggregate_store(repo: R) -> Self {
@@ -141,14 +142,14 @@ where
     /// using events and aggregate snapshots as the source of truth.
     ///
     /// ```
-    /// # use cqrs_es::doc::MyAggregate;
+    /// # use cqrs_es::doc::{MyAggregate, MyService};
     /// # use cqrs_es::CqrsFramework;
     /// # use cqrs_es::persist::doc::{MyDatabaseConnection, MyEventRepository};
     /// # use cqrs_es::persist::PersistedEventStore;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
     /// let repo = MyEventRepository::new(my_db_connection);
     /// let store = PersistedEventStore::<MyEventRepository,MyAggregate>::new_snapshot_store(repo, 100);
-    /// let cqrs = CqrsFramework::new(store, vec![]);
+    /// let cqrs = CqrsFramework::new(store, vec![], MyService);
     /// # }
     /// ```
     pub fn new_snapshot_store(repo: R, snapshot_size: usize) -> Self {
@@ -397,6 +398,9 @@ mod shared_test {
 
     impl std::error::Error for TestError {}
 
+    #[derive(Clone)]
+    pub struct TestService;
+
     #[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
     pub(crate) struct TestAggregate {
         pub(crate) something_happened: usize,
@@ -407,11 +411,16 @@ mod shared_test {
         type Command = TestCommands;
         type Event = TestEvents;
         type Error = TestError;
+        type Services = TestService;
 
         fn aggregate_type() -> String {
             "TestAggregate".to_string()
         }
-        async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, Self::Error> {
+        async fn handle(
+            &self,
+            command: Self::Command,
+            _service: &Self::Services,
+        ) -> Result<Vec<Self::Event>, Self::Error> {
             match command {
                 TestCommands::DoSomething => Ok(vec![TestEvents::SomethingWasDone]),
                 TestCommands::BadCommand => Err("the expected error message".into()),

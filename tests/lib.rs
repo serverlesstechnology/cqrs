@@ -32,17 +32,25 @@ impl From<&str> for TestError {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct TestService;
+
 #[async_trait]
 impl Aggregate for TestAggregate {
     type Command = TestCommand;
     type Event = TestEvent;
     type Error = TestError;
+    type Services = TestService;
 
     fn aggregate_type() -> String {
         "TestAggregate".to_string()
     }
 
-    async fn handle(&self, command: TestCommand) -> Result<Vec<TestEvent>, Self::Error> {
+    async fn handle(
+        &self,
+        command: Self::Command,
+        _service: &Self::Services,
+    ) -> Result<Vec<TestEvent>, Self::Error> {
         match &command {
             TestCommand::CreateTest(command) => {
                 let event = TestEvent::Created(Created {
@@ -235,23 +243,25 @@ type ThisTestFramework = TestFramework<TestAggregate>;
 fn test_framework_test() {
     let test_name = "test A";
 
-    ThisTestFramework::given(vec![TestEvent::Created(Created {
-        id: "test_id_A".to_string(),
-    })])
-    .when(TestCommand::ConfirmTest(ConfirmTest {
-        test_name: test_name.to_string(),
-    }))
-    .then_expect_events(vec![TestEvent::Tested(Tested {
-        test_name: test_name.to_string(),
-    })]);
+    ThisTestFramework::with(TestService)
+        .given(vec![TestEvent::Created(Created {
+            id: "test_id_A".to_string(),
+        })])
+        .when(TestCommand::ConfirmTest(ConfirmTest {
+            test_name: test_name.to_string(),
+        }))
+        .then_expect_events(vec![TestEvent::Tested(Tested {
+            test_name: test_name.to_string(),
+        })]);
 
-    ThisTestFramework::given(vec![TestEvent::Tested(Tested {
-        test_name: test_name.to_string(),
-    })])
-    .when(TestCommand::ConfirmTest(ConfirmTest {
-        test_name: test_name.to_string(),
-    }))
-    .then_expect_error_message("test already performed")
+    ThisTestFramework::with(TestService)
+        .given(vec![TestEvent::Tested(Tested {
+            test_name: test_name.to_string(),
+        })])
+        .when(TestCommand::ConfirmTest(ConfirmTest {
+            test_name: test_name.to_string(),
+        }))
+        .then_expect_error_message("test already performed")
 }
 
 #[test]
@@ -259,15 +269,16 @@ fn test_framework_test() {
 fn test_framework_failure_test() {
     let test_name = "test A";
 
-    ThisTestFramework::given(vec![TestEvent::Tested(Tested {
-        test_name: test_name.to_string(),
-    })])
-    .when(TestCommand::ConfirmTest(ConfirmTest {
-        test_name: test_name.to_string(),
-    }))
-    .then_expect_events(vec![TestEvent::Tested(Tested {
-        test_name: test_name.to_string(),
-    })]);
+    ThisTestFramework::with(TestService)
+        .given(vec![TestEvent::Tested(Tested {
+            test_name: test_name.to_string(),
+        })])
+        .when(TestCommand::ConfirmTest(ConfirmTest {
+            test_name: test_name.to_string(),
+        }))
+        .then_expect_events(vec![TestEvent::Tested(Tested {
+            test_name: test_name.to_string(),
+        })]);
 }
 
 #[test]
@@ -275,13 +286,14 @@ fn test_framework_failure_test() {
 fn test_framework_failure_test_b() {
     let test_name = "test A";
 
-    ThisTestFramework::given(vec![TestEvent::Created(Created {
-        id: "test_id_A".to_string(),
-    })])
-    .when(TestCommand::ConfirmTest(ConfirmTest {
-        test_name: test_name.to_string(),
-    }))
-    .then_expect_error_message("some error message")
+    ThisTestFramework::with(TestService)
+        .given(vec![TestEvent::Created(Created {
+            id: "test_id_A".to_string(),
+        })])
+        .when(TestCommand::ConfirmTest(ConfirmTest {
+            test_name: test_name.to_string(),
+        }))
+        .then_expect_error_message("some error message")
 }
 
 #[tokio::test]
@@ -292,7 +304,7 @@ async fn framework_test() {
     let delivered_events = Default::default();
     let view = TestView::new(Arc::clone(&delivered_events));
 
-    let cqrs = CqrsFramework::new(event_store, vec![Box::new(view)]);
+    let cqrs = CqrsFramework::new(event_store, vec![Box::new(view)], TestService);
     let uuid = uuid::Uuid::new_v4().to_string();
     let id = uuid.clone();
     let metadata = metadata();

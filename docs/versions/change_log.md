@@ -3,8 +3,8 @@
 #### `v0.4.0`
 - Modified the aggregate `handle` method to expect a reply of `Self::Error`. 
 Previously `AggregateError` was returned which allowed overloading enum branches other than the `UserError`, this is no longer allowed.
+- Added `Services` type to the aggregate trait.
 - Removed deprecated `EventEnvelope` methods and `UserErrorPayload` struct from use in examples.
-- TestFramework no longer requires a default instance. 
 
 #### `v0.3.2`
 - Removed deprecated methods and structs from use in examples.

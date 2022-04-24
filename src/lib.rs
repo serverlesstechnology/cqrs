@@ -43,12 +43,13 @@ pub mod doc;
 /// require persistence after running.
 ///
 /// ```
-/// # use cqrs_es::doc::MyAggregate;
+/// # use cqrs_es::doc::{MyAggregate, MyService};
 /// use cqrs_es::CqrsFramework;
 /// use cqrs_es::mem_store::MemStore;
 ///
 /// let store = MemStore::<MyAggregate>::default();
-/// let cqrs = CqrsFramework::new(store, vec![]);
+/// let service = MyService::default();
+/// let cqrs = CqrsFramework::new(store, vec![], service);
 /// ```
 pub mod mem_store;
 
@@ -59,11 +60,12 @@ pub mod persist;
 ///
 /// ```rust
 /// # use cqrs_es::test::TestFramework;
-/// # use cqrs_es::doc::{Customer, CustomerEvent, CustomerCommand};
+/// # use cqrs_es::doc::{Customer, CustomerEvent, CustomerCommand, CustomerService};
 /// # fn test() {
 /// type CustomerTestFramework = TestFramework<Customer>;
 ///
-/// CustomerTestFramework::given_no_previous_events()
+/// CustomerTestFramework::with(CustomerService::default())
+///     .given_no_previous_events()
 ///     .when(CustomerCommand::AddCustomerName{
 ///             name: "John Doe".to_string()
 ///         })

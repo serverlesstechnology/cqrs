@@ -35,12 +35,17 @@ impl Aggregate for MyAggregate {
     type Command = MyCommands;
     type Event = MyEvents;
     type Error = MyUserError;
+    type Services = MyService;
 
     fn aggregate_type() -> String {
         "MyAggregate".to_string()
     }
 
-    async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, Self::Error> {
+    async fn handle(
+        &self,
+        command: Self::Command,
+        _service: &Self::Services,
+    ) -> Result<Vec<Self::Event>, Self::Error> {
         match command {
             MyCommands::DoSomething => Ok(vec![MyEvents::SomethingWasDone]),
             MyCommands::BadCommand => Err("the expected error message".into()),
@@ -74,17 +79,25 @@ impl From<&str> for MyUserError {
     }
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct MyService;
+
 #[async_trait]
 impl Aggregate for Customer {
     type Command = CustomerCommand;
     type Event = CustomerEvent;
-    type Error = MyUserError;
+    type Error = CustomerError;
+    type Services = CustomerService;
 
     fn aggregate_type() -> String {
         "Customer".to_string()
     }
 
-    async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, Self::Error> {
+    async fn handle(
+        &self,
+        command: Self::Command,
+        _service: &Self::Services,
+    ) -> Result<Vec<Self::Event>, Self::Error> {
         match command {
             CustomerCommand::AddCustomerName { name: changed_name } => {
                 if self.name.as_str() != "" {
@@ -137,6 +150,9 @@ impl Display for CustomerError {
 
 impl std::error::Error for CustomerError {}
 
+#[derive(Clone, Default)]
+pub struct CustomerService;
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum CustomerEvent {
     NameAdded { name: String },
@@ -172,7 +188,8 @@ mod doc_tests {
 
     #[test]
     fn test_add_name() {
-        CustomerTestFramework::given_no_previous_events()
+        CustomerTestFramework::with(CustomerService::default())
+            .given_no_previous_events()
             .when(CustomerCommand::AddCustomerName {
                 name: "John Doe".to_string(),
             })
@@ -183,13 +200,14 @@ mod doc_tests {
 
     #[test]
     fn test_add_name_again() {
-        CustomerTestFramework::given(vec![CustomerEvent::NameAdded {
-            name: "John Doe".to_string(),
-        }])
-        .when(CustomerCommand::AddCustomerName {
-            name: "John Doe".to_string(),
-        })
-        .then_expect_error_message("a name has already been added for this customer");
+        CustomerTestFramework::with(CustomerService::default())
+            .given(vec![CustomerEvent::NameAdded {
+                name: "John Doe".to_string(),
+            }])
+            .when(CustomerCommand::AddCustomerName {
+                name: "John Doe".to_string(),
+            })
+            .then_expect_error_message("a name has already been added for this customer");
     }
 }
 
