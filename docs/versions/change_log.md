@@ -3,7 +3,9 @@
 #### `v0.4.0`
 - Modified the aggregate `handle` method to expect a reply of `Self::Error`. 
 Previously `AggregateError` was returned which allowed overloading enum branches other than the `UserError`, this is no longer allowed.
-- Added `Services` type to the aggregate trait.
+- Added `Services` type to the aggregate trait. 
+Any external services used should now be configured with the CqrsFramework rather than attached to a command.
+- The TestFramework now provides the `expect_error` validator that is available if the `Self::Error` implements `PartialEq`.
 - Removed deprecated `EventEnvelope` methods and `UserErrorPayload` struct from use in examples.
 
 #### `v0.3.2`

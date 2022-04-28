@@ -133,28 +133,6 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     /// further validation.
     ///
     /// ```
-    /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents, MyService, MyUserError};
-    /// use cqrs_es::test::TestFramework;
-    ///
-    /// let validator = TestFramework::<MyAggregate>::with(MyService)
-    ///     .given_no_previous_events()
-    ///     .when(MyCommands::BadCommand);
-    ///
-    /// let expected = MyUserError("the expected error message".to_string());
-    /// assert_eq!(expected,validator.then_expect_error());
-    /// ```
-    pub fn then_expect_error(self) -> A::Error {
-        match self.result {
-            Ok(events) => {
-                panic!("expected error, received events: '{:?}'", events);
-            }
-            Err(err) => err,
-        }
-    }
-
-    /// Verifies that an `AggregateError` with the expected message is produced with the command.
-    ///
-    /// ```
     /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents, MyService};
     /// use cqrs_es::test::TestFramework;
     ///
@@ -171,5 +149,53 @@ impl<A: Aggregate> AggregateResultValidator<A> {
             }
             Err(err) => assert_eq!(err.to_string(), error_message.to_string()),
         };
+    }
+
+    /// Returns the internal error payload for validation by the user.
+    ///
+    /// ```
+    /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents, MyService, MyUserError};
+    /// use cqrs_es::test::TestFramework;
+    ///
+    /// let validator = TestFramework::<MyAggregate>::with(MyService)
+    ///     .given_no_previous_events()
+    ///     .when(MyCommands::BadCommand);
+    ///
+    /// let expected = MyUserError("the expected error message".to_string());
+    /// assert_eq!(expected,validator.inspect_result().unwrap_err());
+    /// ```
+    pub fn inspect_result(self) -> Result<Vec<A::Event>, A::Error> {
+        self.result
+    }
+}
+impl<A> AggregateResultValidator<A>
+where
+    A: Aggregate,
+    A::Error: PartialEq,
+{
+    /// Verifies that the result is the expected error.
+    ///
+    /// > Note that the configured Error *must* implement `std::cmp::PartialEq`.
+    ///
+    /// ```
+    /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents, MyService, MyUserError};
+    /// use cqrs_es::test::TestFramework;
+    ///
+    /// let validator = TestFramework::<MyAggregate>::with(MyService)
+    ///     .given_no_previous_events()
+    ///     .when(MyCommands::BadCommand);
+    ///
+    /// let expected = MyUserError("the expected error message".to_string());
+    /// validator.then_expect_error(expected);
+    /// ```
+    pub fn then_expect_error(self, expected_error: A::Error) {
+        match self.result {
+            Ok(events) => {
+                panic!("expected error, received events: '{:?}'", events);
+            }
+            Err(err) => {
+                assert_eq!(err, expected_error);
+            }
+        }
     }
 }
