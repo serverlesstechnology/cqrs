@@ -15,8 +15,7 @@ use crate::{AggregateContext, AggregateError};
 /// 1. Applying these events, in order, to a new `Aggregate` in order to reach the correct state.
 /// 1. Using the recreated `Aggregate` to handle an inbound `Command` producing events or an error
 /// (see `handle` method in this trait).
-/// 1. Applying any generated events to the `Aggregate` (see `apply` method in this trait).
-/// 1. Persisting any generated events or rolling back in the event of an error.
+/// 1. Persisting any generated events or roll back in the event of an error.
 ///
 /// To manage these tasks we use a `CqrsFramework`.
 ///
@@ -36,12 +35,13 @@ where
     ES: EventStore<A>,
 {
     /// Creates new framework for dispatching commands using the provided elements.
-    /// Takes an `EventStore` and a vector of queries.
+    /// Takes an implementation of an `EventStore`, a vector of queries and a set of services
+    /// to be used within the command handler.
     ///
     /// For a simple in-memory `EventStore` suitable for experimentation or testing see
     /// [MemStore](mem_store/struct.MemStore.html).
     ///
-    /// ```
+    /// ```rust
     /// # use cqrs_es::doc::{MyAggregate, MyService};
     /// use cqrs_es::CqrsFramework;
     /// use cqrs_es::mem_store::MemStore;
@@ -49,7 +49,8 @@ where
     /// let store = MemStore::<MyAggregate>::default();
     /// let cqrs = CqrsFramework::new(store, vec![], MyService);
     /// ```
-    /// For production uses a persistent event store
+    /// For production uses a
+    /// [persistent event store](https://docs.rs/cqrs-es/latest/cqrs_es/persist/struct.PersistedEventStore.html)
     /// using a backing database is needed, such as in the available persistence crates:
     /// - [PostgreSQL](https://www.postgresql.org/) - [postgres-es](https://crates.io/crates/postgres-es)
     /// - [MySQL](https://www.mysql.com/) - [mysql-es](https://crates.io/crates/mysql-es)
@@ -71,25 +72,26 @@ where
         }
     }
     /// This applies a command to an aggregate. Executing a command
-    /// in this way is the only way to make any change to
-    /// the state of an aggregate.
+    /// in this way is the only way to make changes to
+    /// the state of an aggregate in CQRS.
     ///
     /// An error while processing will result in no events committed and
-    /// an AggregateError being returned.
+    /// an [`AggregateError`](https://docs.rs/cqrs-es/latest/cqrs_es/enum.AggregateError.html)
+    /// being returned.
     ///
     /// If successful the events produced will be persisted in the backing `EventStore`
     /// before being applied to any configured `QueryProcessor`s.
     ///
     /// ```
-    /// # use cqrs_es::CqrsFramework;
-    /// # use cqrs_es::doc::{MyAggregate,MyCommands};
+    /// # use cqrs_es::{AggregateError, CqrsFramework};
+    /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyUserError};
     /// # use cqrs_es::mem_store::MemStore;
     /// # use std::collections::HashMap;
     /// # use chrono;
-    /// # async fn test(cqrs: CqrsFramework<MyAggregate,MemStore<MyAggregate>>) {
-    /// let command = MyCommands::DoSomething;
-    ///
-    /// cqrs.execute("agg-id-F39A0C", command).await;
+    /// # async fn test(cqrs: CqrsFramework<MyAggregate,MemStore<MyAggregate>>) -> Result<(),AggregateError<MyUserError>> {
+    ///     let command = MyCommands::DoSomething;
+    ///     cqrs.execute("agg-id-F39A0C", command).await?;
+    /// #    Ok(())
     /// # }
     /// ```
     pub async fn execute(
@@ -101,8 +103,9 @@ where
             .await
     }
 
-    /// This applies a command to an aggregate along with associated metadata. Executing a command
-    /// in this way to make any change to the state of an aggregate.
+    /// This applies a command to an aggregate. Executing a command
+    /// in this way is the only way to make changes to
+    /// the state of an aggregate in CQRS.
     ///
     /// A `Hashmap<String,String>` is supplied with any contextual information that should be
     /// associated with this change. This metadata will be attached to any produced events and is
@@ -112,7 +115,8 @@ where
     /// - application version
     ///
     /// An error while processing will result in no events committed and
-    /// an AggregateError being returned.
+    /// an [`AggregateError`](https://docs.rs/cqrs-es/latest/cqrs_es/enum.AggregateError.html)
+    /// being returned.
     ///
     /// If successful the events produced will be persisted in the backing `EventStore`
     /// before being applied to any configured `QueryProcessor`s.

@@ -6,9 +6,13 @@ use crate::DomainEvent;
 
 /// In CQRS (and Domain Driven Design) an `Aggregate` is the fundamental component that
 /// encapsulates the state and application logic (aka business rules) for the application.
-/// An `Aggregate` is always an entity along with all objects associated with it.
+/// An `Aggregate` is always composed of a
+/// [DDD entity](https://docs.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/microservice-domain-model#the-domain-entity-pattern)
+/// along with all entities and
+/// [value objects](https://docs.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/microservice-domain-model#the-value-object-pattern)
+/// associated with it.
 ///
-/// # Examples
+/// # Example of a 'Customer' aggregate
 /// ```rust
 /// # use cqrs_es::doc::{CustomerEvent, CustomerError, CustomerCommand, CustomerService};
 /// # use cqrs_es::{Aggregate, AggregateError};
@@ -70,13 +74,13 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// The external services required for the logic within the Aggregate
     type Services: Send + Sync;
     /// The aggregate type is used as the unique identifier for this aggregate and its events.
-    /// This is used for persisting the events or aggregate snapshot to a database.
+    /// This is used for persisting the events and snapshots to a database.
     fn aggregate_type() -> String;
     /// This method consumes and processes commands.
     /// The result should be either a vector of events if the command is successful,
     /// or an error if the command is rejected.
     ///
-    /// *All business logic should be placed here*.
+    /// _All business logic belongs in this method_.
     ///
     /// ```rust
     /// # use std::sync::Arc;
@@ -119,16 +123,17 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
         service: &Self::Services,
     ) -> Result<Vec<Self::Event>, Self::Error>;
     /// This is used to update the aggregate's state once an event has been committed.
-    /// Events emitted from the `handle` method will be applied using this method
+    /// Any events returned from the `handle` method will be applied using this method
     /// in order to populate the state of the aggregate instance.
     ///
-    /// When these events are applied varies with the source of truth used:
-    /// - event sourced - Events are applied every time the aggregate is loaded.
+    /// The source of truth used in the CQRS framework determines when the events are
+    /// applied to an aggregate:
+    /// - event sourced - All events are applied every time the aggregate is loaded.
     /// - aggregate sourced - Events are applied immediately after they are returned from `handle`
     /// (and before they are committed) and the resulting aggregate instance is serialized and persisted.
     /// - snapshots - Uses a combination of the above patterns.
     ///
-    /// *No business logic should be placed here*, this is only used for updating the aggregate state.
+    /// _No business logic should be placed here_, this is only used for updating the aggregate state.
     ///
     /// ```rust
     /// # use std::sync::Arc;
