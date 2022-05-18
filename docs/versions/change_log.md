@@ -1,5 +1,8 @@
 # Change log
 
+#### `v0.4.2`
+- Add `append_query` method to the framework.
+
 #### `v0.4.0`
 - Modified the aggregate `handle` method to expect a reply of `Self::Error`. 
 Previously `AggregateError` was returned which allowed overloading enum branches other than the `UserError`, this is no longer allowed.

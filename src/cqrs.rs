@@ -25,7 +25,7 @@ where
     ES: EventStore<A>,
 {
     store: ES,
-    query_processors: Vec<Box<dyn Query<A>>>,
+    queries: Vec<Box<dyn Query<A>>>,
     service: A::Services,
 }
 
@@ -47,7 +47,10 @@ where
     /// use cqrs_es::mem_store::MemStore;
     ///
     /// let store = MemStore::<MyAggregate>::default();
-    /// let cqrs = CqrsFramework::new(store, vec![], MyService);
+    /// let queries = vec![];
+    /// let service = MyService::default();
+    ///
+    /// let cqrs = CqrsFramework::new(store, queries, service);
     /// ```
     /// For production uses a
     /// [persistent event store](https://docs.rs/cqrs-es/latest/cqrs_es/persist/struct.PersistedEventStore.html)
@@ -58,7 +61,7 @@ where
     ///
     pub fn new(
         store: ES,
-        query_processors: Vec<Box<dyn Query<A>>>,
+        queries: Vec<Box<dyn Query<A>>>,
         service: A::Services,
     ) -> CqrsFramework<A, ES>
     where
@@ -67,8 +70,34 @@ where
     {
         CqrsFramework {
             store,
-            query_processors,
+            queries,
             service,
+        }
+    }
+    /// Appends an additional query to the framework.
+    /// ```rust
+    /// # use cqrs_es::doc::{MyAggregate, MyQuery, MyService};
+    /// use cqrs_es::CqrsFramework;
+    /// use cqrs_es::mem_store::MemStore;
+    ///
+    /// let store = MemStore::<MyAggregate>::default();
+    /// let queries = vec![];
+    /// let service = MyService::default();
+    ///
+    /// let cqrs = CqrsFramework::new(store, queries, service)
+    ///     .append_query(Box::new(MyQuery::default()));
+    /// ```
+    pub fn append_query(self, query: Box<dyn Query<A>>) -> CqrsFramework<A, ES>
+    where
+        A: Aggregate,
+        ES: EventStore<A>,
+    {
+        let mut queries = self.queries;
+        queries.push(query);
+        CqrsFramework {
+            store: self.store,
+            queries,
+            service: self.service,
         }
     }
     /// This applies a command to an aggregate. Executing a command
@@ -88,11 +117,13 @@ where
     /// # use cqrs_es::mem_store::MemStore;
     /// # use std::collections::HashMap;
     /// # use chrono;
-    /// # async fn test(cqrs: CqrsFramework<MyAggregate,MemStore<MyAggregate>>) -> Result<(),AggregateError<MyUserError>> {
+    /// type MyFramework = CqrsFramework<MyAggregate,MemStore<MyAggregate>>;
+    ///
+    /// async fn do_something(cqrs: MyFramework) -> Result<(),AggregateError<MyUserError>> {
     ///     let command = MyCommands::DoSomething;
-    ///     cqrs.execute("agg-id-F39A0C", command).await?;
-    /// #    Ok(())
-    /// # }
+    ///
+    ///     cqrs.execute("agg-id-F39A0C", command).await
+    /// }
     /// ```
     pub async fn execute(
         &self,
@@ -122,18 +153,20 @@ where
     /// before being applied to any configured `QueryProcessor`s.
     ///
     /// ```
-    /// # use cqrs_es::CqrsFramework;
-    /// # use cqrs_es::doc::{MyAggregate,MyCommands};
+    /// # use cqrs_es::{AggregateError, CqrsFramework};
+    /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyUserError};
     /// # use cqrs_es::mem_store::MemStore;
     /// # use std::collections::HashMap;
     /// # use chrono;
-    /// # async fn test(cqrs: CqrsFramework<MyAggregate,MemStore<MyAggregate>>) {
-    /// let command = MyCommands::DoSomething;
-    /// let mut metadata = HashMap::new();
-    /// metadata.insert("time".to_string(), chrono::Utc::now().to_rfc3339());
+    /// type MyFramework = CqrsFramework<MyAggregate,MemStore<MyAggregate>>;
     ///
-    /// cqrs.execute_with_metadata("agg-id-F39A0C", command, metadata).await;
-    /// # }
+    /// async fn do_something(cqrs: MyFramework) -> Result<(),AggregateError<MyUserError>>  {
+    ///     let command = MyCommands::DoSomething;
+    ///     let mut metadata = HashMap::new();
+    ///     metadata.insert("time".to_string(), chrono::Utc::now().to_rfc3339());
+    ///
+    ///     cqrs.execute_with_metadata("agg-id-F39A0C", command, metadata).await
+    /// }
     /// ```
     pub async fn execute_with_metadata(
         &self,
@@ -151,7 +184,7 @@ where
             .store
             .commit(resultant_events, aggregate_context, metadata)
             .await?;
-        for processor in &self.query_processors {
+        for processor in &self.queries {
             let dispatch_events = committed_events.as_slice();
             processor.dispatch(aggregate_id, dispatch_events).await;
         }
