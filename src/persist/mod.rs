@@ -10,7 +10,7 @@
 pub use context::{EventStoreAggregateContext, ViewContext};
 pub use error::PersistenceError;
 pub use event_store::PersistedEventStore;
-pub use queries::GenericQuery;
+pub use queries::{GenericQuery,QueryErrorHandler};
 pub use repository::{PersistedEventRepository, ViewRepository};
 pub use serialized_event::{SerializedEvent, SerializedSnapshot};
 pub use upcaster::{
@@ -22,6 +22,7 @@ mod context;
 mod error;
 mod event_store;
 mod queries;
+mod replay;
 mod repository;
 mod serialized_event;
 mod upcaster;

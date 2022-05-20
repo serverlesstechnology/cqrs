@@ -15,11 +15,9 @@ where
     A: Aggregate,
 {
     view_repository: Arc<R>,
-    error_handler: Option<Box<ErrorHandler>>,
+    error_handler: Option<Box<QueryErrorHandler>>,
     phantom: PhantomData<(V, A)>,
 }
-
-type ErrorHandler = dyn Fn(PersistenceError) + Send + Sync + 'static;
 
 impl<R, V, A> GenericQuery<R, V, A>
 where
@@ -64,7 +62,7 @@ where
     /// query.use_error_handler(Box::new(|e|panic!("{}",e)));
     /// # }
     /// ```
-    pub fn use_error_handler(&mut self, error_handler: Box<ErrorHandler>) {
+    pub fn use_error_handler(&mut self, error_handler: Box<QueryErrorHandler>) {
         self.error_handler = Some(error_handler);
     }
 
@@ -136,3 +134,24 @@ where
         };
     }
 }
+
+/// A convenience type for query error handlers.
+///
+/// In a CQRS system queries are downstream services and can not return errors in a problem is encountered.
+/// This convenience type allows the user to define a function for handling persistence errors.
+///
+/// An error handler should be a method that takes a single `PersistenceError` parameter and has no
+/// result.
+///
+/// ```rust
+/// use cqrs_es::persist::{PersistenceError, QueryErrorHandler};
+/// fn create_error_handler() {
+///     // An error handler that panics when any persistence error is encountered.
+///     let error_handler: Box<QueryErrorHandler> = Box::new(error_handler);
+/// }
+///
+/// fn error_handler(error: PersistenceError) {
+///     panic!("{}",error);
+/// }
+/// ```
+pub type QueryErrorHandler = dyn Fn(PersistenceError) + Send + Sync + 'static;

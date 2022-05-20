@@ -161,28 +161,6 @@ where
         }
     }
 
-    // /// Configures the source of truth used by the EventStore. All committed events will be stored
-    // /// but not necessarily loaded when processing inbound commands.
-    // ///
-    // /// ```rust
-    // /// # use cqrs_es::doc::{MyAggregate, MyRepository};
-    // /// # use cqrs_es::persist::{PersistedEventStore,SourceOfTruth};
-    // /// # async fn config(repo: MyRepository) {
-    // ///     let event_store = PersistedEventStore::<MyRepository, MyAggregate>::new(repo)
-    // ///         .with_storage_method(SourceOfTruth::AggregateStore);
-    // /// # }
-    // /// ```
-    // ///
-    // /// Changing storage methods of in-use databases is not supported out of the box.
-    // pub fn with_storage_method(self, storage: SourceOfTruth) -> Self {
-    //     Self {
-    //         repo: self.repo,
-    //         storage,
-    //         event_upcasters: self.event_upcasters,
-    //         _phantom: Default::default(),
-    //     }
-    // }
-
     /// Configures the event store to use event upcasters when loading events.
     /// The EventUpcasters within the Vec should be placed in the
     /// order that they should be applied
@@ -309,13 +287,7 @@ where
         let payload = serde_json::to_value(context.aggregate)?;
         Ok(Some((payload, next_snapshot)))
     }
-}
 
-impl<R, A> PersistedEventStore<R, A>
-where
-    R: PersistedEventRepository,
-    A: Aggregate + Send + Sync,
-{
     /// Method to wrap a set of events with the additional metadata needed for persistence and publishing
     fn wrap_events(
         &self,
@@ -343,7 +315,7 @@ where
 }
 
 #[cfg(test)]
-mod shared_test {
+pub(crate) mod shared_test {
     use std::collections::HashMap;
     use std::fmt::{Display, Formatter};
     use std::sync::Mutex;
