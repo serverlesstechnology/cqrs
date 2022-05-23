@@ -1,11 +1,15 @@
-use crate::persist::{PersistenceError, SerializedEvent, SerializedSnapshot, ViewContext};
-use crate::{Aggregate, View};
+use crate::persist::{PersistenceError, SerializedEvent, SerializedSnapshot};
+use crate::Aggregate;
 use async_trait::async_trait;
 use serde_json::Value;
+use tokio::sync::mpsc::Receiver;
 
 /// Handles the database access needed for operation of a PersistedSnapshotStore.
 #[async_trait]
 pub trait PersistedEventRepository: Send + Sync {
+    /// An iterator of serialized event returned for streaming calls.
+    // type EventIterator: Iterator<Item = Result<SerializedEvent, PersistenceError>>;
+
     /// Returns all events for a single aggregate instance.
     async fn get_events<A: Aggregate>(
         &self,
@@ -31,26 +35,9 @@ pub trait PersistedEventRepository: Send + Sync {
         events: &[SerializedEvent],
         snapshot_update: Option<(String, Value, usize)>,
     ) -> Result<(), PersistenceError>;
-}
 
-/// Handles the database access needed for a GenericQuery.
-#[async_trait]
-pub trait ViewRepository<V, A>: Send + Sync
-where
-    V: View<A>,
-    A: Aggregate,
-{
-    /// Returns the current view instance.
-    async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError>;
-
-    /// Returns the current view instance and context, used by the `GenericQuery` to update
-    /// views with committed events.
-    async fn load_with_context(
+    /// Streams all events for an aggregate type.
+    async fn stream_events<A: Aggregate>(
         &self,
-        view_id: &str,
-    ) -> Result<Option<(V, ViewContext)>, PersistenceError>;
-
-    /// Updates the view instance and context, used by the `GenericQuery` to update
-    /// views with committed events.
-    async fn update_view(&self, view: V, context: ViewContext) -> Result<(), PersistenceError>;
+    ) -> Result<Receiver<Result<SerializedEvent, PersistenceError>>, PersistenceError>;
 }

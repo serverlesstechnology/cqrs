@@ -27,6 +27,7 @@ where
         self.query.dispatch(aggregate_id, &events).await;
         Ok(())
     }
+
 }
 
 #[cfg(test)]

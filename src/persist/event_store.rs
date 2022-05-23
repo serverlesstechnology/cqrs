@@ -312,6 +312,7 @@ where
         }
         wrapped_events
     }
+
 }
 
 #[cfg(test)]
@@ -323,6 +324,7 @@ pub(crate) mod shared_test {
     use async_trait::async_trait;
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
+    use tokio::sync::mpsc::Receiver;
 
     use crate::persist::{
         PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
@@ -408,6 +410,15 @@ pub(crate) mod shared_test {
         }
     }
 
+    pub(crate) struct MockEventIterator;
+    impl Iterator for MockEventIterator {
+        type Item = Result<SerializedEvent, PersistenceError>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            todo!()
+        }
+    }
+
     pub(crate) struct MockRepo {
         events_result: Mutex<Option<Result<Vec<SerializedEvent>, PersistenceError>>>,
         last_events_result: Mutex<Option<Result<Vec<SerializedEvent>, PersistenceError>>>,
@@ -463,6 +474,7 @@ pub(crate) mod shared_test {
 
     #[async_trait]
     impl PersistedEventRepository for MockRepo {
+
         async fn get_events<A: Aggregate>(
             &self,
             _aggregate_id: &str,
@@ -490,6 +502,12 @@ pub(crate) mod shared_test {
             let test = self.persist_check.lock().unwrap().take().unwrap();
             test(events, snapshot_update);
             Ok(())
+        }
+
+        async fn stream_events<A: Aggregate>(
+            &self,
+        ) -> Result<Receiver<Result<SerializedEvent, PersistenceError>>, PersistenceError> {
+            todo!()
         }
     }
 

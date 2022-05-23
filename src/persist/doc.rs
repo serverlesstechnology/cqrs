@@ -7,6 +7,7 @@ use crate::{Aggregate, EventEnvelope, View};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tokio::sync::mpsc::Receiver;
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct MyView;
@@ -48,6 +49,15 @@ impl ViewRepository<MyView, MyAggregate> for MyViewRepository {
     }
 }
 
+pub struct MyEventIterator;
+impl Iterator for MyEventIterator {
+    type Item = Result<SerializedEvent, PersistenceError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!()
+    }
+}
+
 pub struct MyEventRepository;
 
 impl MyEventRepository {
@@ -58,6 +68,7 @@ impl MyEventRepository {
 
 #[async_trait]
 impl PersistedEventRepository for MyEventRepository {
+
     async fn get_events<A: Aggregate>(
         &self,
         _aggregate_id: &str,
@@ -85,6 +96,12 @@ impl PersistedEventRepository for MyEventRepository {
         _events: &[SerializedEvent],
         _snapshot_update: Option<(String, Value, usize)>,
     ) -> Result<(), PersistenceError> {
+        todo!()
+    }
+
+    async fn stream_events<A: Aggregate>(
+        &self,
+    ) -> Result<Receiver<Result<SerializedEvent, PersistenceError>>, PersistenceError> {
         todo!()
     }
 }
