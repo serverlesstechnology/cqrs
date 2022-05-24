@@ -2,10 +2,9 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt::{Display, Formatter};
-use tokio::sync::mpsc::Receiver;
 
 use crate::persist::{
-    PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
+    PersistedEventRepository, PersistenceError, ReplayStream, SerializedEvent, SerializedSnapshot,
 };
 use crate::{Aggregate, DomainEvent, EventEnvelope, Query};
 
@@ -255,7 +254,12 @@ impl PersistedEventRepository for MyRepository {
 
     async fn stream_events<A: Aggregate>(
         &self,
-    ) -> Result<Receiver<Result<SerializedEvent, PersistenceError>>, PersistenceError> {
+        _aggregate_id: &str,
+    ) -> Result<ReplayStream, PersistenceError> {
+        todo!()
+    }
+
+    async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
         todo!()
     }
 }

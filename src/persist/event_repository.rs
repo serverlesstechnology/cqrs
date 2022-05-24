@@ -1,8 +1,8 @@
+use crate::persist::event_stream::ReplayStream;
 use crate::persist::{PersistenceError, SerializedEvent, SerializedSnapshot};
 use crate::Aggregate;
 use async_trait::async_trait;
 use serde_json::Value;
-use tokio::sync::mpsc::Receiver;
 
 /// Handles the database access needed for operation of a PersistedSnapshotStore.
 #[async_trait]
@@ -36,8 +36,12 @@ pub trait PersistedEventRepository: Send + Sync {
         snapshot_update: Option<(String, Value, usize)>,
     ) -> Result<(), PersistenceError>;
 
-    /// Streams all events for an aggregate type.
+    /// Streams all events for an aggregate instance.
     async fn stream_events<A: Aggregate>(
         &self,
-    ) -> Result<Receiver<Result<SerializedEvent, PersistenceError>>, PersistenceError>;
+        aggregate_id: &str,
+    ) -> Result<ReplayStream, PersistenceError>;
+
+    /// Streams all events for an aggregate type.
+    async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError>;
 }

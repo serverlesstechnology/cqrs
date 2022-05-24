@@ -1,8 +1,7 @@
-use tokio::sync::mpsc::Receiver;
+use std::marker::PhantomData;
 
-use crate::persist::PersistedEventStore;
-use crate::persist::{PersistedEventRepository, PersistenceError, SerializedEvent};
-use crate::{Aggregate, AggregateError, EventEnvelope, EventStore, Query};
+use crate::persist::{PersistedEventRepository, PersistenceError};
+use crate::{Aggregate, AggregateError, EventEnvelope, Query};
 
 pub struct QueryReplay<R, Q, A>
 where
@@ -10,8 +9,9 @@ where
     Q: Query<A>,
     A: Aggregate,
 {
-    event_store: PersistedEventStore<R, A>,
+    repository: R,
     query: Q,
+    phantom_data: PhantomData<A>,
 }
 
 impl<R, Q, A> QueryReplay<R, Q, A>
@@ -20,42 +20,40 @@ where
     Q: Query<A>,
     A: Aggregate,
 {
-    pub fn new(event_store: PersistedEventStore<R, A>, query: Q) -> Self {
-        Self { event_store, query }
+    pub fn new(repository: R, query: Q) -> Self {
+        Self {
+            repository,
+            query,
+            phantom_data: Default::default(),
+        }
     }
 
     pub async fn replay(&self, aggregate_id: &str) -> Result<(), AggregateError<A::Error>> {
-        let events = self.event_store.load_events(aggregate_id).await?;
-        self.query.dispatch(aggregate_id, &events).await;
+        let mut stream = self.repository.stream_events::<A>(aggregate_id).await?;
+        while let Some(event) = stream.next::<A>().await {
+            self.apply(event).await;
+        }
         Ok(())
     }
 
     pub async fn replay_all(&self) -> Result<(), AggregateError<A::Error>> {
-        let mut stream = self.event_store.replay_stream().await?;
-        while let Some(event) = stream.next::<A>().await {}
+        let mut stream = self.repository.stream_all_events::<A>().await?;
+        while let Some(event) = stream.next::<A>().await {
+            self.apply(event).await;
+        }
         Ok(())
     }
-}
 
-pub struct ReplayStream {
-    queue: Receiver<Result<SerializedEvent, PersistenceError>>,
-}
-
-impl ReplayStream {
-    pub fn new(queue: Receiver<Result<SerializedEvent, PersistenceError>>) -> Self {
-        Self { queue }
-    }
-
-    pub async fn next<A: Aggregate>(
-        &mut self,
-    ) -> Option<Result<EventEnvelope<A>, PersistenceError>> {
-        self.queue.recv().await.map(|result| match result {
-            Ok(event) => match TryInto::try_into(event) {
-                Ok(event) => Ok(event),
-                Err(err) => Err(err),
-            },
-            Err(err) => Err(err),
-        })
+    async fn apply(&self, event: Result<EventEnvelope<A>, PersistenceError>) {
+        match event {
+            Ok(event) => {
+                let aggregate_id = event.aggregate_id.clone();
+                self.query.dispatch(&aggregate_id, &vec![event]).await;
+            }
+            Err(err) => {
+                todo!("need an error handler")
+            }
+        }
     }
 }
 
@@ -68,7 +66,7 @@ mod test {
     use crate::doc::{MyAggregate, MyEvents};
     use crate::persist::event_store::shared_test::MockRepo;
     use crate::persist::replay::QueryReplay;
-    use crate::persist::{PersistedEventStore, SerializedEvent};
+    use crate::persist::SerializedEvent;
     use crate::{EventEnvelope, Query};
 
     #[derive(Debug)]
@@ -106,15 +104,23 @@ mod test {
             payload: MyEvents::SomethingWasDone,
             metadata: Default::default(),
         }];
-        let ser_events = expected_events
+        let ser_events: Vec<SerializedEvent> = expected_events
             .iter()
             .map(|e| SerializedEvent::try_from(e).unwrap())
             .collect();
+        let event_repo = MockRepo::with_events(Ok(ser_events.clone()));
+        let (query, event_list) = MockQuery::new();
+        let query_replay = QueryReplay::new(event_repo, query);
+        query_replay.replay(AGGREGATE_ID).await.unwrap();
+
+        let events = event_list.lock().unwrap().to_owned();
+        assert_events_eq(events, expected_events.clone());
+
+        // query all
         let event_repo = MockRepo::with_events(Ok(ser_events));
         let (query, event_list) = MockQuery::new();
-        let event_store = PersistedEventStore::new_event_store(event_repo);
-        let query_replay = QueryReplay::new(event_store, query);
-        query_replay.replay(AGGREGATE_ID).await.unwrap();
+        let query_replay = QueryReplay::new(event_repo, query);
+        query_replay.replay_all().await.unwrap();
 
         let events = event_list.lock().unwrap().to_owned();
         assert_events_eq(events, expected_events);

@@ -4,11 +4,9 @@ use std::marker::PhantomData;
 use async_trait::async_trait;
 use serde_json::Value;
 
-use crate::persist::replay::ReplayStream;
 use crate::persist::serialized_event::{deserialize_events, serialize_events};
 use crate::persist::{
-    EventStoreAggregateContext, EventUpcaster, PersistedEventRepository, PersistenceError,
-    SerializedEvent,
+    EventStoreAggregateContext, EventUpcaster, PersistedEventRepository, SerializedEvent,
 };
 use crate::{Aggregate, AggregateError, EventEnvelope, EventStore};
 
@@ -314,11 +312,6 @@ where
         }
         wrapped_events
     }
-
-    pub async fn replay_stream(&self) -> Result<ReplayStream, PersistenceError> {
-        let queue = self.repo.stream_events::<A>().await?;
-        Ok(ReplayStream::new(queue))
-    }
 }
 
 #[cfg(test)]
@@ -330,8 +323,8 @@ pub(crate) mod shared_test {
     use async_trait::async_trait;
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
-    use tokio::sync::mpsc::Receiver;
 
+    use crate::persist::event_stream::ReplayStream;
     use crate::persist::{
         PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
     };
@@ -511,8 +504,33 @@ pub(crate) mod shared_test {
 
         async fn stream_events<A: Aggregate>(
             &self,
-        ) -> Result<Receiver<Result<SerializedEvent, PersistenceError>>, PersistenceError> {
-            todo!()
+            _aggregate_id: &str,
+        ) -> Result<ReplayStream, PersistenceError> {
+            let result = self.events_result.lock().unwrap().take().unwrap();
+            match result {
+                Ok(events) => {
+                    let (tx, rx) = tokio::sync::mpsc::channel(events.len());
+                    for event in events {
+                        tx.send(Ok(event)).await.unwrap();
+                    }
+                    Ok(ReplayStream::new(rx))
+                }
+                Err(err) => Err(err),
+            }
+        }
+
+        async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
+            let result = self.events_result.lock().unwrap().take().unwrap();
+            match result {
+                Ok(events) => {
+                    let (tx, rx) = tokio::sync::mpsc::channel(events.len());
+                    for event in events {
+                        tx.send(Ok(event)).await.unwrap();
+                    }
+                    Ok(ReplayStream::new(rx))
+                }
+                Err(err) => Err(err),
+            }
         }
     }
 

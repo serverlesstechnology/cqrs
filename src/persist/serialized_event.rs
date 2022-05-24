@@ -7,7 +7,7 @@ use crate::persist::{EventStoreAggregateContext, EventUpcaster, PersistenceError
 
 /// A serialized version of an event with metadata.
 /// Used by repositories to store and load events from a database.
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SerializedEvent {
     /// The id of the aggregate instance.
     pub aggregate_id: String,

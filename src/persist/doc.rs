@@ -1,4 +1,5 @@
 use crate::doc::MyAggregate;
+use crate::persist::event_stream::ReplayStream;
 use crate::persist::{
     PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot, ViewContext,
     ViewRepository,
@@ -7,7 +8,6 @@ use crate::{Aggregate, EventEnvelope, View};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tokio::sync::mpsc::Receiver;
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct MyView;
@@ -100,7 +100,12 @@ impl PersistedEventRepository for MyEventRepository {
 
     async fn stream_events<A: Aggregate>(
         &self,
-    ) -> Result<Receiver<Result<SerializedEvent, PersistenceError>>, PersistenceError> {
+        _aggregate_id: &str,
+    ) -> Result<ReplayStream, PersistenceError> {
+        todo!()
+    }
+
+    async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
         todo!()
     }
 }
