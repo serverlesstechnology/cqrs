@@ -1,6 +1,8 @@
-use crate::persist::PersistedEventRepository;
+use tokio::sync::mpsc::Receiver;
+
 use crate::persist::PersistedEventStore;
-use crate::{Aggregate, AggregateError, EventStore, Query};
+use crate::persist::{PersistedEventRepository, PersistenceError, SerializedEvent};
+use crate::{Aggregate, AggregateError, EventEnvelope, EventStore, Query};
 
 pub struct QueryReplay<R, Q, A>
 where
@@ -28,6 +30,33 @@ where
         Ok(())
     }
 
+    pub async fn replay_all(&self) -> Result<(), AggregateError<A::Error>> {
+        let mut stream = self.event_store.replay_stream().await?;
+        while let Some(event) = stream.next::<A>().await {}
+        Ok(())
+    }
+}
+
+pub struct ReplayStream {
+    queue: Receiver<Result<SerializedEvent, PersistenceError>>,
+}
+
+impl ReplayStream {
+    pub fn new(queue: Receiver<Result<SerializedEvent, PersistenceError>>) -> Self {
+        Self { queue }
+    }
+
+    pub async fn next<A: Aggregate>(
+        &mut self,
+    ) -> Option<Result<EventEnvelope<A>, PersistenceError>> {
+        self.queue.recv().await.map(|result| match result {
+            Ok(event) => match TryInto::try_into(event) {
+                Ok(event) => Ok(event),
+                Err(err) => Err(err),
+            },
+            Err(err) => Err(err),
+        })
+    }
 }
 
 #[cfg(test)]

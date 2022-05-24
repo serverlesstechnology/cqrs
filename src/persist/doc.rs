@@ -68,7 +68,6 @@ impl MyEventRepository {
 
 #[async_trait]
 impl PersistedEventRepository for MyEventRepository {
-
     async fn get_events<A: Aggregate>(
         &self,
         _aggregate_id: &str,

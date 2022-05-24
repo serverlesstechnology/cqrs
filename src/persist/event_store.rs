@@ -4,9 +4,11 @@ use std::marker::PhantomData;
 use async_trait::async_trait;
 use serde_json::Value;
 
+use crate::persist::replay::ReplayStream;
 use crate::persist::serialized_event::{deserialize_events, serialize_events};
 use crate::persist::{
-    EventStoreAggregateContext, EventUpcaster, PersistedEventRepository, SerializedEvent,
+    EventStoreAggregateContext, EventUpcaster, PersistedEventRepository, PersistenceError,
+    SerializedEvent,
 };
 use crate::{Aggregate, AggregateError, EventEnvelope, EventStore};
 
@@ -313,6 +315,10 @@ where
         wrapped_events
     }
 
+    pub async fn replay_stream(&self) -> Result<ReplayStream, PersistenceError> {
+        let queue = self.repo.stream_events::<A>().await?;
+        Ok(ReplayStream::new(queue))
+    }
 }
 
 #[cfg(test)]
@@ -474,7 +480,6 @@ pub(crate) mod shared_test {
 
     #[async_trait]
     impl PersistedEventRepository for MockRepo {
-
         async fn get_events<A: Aggregate>(
             &self,
             _aggregate_id: &str,
