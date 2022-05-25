@@ -1,8 +1,19 @@
 use std::marker::PhantomData;
 
-use crate::persist::{PersistedEventRepository, PersistenceError};
+use crate::persist::{PersistedEventRepository, PersistenceError, QueryErrorHandler};
 use crate::{Aggregate, AggregateError, EventEnvelope, Query};
 
+/// A utility for replaying committed events to a `Query`.
+///
+/// ```rust
+/// use cqrs_es::doc::{MyAggregate, MyQuery, MyRepository};
+/// use cqrs_es::persist::QueryReplay;
+///
+/// fn update(repo: MyRepository, query: MyQuery) {
+///     let replay = QueryReplay::new(repo, query);
+///     replay.replay_all();
+/// }
+/// ```
 pub struct QueryReplay<R, Q, A>
 where
     R: PersistedEventRepository,
@@ -11,6 +22,7 @@ where
 {
     repository: R,
     query: Q,
+    error_handler: Option<Box<QueryErrorHandler>>,
     phantom_data: PhantomData<A>,
 }
 
@@ -20,14 +32,32 @@ where
     Q: Query<A>,
     A: Aggregate,
 {
+    /// Create a new replay utility using the provided event repository as the source and the
+    /// query as the target.
     pub fn new(repository: R, query: Q) -> Self {
         Self {
             repository,
             query,
+            error_handler: None,
             phantom_data: Default::default(),
         }
     }
 
+    /// Allows the user to apply a custom error handler to the query replay.
+    ///
+    /// _Example: An error handler that panics on any error._
+    /// ```
+    /// # use cqrs_es::doc::{MyAggregate, MyQuery, MyRepository};
+    /// # use cqrs_es::persist::{GenericQuery, QueryReplay, ReplayStream};
+    /// # fn config(mut replay: QueryReplay<MyRepository,MyQuery,MyAggregate>) {
+    /// replay.use_error_handler(Box::new(|e|panic!("{}",e)));
+    /// # }
+    /// ```
+    pub fn use_error_handler(&mut self, error_handler: Box<QueryErrorHandler>) {
+        self.error_handler = Some(error_handler);
+    }
+
+    /// Replay the events of a single aggregate instance.
     pub async fn replay(&self, aggregate_id: &str) -> Result<(), AggregateError<A::Error>> {
         let mut stream = self.repository.stream_events::<A>(aggregate_id).await?;
         while let Some(event) = stream.next::<A>().await {
@@ -36,6 +66,7 @@ where
         Ok(())
     }
 
+    /// Replay the events of all aggregate instances within the database.
     pub async fn replay_all(&self) -> Result<(), AggregateError<A::Error>> {
         let mut stream = self.repository.stream_all_events::<A>().await?;
         while let Some(event) = stream.next::<A>().await {
@@ -48,10 +79,12 @@ where
         match event {
             Ok(event) => {
                 let aggregate_id = event.aggregate_id.clone();
-                self.query.dispatch(&aggregate_id, &vec![event]).await;
+                self.query.dispatch(&aggregate_id, &[event]).await;
             }
-            Err(err) => {
-                todo!("need an error handler")
+            Err(error) => {
+                if let Some(handler) = &self.error_handler {
+                    (handler)(error);
+                }
             }
         }
     }

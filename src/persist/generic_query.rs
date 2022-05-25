@@ -111,11 +111,8 @@ where
     }
 
     fn handle_error(&self, error: PersistenceError) {
-        match &self.error_handler {
-            None => {}
-            Some(handler) => {
-                (handler)(error);
-            }
+        if let Some(handler) = &self.error_handler {
+            (handler)(error);
         }
     }
 }

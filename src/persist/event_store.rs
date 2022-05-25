@@ -506,28 +506,18 @@ pub(crate) mod shared_test {
             &self,
             _aggregate_id: &str,
         ) -> Result<ReplayStream, PersistenceError> {
-            let result = self.events_result.lock().unwrap().take().unwrap();
-            match result {
-                Ok(events) => {
-                    let (tx, rx) = tokio::sync::mpsc::channel(events.len());
-                    for event in events {
-                        tx.send(Ok(event)).await.unwrap();
-                    }
-                    Ok(ReplayStream::new(rx))
-                }
-                Err(err) => Err(err),
-            }
+            self.stream_all_events::<A>().await
         }
 
         async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
             let result = self.events_result.lock().unwrap().take().unwrap();
             match result {
                 Ok(events) => {
-                    let (tx, rx) = tokio::sync::mpsc::channel(events.len());
+                    let (mut feed, stream) = ReplayStream::new(events.len());
                     for event in events {
-                        tx.send(Ok(event)).await.unwrap();
+                        feed.push(Ok(event)).await?;
                     }
-                    Ok(ReplayStream::new(rx))
+                    Ok(stream)
                 }
                 Err(err) => Err(err),
             }

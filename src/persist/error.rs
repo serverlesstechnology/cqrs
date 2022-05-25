@@ -1,5 +1,5 @@
+use crate::persist::SerializedEvent;
 use crate::AggregateError;
-use serde_json::Error;
 use std::fmt::{Display, Formatter};
 
 /// Errors for implementations of a persistent event store.
@@ -44,7 +44,7 @@ impl<T: std::error::Error> From<PersistenceError> for AggregateError<T> {
 }
 
 impl From<serde_json::Error> for PersistenceError {
-    fn from(err: Error) -> Self {
+    fn from(err: serde_json::Error) -> Self {
         match err.classify() {
             serde_json::error::Category::Data | serde_json::error::Category::Syntax => {
                 PersistenceError::DeserializationError(Box::new(err))
@@ -53,5 +53,15 @@ impl From<serde_json::Error> for PersistenceError {
                 PersistenceError::UnknownError(Box::new(err))
             }
         }
+    }
+}
+
+impl From<tokio::sync::mpsc::error::SendError<Result<SerializedEvent, PersistenceError>>>
+    for PersistenceError
+{
+    fn from(
+        err: tokio::sync::mpsc::error::SendError<Result<SerializedEvent, PersistenceError>>,
+    ) -> Self {
+        PersistenceError::UnknownError(Box::new(err))
     }
 }

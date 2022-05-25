@@ -1,16 +1,21 @@
 use crate::persist::{PersistenceError, SerializedEvent};
 use crate::{Aggregate, EventEnvelope};
-use tokio::sync::mpsc::Receiver;
-
+use tokio::sync::mpsc::{Receiver, Sender};
+/// Accesses a domain event stream for a particular aggregate.
+///
+/// _Note: design expected to change after [implemention of RFC 2996](https://github.com/rust-lang/rust/issues/79024)._
 pub struct ReplayStream {
     queue: Receiver<Result<SerializedEvent, PersistenceError>>,
 }
 
 impl ReplayStream {
-    pub fn new(queue: Receiver<Result<SerializedEvent, PersistenceError>>) -> Self {
-        Self { queue }
+    /// Creates a new `ReplayStream` that will buffer events up to the `queue_size`.
+    pub fn new(queue_size: usize) -> (ReplayFeed, Self) {
+        let (sender, queue) = tokio::sync::mpsc::channel(queue_size);
+        (ReplayFeed { sender }, Self { queue })
     }
 
+    /// Receive the next event or error in the stream, if no event is available this will block.
     pub async fn next<A: Aggregate>(
         &mut self,
     ) -> Option<Result<EventEnvelope<A>, PersistenceError>> {
@@ -23,3 +28,19 @@ impl ReplayStream {
         })
     }
 }
+
+pub struct ReplayFeed {
+    sender: Sender<Result<SerializedEvent, PersistenceError>>,
+}
+
+impl ReplayFeed {
+    pub async fn push(
+        &mut self,
+        result: Result<SerializedEvent, PersistenceError>,
+    ) -> Result<(), PersistenceError> {
+        self.sender.send(result).await?;
+        Ok(())
+    }
+}
+#[test]
+fn test() {}

@@ -12,27 +12,13 @@ pub use crate::event::*;
 pub use crate::query::*;
 pub use crate::store::*;
 
-// Aggregate module holds the central traits that define the fundamental component of CQRS.
 mod aggregate;
-
-// Event module provides the abstract domain events and associated wrapper.
+mod cqrs;
+mod error;
 mod event;
-
-// Store holds the abstact `EventStore` trait as well as an in-memory and Postgres implementation.
+mod query;
 mod store;
 
-// Cqrs provides the base framework and associated logic for processing loading aggregates via an
-// event store and subsequently processing commands.
-mod cqrs;
-
-// Aggregate error
-mod error;
-
-// Query provides the basic downstream query objects needed to render queries (or "views") that
-// describe the state of the system.
-mod query;
-
-// Documentation items
 #[doc(hidden)]
 pub mod doc;
 
@@ -54,7 +40,7 @@ pub mod doc;
 pub mod mem_store;
 
 pub mod persist;
-/// Test provides a test framework for building a resilient test base around aggregates.
+/// This module provides a test framework for building a resilient test base around aggregates.
 /// A `TestFramework` should be used to build a comprehensive set of aggregate tests to verify
 /// your application logic.
 ///
