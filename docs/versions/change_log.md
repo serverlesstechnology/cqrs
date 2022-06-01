@@ -2,7 +2,8 @@
 
 #### `v0.4.3`
 - Added a `QueryReplay` component to assist in replaying events across a query.
-- Added `QueryErrorHandler` convenience type.
+- Made the `QueryErrorHandler` convenience type public.
+- Set consistent reads in dynamo-es to reduce optimistic locking errors.
 
 #### `v0.4.2`
 - Add `append_query` method to the framework.

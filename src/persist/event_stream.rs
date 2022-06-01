@@ -29,11 +29,13 @@ impl ReplayStream {
     }
 }
 
+/// Used to send events to a `ReplayStream` for replaying events.
 pub struct ReplayFeed {
     sender: Sender<Result<SerializedEvent, PersistenceError>>,
 }
 
 impl ReplayFeed {
+    /// Push the next event onto the stream.
     pub async fn push(
         &mut self,
         result: Result<SerializedEvent, PersistenceError>,
