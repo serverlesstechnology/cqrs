@@ -9,6 +9,7 @@ description = "A lightweight, opinionated CQRS and event sourcing framework targ
 documentation = "https://docs.rs/cqrs-es"
 repository = "https://github.com/serverlesstechnology/cqrs"
 readme = "README.md"
+exclude = ["docs"]
 
 [dependencies]
 async-trait = "0.1.53"
