@@ -7,8 +7,6 @@ use serde_json::Value;
 /// Handles the database access needed for operation of a PersistedSnapshotStore.
 #[async_trait]
 pub trait PersistedEventRepository: Send + Sync {
-    /// An iterator of serialized event returned for streaming calls.
-    // type EventIterator: Iterator<Item = Result<SerializedEvent, PersistenceError>>;
 
     /// Returns all events for a single aggregate instance.
     async fn get_events<A: Aggregate>(
