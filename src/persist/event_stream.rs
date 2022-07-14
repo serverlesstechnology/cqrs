@@ -45,15 +45,22 @@ impl ReplayFeed {
         Ok(())
     }
 }
+#[cfg(test)]
+mod test {
+    use crate::doc::MyAggregate;
+    use crate::persist::{PersistenceError, ReplayStream};
 
-#[tokio::test]
-async fn test_replay_stream() {
-    let (mut feed,mut stream) = ReplayStream::new(5);
-    feed.push(Err(PersistenceError::OptimisticLockError)).await.unwrap();
-    drop(feed);
-    let found = stream.next::<MyAggregate>().await;
-    match found.unwrap().unwrap_err() {
-        PersistenceError::OptimisticLockError => {}
-        _ => panic!("expected optimistic lock error")
+    #[tokio::test]
+    async fn test_replay_stream() {
+        let (mut feed, mut stream) = ReplayStream::new(5);
+        feed.push(Err(PersistenceError::OptimisticLockError))
+            .await
+            .unwrap();
+        drop(feed);
+        let found = stream.next::<MyAggregate>().await;
+        match found.unwrap().unwrap_err() {
+            PersistenceError::OptimisticLockError => {}
+            _ => panic!("expected optimistic lock error"),
+        }
     }
 }

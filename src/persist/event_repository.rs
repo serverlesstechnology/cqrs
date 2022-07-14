@@ -7,7 +7,6 @@ use serde_json::Value;
 /// Handles the database access needed for operation of a PersistedSnapshotStore.
 #[async_trait]
 pub trait PersistedEventRepository: Send + Sync {
-
     /// Returns all events for a single aggregate instance.
     async fn get_events<A: Aggregate>(
         &self,
