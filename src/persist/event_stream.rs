@@ -1,7 +1,6 @@
 use crate::persist::{PersistenceError, SerializedEvent};
 use crate::{Aggregate, EventEnvelope};
 use tokio::sync::mpsc::{Receiver, Sender};
-use crate::doc::MyAggregate;
 
 /// Accesses a domain event stream for a particular aggregate.
 ///
