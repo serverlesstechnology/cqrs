@@ -1,6 +1,8 @@
 use crate::persist::{PersistenceError, SerializedEvent};
 use crate::{Aggregate, EventEnvelope};
 use tokio::sync::mpsc::{Receiver, Sender};
+use crate::doc::MyAggregate;
+
 /// Accesses a domain event stream for a particular aggregate.
 ///
 /// _Note: design expected to change after [implemention of RFC 2996](https://github.com/rust-lang/rust/issues/79024)._
@@ -44,5 +46,15 @@ impl ReplayFeed {
         Ok(())
     }
 }
-#[test]
-fn test() {}
+
+#[tokio::test]
+async fn test_replay_stream() {
+    let (mut feed,mut stream) = ReplayStream::new(5);
+    feed.push(Err(PersistenceError::OptimisticLockError)).await.unwrap();
+    drop(feed);
+    let found = stream.next::<MyAggregate>().await;
+    match found.unwrap().unwrap_err() {
+        PersistenceError::OptimisticLockError => {}
+        _ => panic!("expected optimistic lock error")
+    }
+}
