@@ -1,5 +1,8 @@
 # Change log
 
+#### `v0.4.4`
+- Dependency updates including moving to sqlx v0.6 in postgres-es and mysql-es crates.
+
 #### `v0.4.3`
 - Added a `QueryReplay` component to assist in replaying events across a query.
 - Made the `QueryErrorHandler` convenience type public.

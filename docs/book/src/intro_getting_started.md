@@ -22,8 +22,8 @@ Add these dependencies in your cargo.toml:
 
 ```toml
 [dependencies]
-cqrs-es = "0.3.0"
-async-trait = "0.1.52"
+cqrs-es = "0.4.4"
+async-trait = "0.1"
 serde = { version = "1.0", features = ["derive"]}
 tokio = { version = "1", features = ["full"] }
 ```
