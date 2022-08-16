@@ -8,7 +8,7 @@ use crate::persist::{
 };
 use crate::{Aggregate, DomainEvent, EventEnvelope, Query};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum MyEvents {
     SomethingWasDone,
 }
@@ -62,7 +62,7 @@ pub struct Customer {
     pub email: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct MyUserError(pub String);
 
 impl Display for MyUserError {
@@ -141,7 +141,7 @@ impl Default for Customer {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CustomerError(String);
 
 impl From<&str> for CustomerError {
@@ -161,7 +161,7 @@ impl std::error::Error for CustomerError {}
 #[derive(Clone, Default)]
 pub struct CustomerService;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CustomerEvent {
     NameAdded { name: String },
     EmailUpdated { new_email: String },
@@ -180,7 +180,7 @@ impl DomainEvent for CustomerEvent {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CustomerCommand {
     AddCustomerName { name: String },
     UpdateEmail { new_email: String },

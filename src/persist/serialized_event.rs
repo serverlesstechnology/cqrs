@@ -7,7 +7,7 @@ use crate::persist::{EventStoreAggregateContext, EventUpcaster, PersistenceError
 
 /// A serialized version of an event with metadata.
 /// Used by repositories to store and load events from a database.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SerializedEvent {
     /// The id of the aggregate instance.
     pub aggregate_id: String,
@@ -106,7 +106,7 @@ impl<A: Aggregate> TryFrom<&EventEnvelope<A>> for SerializedEvent {
 
 /// A serialized version of a snapshot.
 /// Used by repositories to store and load snapshots from a database.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct SerializedSnapshot {
     /// The aggregate ID of the aggregate instance that has been loaded.
     pub aggregate_id: String,

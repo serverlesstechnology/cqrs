@@ -19,7 +19,7 @@ pub trait EventUpcaster: Send + Sync {
 pub type SemanticVersionEventUpcasterFunc = dyn Fn(Value) -> Value + Send + Sync;
 
 /// A representation of a semantic version used in a `SemanticVersionEventUpcaster`.
-#[derive(Debug, PartialOrd, PartialEq)]
+#[derive(Debug, PartialOrd, PartialEq, Eq)]
 pub struct SemanticVersion {
     major_version: u32,
     minor_version: u32,
@@ -73,7 +73,7 @@ impl FromStr for SemanticVersion {
         } else {
             u32::from_str(split_version.get(1).unwrap())?
         };
-        let major_version = u32::from_str(split_version.get(0).unwrap())?;
+        let major_version = u32::from_str(split_version.first().unwrap())?;
         Ok(Self {
             major_version,
             minor_version,
@@ -82,7 +82,7 @@ impl FromStr for SemanticVersion {
     }
 }
 
-#[derive(Debug, PartialOrd, PartialEq)]
+#[derive(Debug, PartialOrd, PartialEq, Eq)]
 /// Type can not be converted to a `Semantic Version`.
 pub struct SemanticVersionError;
 
