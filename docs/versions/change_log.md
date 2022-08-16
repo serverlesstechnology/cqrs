@@ -1,5 +1,8 @@
 # Change log
 
+#### `v0.4.5`
+- Changes required for Rust 1.63 clippy additions.
+
 #### `v0.4.4`
 - Dependency updates including moving to sqlx v0.6 in postgres-es and mysql-es crates.
 

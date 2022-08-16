@@ -22,7 +22,7 @@ Add these dependencies in your cargo.toml:
 
 ```toml
 [dependencies]
-cqrs-es = "0.4.4"
+cqrs-es = "0.4.5"
 async-trait = "0.1"
 serde = { version = "1.0", features = ["derive"]}
 tokio = { version = "1", features = ["full"] }
