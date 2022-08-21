@@ -11,20 +11,28 @@ Wiring this all up and firing two commands:
 async fn test_event_store() {
     let event_store = MemStore::<BankAccount>::default();
     let query = SimpleLoggingQuery {};
-    let cqrs = CqrsFramework::new(event_store, vec![Box::new(query)]);
+    let cqrs = CqrsFramework::new(event_store, vec![Box::new(query)], BankAccountServices);
 
     let aggregate_id = "aggregate-instance-A";
 
     // deposit $1000
-    cqrs.execute(aggregate_id, DepositMoney{
-        amount: 1000_f64
-    }).unwrap();
+    cqrs.execute(
+        aggregate_id,
+        BankAccountCommand::DepositMoney { amount: 1000_f64 },
+    )
+    .await
+    .unwrap();
 
     // write a check for $236.15
-    cqrs.execute(aggregate_id, WriteCheck{
-        check_number: "1337".to_string(),
-        amount: 236.15
-    }).unwrap();
+    cqrs.execute(
+        aggregate_id,
+        BankAccountCommand::WriteCheck {
+            check_number: "1337".to_string(),
+            amount: 236.15,
+        },
+    )
+    .await
+    .unwrap();
 }
 ```
 
