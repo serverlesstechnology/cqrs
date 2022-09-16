@@ -83,7 +83,7 @@ where
     }
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn when<A: Aggregate>(
     events: Vec<A::Event>,
     command: A::Command,
