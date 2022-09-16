@@ -68,7 +68,7 @@ Now we update our command logic to return an error when this situation arises:
             BankAccountCommand::WithdrawMoney { amount } => {
                 let balance = self.balance - amount;
                 if balance < 0_f64 {
-                    return Err(AggregateError::new("funds not available"));
+                    return Err(BankAccountError::from("funds not available"));
                 }
                 Ok(vec![BankAccountEvent::CustomerWithdrewCash {
                     amount,
