@@ -1,6 +1,6 @@
 [package]
 name = "cqrs-es"
-version = "0.4.5"
+version = "0.4.6"
 authors = ["Dave Garred <dave.garred@serverlesstechnology.com>"]
 edition = "2021"
 license = "Apache-2.0"
