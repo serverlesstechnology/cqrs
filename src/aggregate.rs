@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use std::fmt;
 
 use crate::DomainEvent;
 
@@ -65,7 +66,7 @@ use crate::DomainEvent;
 #[async_trait]
 pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// Specifies the inbound command used to make changes in the state of the Aggregate.
-    type Command;
+    type Command: Serialize + DeserializeOwned + fmt::Debug + Sync + Send;
     /// Specifies the published events representing some change in state of the Aggregate.
     type Event: DomainEvent;
     /// The error returned when a command fails due to business logic.

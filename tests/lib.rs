@@ -141,20 +141,24 @@ impl DomainEvent for TestEvent {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub enum TestCommand {
     CreateTest(CreateTest),
     ConfirmTest(ConfirmTest),
     DoSomethingElse(DoSomethingElse),
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateTest {
     pub id: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ConfirmTest {
     pub test_name: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DoSomethingElse {
     pub description: String,
 }
