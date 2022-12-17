@@ -525,7 +525,7 @@ pub(crate) mod shared_test {
     }
 
     pub(crate) const TEST_AGGREGATE_ID: &str = "test-aggregate-C";
-    pub(crate) const EVENT_VERSION: &'static str = "1.0";
+    pub(crate) const EVENT_VERSION: &str = "1.0";
 
     pub(crate) fn test_serialized_event(seq: usize, event: TestEvents) -> SerializedEvent {
         let event_type = event.event_type();
