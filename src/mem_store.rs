@@ -58,12 +58,12 @@ impl<A: Aggregate> MemStore<A> {
 
     fn load_commited_events(
         &self,
-        aggregate_id: String,
+        aggregate_id: &str,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
         // uninteresting unwrap: this will not be used in production, for tests only
         let event_map = self.events.read().unwrap();
         let mut committed_events: Vec<EventEnvelope<A>> = Vec::new();
-        match event_map.get(aggregate_id.as_str()) {
+        match event_map.get(aggregate_id) {
             None => {}
             Some(events) => {
                 for event in events {
@@ -89,7 +89,7 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
         &self,
         aggregate_id: &str,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        let events = self.load_commited_events(aggregate_id.to_string())?;
+        let events = self.load_commited_events(aggregate_id)?;
         println!(
             "loading: {} events for aggregate ID '{}'",
             &events.len(),
@@ -123,15 +123,15 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
         context: MemStoreAggregateContext<A>,
         metadata: HashMap<String, String>,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        let aggregate_id = context.aggregate_id.as_str();
+        let aggregate_id = context.aggregate_id;
         let current_sequence = context.current_sequence;
-        let wrapped_events = self.wrap_events(aggregate_id, current_sequence, events, metadata);
+        let wrapped_events = self.wrap_events(&aggregate_id, current_sequence, events, metadata);
         let new_events_qty = wrapped_events.len();
         if new_events_qty == 0 {
             return Ok(Vec::default());
         }
         let aggregate_id = self.aggregate_id(&wrapped_events);
-        let mut new_events = self.load_commited_events(aggregate_id.to_string()).unwrap();
+        let mut new_events = self.load_commited_events(&aggregate_id).unwrap();
         for event in &wrapped_events {
             new_events.push(event.clone());
         }
