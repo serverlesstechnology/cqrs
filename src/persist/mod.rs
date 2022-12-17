@@ -31,7 +31,3 @@ mod replay;
 mod serialized_event;
 mod upcaster;
 mod view_repository;
-
-// Documentation items
-#[doc(hidden)]
-pub mod doc;

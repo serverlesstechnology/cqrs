@@ -19,9 +19,6 @@ mod event;
 mod query;
 mod store;
 
-#[doc(hidden)]
-pub mod doc;
-
 /// An in-memory event store suitable for local testing.
 ///
 /// A backing store is necessary for any application to store and retrieve the generated events.
