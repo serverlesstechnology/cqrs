@@ -285,9 +285,9 @@ mod test {
             payload,
             Default::default(),
         );
-        println!("{}", event.payload.to_string());
+        println!("{}", event.payload);
         let upcasted_event = upcaster.upcast(event);
-        println!("{}", upcasted_event.payload.to_string());
+        println!("{}", upcasted_event.payload);
     }
     #[test]
     fn semantic_version_upcaster_upcast_for_documentation() {
