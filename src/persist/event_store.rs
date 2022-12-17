@@ -422,6 +422,7 @@ pub(crate) mod shared_test {
         events_result: Mutex<Option<Result<Vec<SerializedEvent>, PersistenceError>>>,
         last_events_result: Mutex<Option<Result<Vec<SerializedEvent>, PersistenceError>>>,
         snapshot_result: Mutex<Option<Result<Option<SerializedSnapshot>, PersistenceError>>>,
+        #[allow(clippy::type_complexity)]
         persist_check: Mutex<
             Option<Box<dyn FnOnce(&[SerializedEvent], Option<(String, Value, usize)>) + Send>>,
         >,
@@ -457,6 +458,7 @@ pub(crate) mod shared_test {
                 persist_check: Mutex::new(None),
             }
         }
+        #[allow(clippy::type_complexity)]
         pub(crate) fn with_commit(
             test_function: Box<
                 dyn FnOnce(&[SerializedEvent], Option<(String, Value, usize)>) + Send,
