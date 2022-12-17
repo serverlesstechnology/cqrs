@@ -55,7 +55,7 @@ impl Aggregate for MyAggregate {
     fn apply(&mut self, _event: Self::Event) {}
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Customer {
     pub customer_id: String,
     pub name: String,
@@ -127,16 +127,6 @@ impl Aggregate for Customer {
             CustomerEvent::EmailUpdated { new_email } => {
                 self.email = new_email;
             }
-        }
-    }
-}
-
-impl Default for Customer {
-    fn default() -> Self {
-        Customer {
-            customer_id: String::new(),
-            name: String::new(),
-            email: String::new(),
         }
     }
 }

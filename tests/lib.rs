@@ -10,7 +10,7 @@ use cqrs_es::test::TestFramework;
 use cqrs_es::Query;
 use cqrs_es::{Aggregate, AggregateError, CqrsFramework, DomainEvent, EventEnvelope, EventStore};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct TestAggregate {
     id: String,
     description: String,
@@ -91,16 +91,6 @@ impl Aggregate for TestAggregate {
             TestEvent::SomethingElse(e) => {
                 self.description = e.description;
             }
-        }
-    }
-}
-
-impl Default for TestAggregate {
-    fn default() -> Self {
-        TestAggregate {
-            id: String::new(),
-            description: String::new(),
-            tests: Vec::new(),
         }
     }
 }
