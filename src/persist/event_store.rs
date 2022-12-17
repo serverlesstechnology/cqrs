@@ -199,18 +199,16 @@ where
         &self,
         aggregate_id: &str,
     ) -> Result<EventStoreAggregateContext<A>, AggregateError<A::Error>> {
-        let mut context: EventStoreAggregateContext<A> = match self.storage {
-            SourceOfTruth::EventStore => {
+        let mut context: EventStoreAggregateContext<A> =
+            if let SourceOfTruth::EventStore = self.storage {
                 EventStoreAggregateContext::context_for(aggregate_id, true)
-            }
-            _ => {
+            } else {
                 let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
                 match snapshot {
                     Some(snapshot) => snapshot.try_into()?,
                     None => EventStoreAggregateContext::context_for(aggregate_id, false),
                 }
-            }
-        };
+            };
         let events_to_apply = match self.storage {
             SourceOfTruth::EventStore => self.load_events(aggregate_id).await?,
             SourceOfTruth::Snapshot(_) => {
