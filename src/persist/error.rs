@@ -1,32 +1,22 @@
 use crate::persist::SerializedEvent;
 use crate::AggregateError;
-use std::fmt::{Display, Formatter};
 
 /// Errors for implementations of a persistent event store.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum PersistenceError {
     /// Optimistic locking conflict occurred while committing and aggregate.
+    #[error("optimistic lock error")]
     OptimisticLockError,
     /// An error occurred connecting to the database.
+    #[error("{0}")]
     ConnectionError(Box<dyn std::error::Error + Send + Sync + 'static>),
     /// Error occurred while attempting to deserialize data.
+    #[error("{0}")]
     DeserializationError(Box<dyn std::error::Error + Send + Sync + 'static>),
     /// An unexpected error occurred while accessing the database.
+    #[error("{0}")]
     UnknownError(Box<dyn std::error::Error + Send + Sync + 'static>),
 }
-
-impl Display for PersistenceError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::OptimisticLockError => write!(f, "optimistic lock error"),
-            Self::ConnectionError(error) => write!(f, "{}", error),
-            Self::DeserializationError(error) => write!(f, "{}", error),
-            Self::UnknownError(error) => write!(f, "{}", error),
-        }
-    }
-}
-
-impl std::error::Error for PersistenceError {}
 
 impl<T: std::error::Error> From<PersistenceError> for AggregateError<T> {
     fn from(err: PersistenceError) -> Self {

@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::fmt::{Display, Formatter};
 
 use crate::persist::{
     PersistedEventRepository, PersistenceError, ReplayStream, SerializedEvent, SerializedSnapshot,
@@ -62,16 +61,9 @@ pub struct Customer {
     pub email: String,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+#[error("{0}")]
 pub struct MyUserError(pub String);
-
-impl Display for MyUserError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl std::error::Error for MyUserError {}
 
 impl From<&str> for MyUserError {
     fn from(msg: &str) -> Self {
@@ -131,7 +123,8 @@ impl Aggregate for Customer {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, thiserror::Error)]
+#[error("{0}")]
 pub struct CustomerError(String);
 
 impl From<&str> for CustomerError {
@@ -139,14 +132,6 @@ impl From<&str> for CustomerError {
         Self(message.to_string())
     }
 }
-
-impl Display for CustomerError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl std::error::Error for CustomerError {}
 
 #[derive(Clone, Default)]
 pub struct CustomerService;

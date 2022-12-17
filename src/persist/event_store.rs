@@ -315,7 +315,6 @@ where
 #[cfg(test)]
 pub(crate) mod shared_test {
     use std::collections::HashMap;
-    use std::fmt::{Display, Formatter};
     use std::sync::Mutex;
 
     use async_trait::async_trait;
@@ -352,7 +351,8 @@ pub(crate) mod shared_test {
         BadCommand,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, thiserror::Error)]
+    #[error("{0}")]
     pub(crate) struct TestError(String);
 
     impl From<&str> for TestError {
@@ -360,14 +360,6 @@ pub(crate) mod shared_test {
             Self(msg.to_string())
         }
     }
-
-    impl Display for TestError {
-        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-            write!(f, "{}", self.0)
-        }
-    }
-
-    impl std::error::Error for TestError {}
 
     #[derive(Clone)]
     pub struct TestService;
