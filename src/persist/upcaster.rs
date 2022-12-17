@@ -33,7 +33,7 @@ impl SemanticVersion {
     /// E.g.,
     /// - for upcaster v0.2.3 with code v0.2.2 --> upcaster is applied
     /// - for upcaster v0.2.2 with code v0.2.2 --> upcaster is _not_ applied
-    pub fn supersedes(&self, other: &SemanticVersion) -> bool {
+    pub fn supersedes(&self, other: &Self) -> bool {
         if other.major_version < self.major_version {
             return true;
         }

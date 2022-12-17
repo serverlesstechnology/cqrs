@@ -42,11 +42,11 @@ impl<T: error::Error> error::Error for AggregateError<T> {}
 impl<T: error::Error> fmt::Display for AggregateError<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AggregateError::UserError(message) => write!(f, "{}", message),
-            AggregateError::AggregateConflict => write!(f, "aggregate conflict"),
-            AggregateError::DeserializationError(error) => write!(f, "{}", error),
-            AggregateError::DatabaseConnectionError(error) => write!(f, "{}", error),
-            AggregateError::UnexpectedError(error) => write!(f, "{}", error),
+            Self::UserError(message) => write!(f, "{}", message),
+            Self::AggregateConflict => write!(f, "aggregate conflict"),
+            Self::DeserializationError(error) => write!(f, "{}", error),
+            Self::DatabaseConnectionError(error) => write!(f, "{}", error),
+            Self::UnexpectedError(error) => write!(f, "{}", error),
         }
     }
 }
@@ -55,10 +55,10 @@ impl<T: error::Error> From<serde_json::error::Error> for AggregateError<T> {
     fn from(err: serde_json::error::Error) -> Self {
         match err.classify() {
             serde_json::error::Category::Data | serde_json::error::Category::Syntax => {
-                AggregateError::DeserializationError(Box::new(err))
+                Self::DeserializationError(Box::new(err))
             }
             serde_json::error::Category::Io | serde_json::error::Category::Eof => {
-                AggregateError::UnexpectedError(Box::new(err))
+                Self::UnexpectedError(Box::new(err))
             }
         }
     }

@@ -24,7 +24,7 @@ pub struct MemStore<A: Aggregate + Send + Sync> {
 impl<A: Aggregate> Default for MemStore<A> {
     fn default() -> Self {
         let events = Arc::default();
-        MemStore { events }
+        Self { events }
     }
 }
 

@@ -74,7 +74,7 @@ where
 
 impl<A: Aggregate> Clone for EventEnvelope<A> {
     fn clone(&self) -> Self {
-        EventEnvelope {
+        Self {
             aggregate_id: self.aggregate_id.clone(),
             sequence: self.sequence,
             payload: self.payload.clone(),

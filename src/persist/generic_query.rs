@@ -38,7 +38,7 @@ where
     /// # }
     /// ```
     pub fn new(view_repository: Arc<R>) -> Self {
-        GenericQuery {
+        Self {
             view_repository,
             error_handler: None,
             phantom: PhantomData::default(),

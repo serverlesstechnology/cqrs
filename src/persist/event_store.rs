@@ -23,8 +23,8 @@ impl SourceOfTruth {
         num_events: usize,
     ) -> usize {
         match self {
-            SourceOfTruth::EventStore => 0,
-            SourceOfTruth::Snapshot(max_size) => {
+            Self::EventStore => 0,
+            Self::Snapshot(max_size) => {
                 let next_snapshot_at = max_size - (current_sequence % max_size);
                 if num_events < next_snapshot_at {
                     0
@@ -35,7 +35,7 @@ impl SourceOfTruth {
                     next_snapshot_at + addl_events_after_next_snapshot_to_apply
                 }
             }
-            SourceOfTruth::AggregateStore => num_events,
+            Self::AggregateStore => num_events,
         }
     }
 }
@@ -105,7 +105,7 @@ where
     /// # }
     /// ```
     pub fn new_event_store(repo: R) -> Self {
-        PersistedEventStore {
+        Self {
             repo,
             storage: SourceOfTruth::EventStore,
             event_upcasters: None,
@@ -130,7 +130,7 @@ where
     /// # }
     /// ```
     pub fn new_aggregate_store(repo: R) -> Self {
-        PersistedEventStore {
+        Self {
             repo,
             storage: SourceOfTruth::AggregateStore,
             event_upcasters: None,
@@ -153,7 +153,7 @@ where
     /// # }
     /// ```
     pub fn new_snapshot_store(repo: R, snapshot_size: usize) -> Self {
-        PersistedEventStore {
+        Self {
             repo,
             storage: SourceOfTruth::Snapshot(snapshot_size),
             event_upcasters: None,
@@ -339,8 +339,8 @@ pub(crate) mod shared_test {
     impl DomainEvent for TestEvents {
         fn event_type(&self) -> String {
             match self {
-                TestEvents::Started => "Started".to_string(),
-                TestEvents::SomethingWasDone => "SomethingWasDone".to_string(),
+                Self::Started => "Started".to_string(),
+                Self::SomethingWasDone => "SomethingWasDone".to_string(),
             }
         }
         fn event_version(&self) -> String {
@@ -359,7 +359,7 @@ pub(crate) mod shared_test {
 
     impl From<&str> for TestError {
         fn from(msg: &str) -> Self {
-            TestError(msg.to_string())
+            Self(msg.to_string())
         }
     }
 

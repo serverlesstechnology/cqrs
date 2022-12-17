@@ -15,7 +15,7 @@ pub enum MyEvents {
 impl DomainEvent for MyEvents {
     fn event_type(&self) -> String {
         match self {
-            MyEvents::SomethingWasDone => "SomethingWasDone".to_string(),
+            Self::SomethingWasDone => "SomethingWasDone".to_string(),
         }
     }
     fn event_version(&self) -> String {
@@ -136,7 +136,7 @@ pub struct CustomerError(String);
 
 impl From<&str> for CustomerError {
     fn from(message: &str) -> Self {
-        CustomerError(message.to_string())
+        Self(message.to_string())
     }
 }
 
@@ -160,8 +160,8 @@ pub enum CustomerEvent {
 impl DomainEvent for CustomerEvent {
     fn event_type(&self) -> String {
         match self {
-            CustomerEvent::NameAdded { .. } => "NameAdded".to_string(),
-            CustomerEvent::EmailUpdated { .. } => "EmailUpdated".to_string(),
+            Self::NameAdded { .. } => "NameAdded".to_string(),
+            Self::EmailUpdated { .. } => "EmailUpdated".to_string(),
         }
     }
 

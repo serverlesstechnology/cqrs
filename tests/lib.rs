@@ -120,9 +120,9 @@ pub struct SomethingElse {
 impl DomainEvent for TestEvent {
     fn event_type(&self) -> String {
         match self {
-            TestEvent::Created(_) => "Created".to_string(),
-            TestEvent::Tested(_) => "Tested".to_string(),
-            TestEvent::SomethingElse(_) => "SomethingElse".to_string(),
+            Self::Created(_) => "Created".to_string(),
+            Self::Tested(_) => "Tested".to_string(),
+            Self::SomethingElse(_) => "SomethingElse".to_string(),
         }
     }
 
@@ -155,7 +155,7 @@ struct TestView {
 
 impl TestView {
     fn new(events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>) -> Self {
-        TestView { events }
+        Self { events }
     }
 }
 #[async_trait]
