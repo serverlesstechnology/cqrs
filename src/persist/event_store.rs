@@ -171,7 +171,7 @@ where
             repo: self.repo,
             storage: self.storage,
             event_upcasters: Some(event_upcasters),
-            _phantom: Default::default(),
+            _phantom: PhantomData::default(),
         }
     }
 }

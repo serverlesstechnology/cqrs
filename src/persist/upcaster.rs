@@ -283,7 +283,7 @@ mod test {
             String::new(),
             String::new(),
             payload,
-            Default::default(),
+            Value::default(),
         );
         println!("{}", event.payload);
         let upcasted_event = upcaster.upcast(event);
@@ -316,7 +316,7 @@ mod test {
             String::new(),
             String::new(),
             payload,
-            Default::default(),
+            Value::default(),
         );
         let upcasted_event = upcaster.upcast(event);
 
@@ -335,7 +335,7 @@ mod test {
             String::new(),
             "2.3.4".to_string(),
             expected_payload,
-            Default::default(),
+            Value::default(),
         );
 
         assert_eq!(upcasted_event, expected_event);

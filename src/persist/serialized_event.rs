@@ -51,7 +51,7 @@ impl SerializedEvent {
 pub(crate) fn serialize_events<A: Aggregate>(
     events: &[EventEnvelope<A>],
 ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-    let mut result: Vec<SerializedEvent> = Default::default();
+    let mut result = Vec::default();
     for event in events {
         result.push(SerializedEvent::try_from(event)?);
     }
@@ -62,7 +62,7 @@ pub(crate) fn deserialize_events<A: Aggregate>(
     events: Vec<SerializedEvent>,
     upcasters: &Option<Vec<Box<dyn EventUpcaster>>>,
 ) -> Result<Vec<EventEnvelope<A>>, PersistenceError> {
-    let mut result: Vec<EventEnvelope<A>> = Default::default();
+    let mut result = Vec::default();
     for event in events {
         let upcasted_event = match upcasters {
             None => event,

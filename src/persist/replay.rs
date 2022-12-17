@@ -39,7 +39,7 @@ where
             repository,
             query,
             error_handler: None,
-            phantom_data: Default::default(),
+            phantom_data: PhantomData::default(),
         }
     }
 
@@ -92,6 +92,7 @@ where
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
 
     use async_trait::async_trait;
@@ -109,7 +110,7 @@ mod test {
 
     impl MockQuery {
         fn new() -> (Self, Arc<Mutex<Vec<EventEnvelope<MyAggregate>>>>) {
-            let events: Arc<Mutex<Vec<EventEnvelope<MyAggregate>>>> = Default::default();
+            let events: Arc<Mutex<Vec<EventEnvelope<MyAggregate>>>> = Arc::default();
             let query = Self {
                 events: events.clone(),
             };
@@ -135,7 +136,7 @@ mod test {
             aggregate_id: AGGREGATE_ID.to_string(),
             sequence: 1,
             payload: MyEvents::SomethingWasDone,
-            metadata: Default::default(),
+            metadata: HashMap::default(),
         }];
         let ser_events: Vec<SerializedEvent> = expected_events
             .iter()
