@@ -83,13 +83,13 @@ impl Aggregate for TestAggregate {
     fn apply(&mut self, event: Self::Event) {
         match event {
             TestEvent::Created(e) => {
-                self.id = e.id.clone();
+                self.id = e.id;
             }
             TestEvent::Tested(e) => {
-                self.tests.push(e.test_name.clone());
+                self.tests.push(e.test_name);
             }
             TestEvent::SomethingElse(e) => {
-                self.description = e.description.clone();
+                self.description = e.description;
             }
         }
     }
