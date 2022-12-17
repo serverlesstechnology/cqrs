@@ -98,8 +98,8 @@ impl Aggregate for TestAggregate {
 impl Default for TestAggregate {
     fn default() -> Self {
         TestAggregate {
-            id: "".to_string(),
-            description: "".to_string(),
+            id: String::new(),
+            description: String::new(),
             tests: Vec::new(),
         }
     }

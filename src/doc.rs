@@ -134,9 +134,9 @@ impl Aggregate for Customer {
 impl Default for Customer {
     fn default() -> Self {
         Customer {
-            customer_id: "".to_string(),
-            name: "".to_string(),
-            email: "".to_string(),
+            customer_id: String::new(),
+            name: String::new(),
+            email: String::new(),
         }
     }
 }

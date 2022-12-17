@@ -118,11 +118,11 @@ impl From<ParseIntError> for SemanticVersionError {
 ///                    }"#,
 ///         ).unwrap();
 ///  let event = SerializedEvent::new(
-///             "".to_string(),
+///             String::new(),
 ///             0,
-///             "".to_string(),
-///             "".to_string(),
-///             "".to_string(),
+///             String::new(),
+///             String::new(),
+///             String::new(),
 ///             payload,
 ///             Default::default(),
 ///         );
@@ -136,10 +136,10 @@ impl From<ParseIntError> for SemanticVersionError {
 ///                    }"#,
 ///         ).unwrap();
 /// let expected_event = SerializedEvent::new(
-///             "".to_string(),
+///             String::new(),
 ///             0,
-///             "".to_string(),
-///             "".to_string(),
+///             String::new(),
+///             String::new(),
 ///             "2.3.4".to_string(),
 ///             expected_payload,
 ///             Default::default(),
@@ -277,11 +277,11 @@ mod test {
         )
         .unwrap();
         let event = SerializedEvent::new(
-            "".to_string(),
+            String::new(),
             0,
-            "".to_string(),
-            "".to_string(),
-            "".to_string(),
+            String::new(),
+            String::new(),
+            String::new(),
             payload,
             Default::default(),
         );
@@ -310,11 +310,11 @@ mod test {
         )
         .unwrap();
         let event = SerializedEvent::new(
-            "".to_string(),
+            String::new(),
             0,
-            "".to_string(),
-            "".to_string(),
-            "".to_string(),
+            String::new(),
+            String::new(),
+            String::new(),
             payload,
             Default::default(),
         );
@@ -329,10 +329,10 @@ mod test {
         )
         .unwrap();
         let expected_event = SerializedEvent::new(
-            "".to_string(),
+            String::new(),
             0,
-            "".to_string(),
-            "".to_string(),
+            String::new(),
+            String::new(),
             "2.3.4".to_string(),
             expected_payload,
             Default::default(),
