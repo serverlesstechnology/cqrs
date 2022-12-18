@@ -126,7 +126,7 @@ impl<A: Aggregate> AggregateResultValidator<A> {
                 panic!("expected success, received aggregate error: '{}'", err);
             }
         };
-        assert_eq!(&events[..], &expected_events[..]);
+        assert_eq!(events, expected_events);
     }
 
     /// Verifies that the result is a `UserError` and returns the internal error payload for

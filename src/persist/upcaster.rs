@@ -62,18 +62,10 @@ impl FromStr for SemanticVersion {
     type Err = SemanticVersionError;
 
     fn from_str(event_version: &str) -> Result<Self, Self::Err> {
-        let split_version: Vec<&str> = event_version.split('.').collect();
-        let patch = if split_version.len() < 3 {
-            0
-        } else {
-            u32::from_str(split_version.get(2).unwrap())?
-        };
-        let minor_version = if split_version.len() < 2 {
-            0
-        } else {
-            u32::from_str(split_version.get(1).unwrap())?
-        };
-        let major_version = u32::from_str(split_version.first().unwrap())?;
+        let mut split_version = event_version.split('.').fuse();
+        let major_version = u32::from_str(split_version.next().unwrap())?;
+        let minor_version = split_version.next().map_or(Ok(0), u32::from_str)?;
+        let patch = split_version.next().map_or(Ok(0), u32::from_str)?;
         Ok(Self {
             major_version,
             minor_version,
@@ -172,7 +164,7 @@ impl SemanticVersionEventUpcaster {
 
 impl EventUpcaster for SemanticVersionEventUpcaster {
     fn can_upcast(&self, event_type: &str, event_version: &str) -> bool {
-        if event_type != self.event_type.as_str() {
+        if event_type != self.event_type {
             return false;
         }
         let event_version = match SemanticVersion::from_str(event_version) {
@@ -291,12 +283,11 @@ mod test {
     }
     #[test]
     fn semantic_version_upcaster_upcast_for_documentation() {
-        let upcast_function = Box::new(|payload: Value| match payload {
-            Value::Object(mut object_map) => {
+        let upcast_function = Box::new(|payload: Value| {
+            if let Value::Object(mut object_map) = payload {
                 object_map.insert("country".to_string(), "USA".into());
                 Value::Object(object_map)
-            }
-            _ => {
+            } else {
                 panic!("the event payload is not an object")
             }
         });

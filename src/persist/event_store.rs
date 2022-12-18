@@ -270,18 +270,13 @@ where
         mut context: EventStoreAggregateContext<A>,
         commit_snapshot_to_event: usize,
     ) -> Result<Option<(Value, usize)>, AggregateError<A::Error>> {
-        let mut i = 0;
-        for event in events.iter().cloned() {
-            i += 1;
-            if i <= commit_snapshot_to_event {
+        for (i, event) in events.iter().cloned().enumerate() {
+            if i < commit_snapshot_to_event {
                 context.aggregate.apply(event);
                 context.current_sequence += 1;
             }
         }
-        let next_snapshot = match context.current_snapshot {
-            Some(val) => val + 1,
-            None => 1,
-        };
+        let next_snapshot = context.current_snapshot.map_or(1, |val| val + 1);
         let payload = serde_json::to_value(context.aggregate)?;
         Ok(Some((payload, next_snapshot)))
     }
