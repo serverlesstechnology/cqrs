@@ -11,6 +11,13 @@ repository = "https://github.com/serverlesstechnology/cqrs"
 readme = "README.md"
 exclude = ["docs"]
 
+[workspace]
+members = [
+    ".",
+    "demo",
+    "postgres-es",
+]
+
 [dependencies]
 async-trait = "0.1"
 serde = { version = "1.0", features = ["derive"]}

@@ -5,7 +5,7 @@
 // #![warn(clippy::pedantic,missing_debug_implementations)]
 #![doc = include_str!("../README.md")]
 //!
-pub use crate::aggregate::*;
+pub use crate::aggregate::Aggregate;
 pub use crate::cqrs::*;
 pub use crate::error::*;
 pub use crate::event::*;
