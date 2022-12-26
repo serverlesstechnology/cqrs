@@ -328,7 +328,7 @@ pub(crate) mod shared_test {
     };
     use crate::{Aggregate, DomainEvent};
 
-    #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
     pub(crate) enum TestEvents {
         Started,
         SomethingWasDone,
