@@ -1,11 +1,11 @@
-use crate::doc::MyAggregate;
-use crate::persist::event_stream::ReplayStream;
-use crate::persist::{
+use crate::MyAggregate;
+use async_trait::async_trait;
+use cqrs_es::persist::event_stream::ReplayStream;
+use cqrs_es::persist::{
     PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot, ViewContext,
     ViewRepository,
 };
-use crate::{Aggregate, EventEnvelope, View};
-use async_trait::async_trait;
+use cqrs_es::{Aggregate, EventEnvelope, View};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

@@ -12,6 +12,12 @@ readme = "README.md"
 exclude = ["docs"]
 rust-version = "1.56.1"
 
+[workspace]
+members = [
+    ".",
+    "example",
+]
+
 [dependencies]
 async-trait = "0.1"
 serde = { version = "1.0", features = ["derive"]}

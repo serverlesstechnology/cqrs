@@ -3,10 +3,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt::{Display, Formatter};
 
-use crate::persist::{
+use cqrs_es::persist::{
     PersistedEventRepository, PersistenceError, ReplayStream, SerializedEvent, SerializedSnapshot,
 };
-use crate::{Aggregate, DomainEvent, EventEnvelope, Query};
+use cqrs_es::{Aggregate, DomainEvent, EventEnvelope, Query};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum MyEvents {
@@ -178,7 +178,7 @@ pub enum CustomerCommand {
 
 #[cfg(test)]
 mod doc_tests {
-    use crate::test::TestFramework;
+    use cqrs_es::test::TestFramework;
 
     use super::*;
 
