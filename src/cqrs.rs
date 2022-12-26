@@ -59,16 +59,12 @@ where
     /// - [MySQL](https://www.mysql.com/) - [mysql-es](https://crates.io/crates/mysql-es)
     /// - [DynamoDb](https://aws.amazon.com/dynamodb/) - [dynamo-es](https://crates.io/crates/dynamo-es)
     ///
-    pub fn new(
-        store: ES,
-        queries: Vec<Box<dyn Query<A>>>,
-        service: A::Services,
-    ) -> CqrsFramework<A, ES>
+    pub fn new(store: ES, queries: Vec<Box<dyn Query<A>>>, service: A::Services) -> Self
     where
         A: Aggregate,
         ES: EventStore<A>,
     {
-        CqrsFramework {
+        Self {
             store,
             queries,
             service,
@@ -87,14 +83,14 @@ where
     /// let cqrs = CqrsFramework::new(store, queries, service)
     ///     .append_query(Box::new(MyQuery::default()));
     /// ```
-    pub fn append_query(self, query: Box<dyn Query<A>>) -> CqrsFramework<A, ES>
+    pub fn append_query(self, query: Box<dyn Query<A>>) -> Self
     where
         A: Aggregate,
         ES: EventStore<A>,
     {
         let mut queries = self.queries;
         queries.push(query);
-        CqrsFramework {
+        Self {
             store: self.store,
             queries,
             service: self.service,

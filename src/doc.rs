@@ -15,7 +15,7 @@ pub enum MyEvents {
 impl DomainEvent for MyEvents {
     fn event_type(&self) -> String {
         match self {
-            MyEvents::SomethingWasDone => "SomethingWasDone".to_string(),
+            Self::SomethingWasDone => "SomethingWasDone".to_string(),
         }
     }
     fn event_version(&self) -> String {
@@ -55,7 +55,7 @@ impl Aggregate for MyAggregate {
     fn apply(&mut self, _event: Self::Event) {}
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Customer {
     pub customer_id: String,
     pub name: String,
@@ -131,22 +131,12 @@ impl Aggregate for Customer {
     }
 }
 
-impl Default for Customer {
-    fn default() -> Self {
-        Customer {
-            customer_id: "".to_string(),
-            name: "".to_string(),
-            email: "".to_string(),
-        }
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CustomerError(String);
 
 impl From<&str> for CustomerError {
     fn from(message: &str) -> Self {
-        CustomerError(message.to_string())
+        Self(message.to_string())
     }
 }
 
@@ -170,8 +160,8 @@ pub enum CustomerEvent {
 impl DomainEvent for CustomerEvent {
     fn event_type(&self) -> String {
         match self {
-            CustomerEvent::NameAdded { .. } => "NameAdded".to_string(),
-            CustomerEvent::EmailUpdated { .. } => "EmailUpdated".to_string(),
+            Self::NameAdded { .. } => "NameAdded".to_string(),
+            Self::EmailUpdated { .. } => "EmailUpdated".to_string(),
         }
     }
 

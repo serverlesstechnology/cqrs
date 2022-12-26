@@ -38,10 +38,10 @@ where
     /// # }
     /// ```
     pub fn new(view_repository: Arc<R>) -> Self {
-        GenericQuery {
+        Self {
             view_repository,
             error_handler: None,
-            phantom: Default::default(),
+            phantom: PhantomData::default(),
         }
     }
     /// Allows the user to apply a custom error handler to the query.

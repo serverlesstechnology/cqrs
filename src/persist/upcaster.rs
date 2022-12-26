@@ -33,7 +33,7 @@ impl SemanticVersion {
     /// E.g.,
     /// - for upcaster v0.2.3 with code v0.2.2 --> upcaster is applied
     /// - for upcaster v0.2.2 with code v0.2.2 --> upcaster is _not_ applied
-    pub fn supersedes(&self, other: &SemanticVersion) -> bool {
+    pub fn supersedes(&self, other: &Self) -> bool {
         if other.major_version < self.major_version {
             return true;
         }
@@ -118,11 +118,11 @@ impl From<ParseIntError> for SemanticVersionError {
 ///                    }"#,
 ///         ).unwrap();
 ///  let event = SerializedEvent::new(
-///             "".to_string(),
+///             String::new(),
 ///             0,
-///             "".to_string(),
-///             "".to_string(),
-///             "".to_string(),
+///             String::new(),
+///             String::new(),
+///             String::new(),
 ///             payload,
 ///             Default::default(),
 ///         );
@@ -136,10 +136,10 @@ impl From<ParseIntError> for SemanticVersionError {
 ///                    }"#,
 ///         ).unwrap();
 /// let expected_event = SerializedEvent::new(
-///             "".to_string(),
+///             String::new(),
 ///             0,
-///             "".to_string(),
-///             "".to_string(),
+///             String::new(),
+///             String::new(),
 ///             "2.3.4".to_string(),
 ///             expected_payload,
 ///             Default::default(),
@@ -277,17 +277,17 @@ mod test {
         )
         .unwrap();
         let event = SerializedEvent::new(
-            "".to_string(),
+            String::new(),
             0,
-            "".to_string(),
-            "".to_string(),
-            "".to_string(),
+            String::new(),
+            String::new(),
+            String::new(),
             payload,
-            Default::default(),
+            Value::default(),
         );
-        println!("{}", event.payload.to_string());
+        println!("{}", event.payload);
         let upcasted_event = upcaster.upcast(event);
-        println!("{}", upcasted_event.payload.to_string());
+        println!("{}", upcasted_event.payload);
     }
     #[test]
     fn semantic_version_upcaster_upcast_for_documentation() {
@@ -310,13 +310,13 @@ mod test {
         )
         .unwrap();
         let event = SerializedEvent::new(
-            "".to_string(),
+            String::new(),
             0,
-            "".to_string(),
-            "".to_string(),
-            "".to_string(),
+            String::new(),
+            String::new(),
+            String::new(),
             payload,
-            Default::default(),
+            Value::default(),
         );
         let upcasted_event = upcaster.upcast(event);
 
@@ -329,13 +329,13 @@ mod test {
         )
         .unwrap();
         let expected_event = SerializedEvent::new(
-            "".to_string(),
+            String::new(),
             0,
-            "".to_string(),
-            "".to_string(),
+            String::new(),
+            String::new(),
             "2.3.4".to_string(),
             expected_payload,
-            Default::default(),
+            Value::default(),
         );
 
         assert_eq!(upcasted_event, expected_event);

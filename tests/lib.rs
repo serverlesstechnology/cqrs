@@ -10,7 +10,7 @@ use cqrs_es::test::TestFramework;
 use cqrs_es::Query;
 use cqrs_es::{Aggregate, AggregateError, CqrsFramework, DomainEvent, EventEnvelope, EventStore};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct TestAggregate {
     id: String,
     description: String,
@@ -83,24 +83,14 @@ impl Aggregate for TestAggregate {
     fn apply(&mut self, event: Self::Event) {
         match event {
             TestEvent::Created(e) => {
-                self.id = e.id.clone();
+                self.id = e.id;
             }
             TestEvent::Tested(e) => {
-                self.tests.push(e.test_name.clone());
+                self.tests.push(e.test_name);
             }
             TestEvent::SomethingElse(e) => {
-                self.description = e.description.clone();
+                self.description = e.description;
             }
-        }
-    }
-}
-
-impl Default for TestAggregate {
-    fn default() -> Self {
-        TestAggregate {
-            id: "".to_string(),
-            description: "".to_string(),
-            tests: Vec::new(),
         }
     }
 }
@@ -130,9 +120,9 @@ pub struct SomethingElse {
 impl DomainEvent for TestEvent {
     fn event_type(&self) -> String {
         match self {
-            TestEvent::Created(_) => "Created".to_string(),
-            TestEvent::Tested(_) => "Tested".to_string(),
-            TestEvent::SomethingElse(_) => "SomethingElse".to_string(),
+            Self::Created(_) => "Created".to_string(),
+            Self::Tested(_) => "Tested".to_string(),
+            Self::SomethingElse(_) => "SomethingElse".to_string(),
         }
     }
 
@@ -165,7 +155,7 @@ struct TestView {
 
 impl TestView {
     fn new(events: Arc<RwLock<Vec<EventEnvelope<TestAggregate>>>>) -> Self {
-        TestView { events }
+        Self { events }
     }
 }
 #[async_trait]
@@ -191,9 +181,9 @@ fn metadata() -> HashMap<String, String> {
 async fn test_mem_store() {
     let event_store = MemStore::<TestAggregate>::default();
     let id = "test_id_A";
-    let initial_events = event_store.load_events(&id).await.unwrap();
+    let initial_events = event_store.load_events(id).await.unwrap();
     assert_eq!(0, initial_events.len());
-    let agg_context = event_store.load_aggregate(&id).await.unwrap();
+    let agg_context = event_store.load_aggregate(id).await.unwrap();
 
     event_store
         .commit(
@@ -205,9 +195,9 @@ async fn test_mem_store() {
         )
         .await
         .unwrap();
-    let stored_events = event_store.load_events(&id).await.unwrap();
+    let stored_events = event_store.load_events(id).await.unwrap();
     assert_eq!(1, stored_events.len());
-    let agg_context = event_store.load_aggregate(&id).await.unwrap();
+    let agg_context = event_store.load_aggregate(id).await.unwrap();
 
     event_store
         .commit(
@@ -227,7 +217,7 @@ async fn test_mem_store() {
         )
         .await
         .unwrap();
-    let stored_envelopes = event_store.load_events(&id).await.unwrap();
+    let stored_envelopes = event_store.load_events(id).await.unwrap();
 
     let mut agg = TestAggregate::default();
     for stored_envelope in stored_envelopes {

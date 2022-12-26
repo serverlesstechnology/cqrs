@@ -18,10 +18,10 @@ pub enum PersistenceError {
 impl Display for PersistenceError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            PersistenceError::OptimisticLockError => write!(f, "optimistic lock error"),
-            PersistenceError::ConnectionError(error) => write!(f, "{}", error),
-            PersistenceError::DeserializationError(error) => write!(f, "{}", error),
-            PersistenceError::UnknownError(error) => write!(f, "{}", error),
+            Self::OptimisticLockError => write!(f, "optimistic lock error"),
+            Self::ConnectionError(error) => write!(f, "{}", error),
+            Self::DeserializationError(error) => write!(f, "{}", error),
+            Self::UnknownError(error) => write!(f, "{}", error),
         }
     }
 }
@@ -31,14 +31,10 @@ impl std::error::Error for PersistenceError {}
 impl<T: std::error::Error> From<PersistenceError> for AggregateError<T> {
     fn from(err: PersistenceError) -> Self {
         match err {
-            PersistenceError::OptimisticLockError => AggregateError::AggregateConflict,
-            PersistenceError::ConnectionError(error) => {
-                AggregateError::DatabaseConnectionError(error)
-            }
-            PersistenceError::DeserializationError(error) => {
-                AggregateError::DeserializationError(error)
-            }
-            PersistenceError::UnknownError(error) => AggregateError::UnexpectedError(error),
+            PersistenceError::OptimisticLockError => Self::AggregateConflict,
+            PersistenceError::ConnectionError(error) => Self::DatabaseConnectionError(error),
+            PersistenceError::DeserializationError(error) => Self::DeserializationError(error),
+            PersistenceError::UnknownError(error) => Self::UnexpectedError(error),
         }
     }
 }
@@ -47,21 +43,17 @@ impl From<serde_json::Error> for PersistenceError {
     fn from(err: serde_json::Error) -> Self {
         match err.classify() {
             serde_json::error::Category::Data | serde_json::error::Category::Syntax => {
-                PersistenceError::DeserializationError(Box::new(err))
+                Self::DeserializationError(Box::new(err))
             }
             serde_json::error::Category::Io | serde_json::error::Category::Eof => {
-                PersistenceError::UnknownError(Box::new(err))
+                Self::UnknownError(Box::new(err))
             }
         }
     }
 }
 
-impl From<tokio::sync::mpsc::error::SendError<Result<SerializedEvent, PersistenceError>>>
-    for PersistenceError
-{
-    fn from(
-        err: tokio::sync::mpsc::error::SendError<Result<SerializedEvent, PersistenceError>>,
-    ) -> Self {
-        PersistenceError::UnknownError(Box::new(err))
+impl From<tokio::sync::mpsc::error::SendError<Result<SerializedEvent, Self>>> for PersistenceError {
+    fn from(err: tokio::sync::mpsc::error::SendError<Result<SerializedEvent, Self>>) -> Self {
+        Self::UnknownError(Box::new(err))
     }
 }

@@ -23,8 +23,8 @@ impl SourceOfTruth {
         num_events: usize,
     ) -> usize {
         match self {
-            SourceOfTruth::EventStore => 0,
-            SourceOfTruth::Snapshot(max_size) => {
+            Self::EventStore => 0,
+            Self::Snapshot(max_size) => {
                 let next_snapshot_at = max_size - (current_sequence % max_size);
                 if num_events < next_snapshot_at {
                     0
@@ -35,7 +35,7 @@ impl SourceOfTruth {
                     next_snapshot_at + addl_events_after_next_snapshot_to_apply
                 }
             }
-            SourceOfTruth::AggregateStore => num_events,
+            Self::AggregateStore => num_events,
         }
     }
 }
@@ -105,7 +105,7 @@ where
     /// # }
     /// ```
     pub fn new_event_store(repo: R) -> Self {
-        PersistedEventStore {
+        Self {
             repo,
             storage: SourceOfTruth::EventStore,
             event_upcasters: None,
@@ -130,7 +130,7 @@ where
     /// # }
     /// ```
     pub fn new_aggregate_store(repo: R) -> Self {
-        PersistedEventStore {
+        Self {
             repo,
             storage: SourceOfTruth::AggregateStore,
             event_upcasters: None,
@@ -153,7 +153,7 @@ where
     /// # }
     /// ```
     pub fn new_snapshot_store(repo: R, snapshot_size: usize) -> Self {
-        PersistedEventStore {
+        Self {
             repo,
             storage: SourceOfTruth::Snapshot(snapshot_size),
             event_upcasters: None,
@@ -171,7 +171,7 @@ where
             repo: self.repo,
             storage: self.storage,
             event_upcasters: Some(event_upcasters),
-            _phantom: Default::default(),
+            _phantom: PhantomData::default(),
         }
     }
 }
@@ -199,18 +199,16 @@ where
         &self,
         aggregate_id: &str,
     ) -> Result<EventStoreAggregateContext<A>, AggregateError<A::Error>> {
-        let mut context: EventStoreAggregateContext<A> = match self.storage {
-            SourceOfTruth::EventStore => {
+        let mut context: EventStoreAggregateContext<A> =
+            if let SourceOfTruth::EventStore = self.storage {
                 EventStoreAggregateContext::context_for(aggregate_id, true)
-            }
-            _ => {
+            } else {
                 let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
                 match snapshot {
                     Some(snapshot) => snapshot.try_into()?,
                     None => EventStoreAggregateContext::context_for(aggregate_id, false),
                 }
-            }
-        };
+            };
         let events_to_apply = match self.storage {
             SourceOfTruth::EventStore => self.load_events(aggregate_id).await?,
             SourceOfTruth::Snapshot(_) => {
@@ -339,8 +337,8 @@ pub(crate) mod shared_test {
     impl DomainEvent for TestEvents {
         fn event_type(&self) -> String {
             match self {
-                TestEvents::Started => "Started".to_string(),
-                TestEvents::SomethingWasDone => "SomethingWasDone".to_string(),
+                Self::Started => "Started".to_string(),
+                Self::SomethingWasDone => "SomethingWasDone".to_string(),
             }
         }
         fn event_version(&self) -> String {
@@ -359,7 +357,7 @@ pub(crate) mod shared_test {
 
     impl From<&str> for TestError {
         fn from(msg: &str) -> Self {
-            TestError(msg.to_string())
+            Self(msg.to_string())
         }
     }
 
@@ -422,6 +420,7 @@ pub(crate) mod shared_test {
         events_result: Mutex<Option<Result<Vec<SerializedEvent>, PersistenceError>>>,
         last_events_result: Mutex<Option<Result<Vec<SerializedEvent>, PersistenceError>>>,
         snapshot_result: Mutex<Option<Result<Option<SerializedSnapshot>, PersistenceError>>>,
+        #[allow(clippy::type_complexity)]
         persist_check: Mutex<
             Option<Box<dyn FnOnce(&[SerializedEvent], Option<(String, Value, usize)>) + Send>>,
         >,
@@ -457,6 +456,7 @@ pub(crate) mod shared_test {
                 persist_check: Mutex::new(None),
             }
         }
+        #[allow(clippy::type_complexity)]
         pub(crate) fn with_commit(
             test_function: Box<
                 dyn FnOnce(&[SerializedEvent], Option<(String, Value, usize)>) + Send,
@@ -525,7 +525,7 @@ pub(crate) mod shared_test {
     }
 
     pub(crate) const TEST_AGGREGATE_ID: &str = "test-aggregate-C";
-    pub(crate) const EVENT_VERSION: &'static str = "1.0";
+    pub(crate) const EVENT_VERSION: &str = "1.0";
 
     pub(crate) fn test_serialized_event(seq: usize, event: TestEvents) -> SerializedEvent {
         let event_type = event.event_type();
