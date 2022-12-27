@@ -148,7 +148,7 @@ mod test {
         query_replay.replay(AGGREGATE_ID).await.unwrap();
 
         let events = event_list.lock().unwrap().to_owned();
-        assert_events_eq(events, expected_events.clone());
+        assert_events_eq(&events, &expected_events);
 
         // query all
         let event_repo = MockRepo::with_events(Ok(ser_events));
@@ -157,12 +157,12 @@ mod test {
         query_replay.replay_all().await.unwrap();
 
         let events = event_list.lock().unwrap().to_owned();
-        assert_events_eq(events, expected_events);
+        assert_events_eq(&events, &expected_events);
     }
 
     fn assert_events_eq(
-        expected: Vec<EventEnvelope<MyAggregate>>,
-        found: Vec<EventEnvelope<MyAggregate>>,
+        expected: &[EventEnvelope<MyAggregate>],
+        found: &[EventEnvelope<MyAggregate>],
     ) {
         assert_eq!(expected.len(), found.len());
         for i in 0..expected.len() {

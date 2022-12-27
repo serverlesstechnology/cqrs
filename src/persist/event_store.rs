@@ -530,7 +530,7 @@ pub(crate) mod shared_test {
     pub(crate) fn test_serialized_event(seq: usize, event: TestEvents) -> SerializedEvent {
         let event_type = event.event_type();
         let event_version = event.event_version();
-        let payload = serde_json::to_value(&event).unwrap();
+        let payload = serde_json::to_value(event).unwrap();
         SerializedEvent::new(
             TEST_AGGREGATE_ID.to_string(),
             seq,
