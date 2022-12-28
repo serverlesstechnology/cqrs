@@ -307,15 +307,13 @@ pub(crate) mod shared_test {
     use crate::persist::{
         PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
     };
-    use crate::{Aggregate, DomainEvent};
+    use crate::Aggregate;
 
     #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
     pub(crate) enum TestEvents {
         Started,
         SomethingWasDone,
     }
-
-    impl DomainEvent for TestEvents {}
 
     #[derive(Debug, Serialize, Deserialize)]
     pub(crate) enum TestCommands {

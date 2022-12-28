@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use cqrs_es::mem_store::MemStore;
 use cqrs_es::test::TestFramework;
 use cqrs_es::Query;
-use cqrs_es::{Aggregate, AggregateError, CqrsFramework, DomainEvent, EventEnvelope, EventStore};
+use cqrs_es::{Aggregate, AggregateError, CqrsFramework, EventEnvelope, EventStore};
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct TestAggregate {
@@ -109,8 +109,6 @@ pub struct Tested {
 pub struct SomethingElse {
     pub description: String,
 }
-
-impl DomainEvent for TestEvent {}
 
 pub enum TestCommand {
     CreateTest(CreateTest),

@@ -41,6 +41,11 @@ pub trait DomainEvent:
 {
 }
 
+impl<T> DomainEvent for T where
+    T: Serialize + DeserializeOwned + Clone + PartialEq + fmt::Debug + Sync + Send
+{
+}
+
 /// `EventEnvelope` is a data structure that encapsulates an event with its pertinent
 /// information.
 /// All of the associated data will be transported and persisted together and will be available

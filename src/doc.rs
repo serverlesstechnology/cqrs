@@ -5,13 +5,13 @@ use serde_json::Value;
 use crate::persist::{
     PersistedEventRepository, PersistenceError, ReplayStream, SerializedEvent, SerializedSnapshot,
 };
-use crate::{Aggregate, DomainEvent, EventEnvelope, Query};
+use crate::{Aggregate, EventEnvelope, Query};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum MyEvents {
     SomethingWasDone,
 }
-impl DomainEvent for MyEvents {}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub enum MyCommands {
     DoSomething,
@@ -132,8 +132,6 @@ pub enum CustomerEvent {
     NameAdded { name: String },
     EmailUpdated { new_email: String },
 }
-
-impl DomainEvent for CustomerEvent {}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CustomerCommand {
