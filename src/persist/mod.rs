@@ -15,10 +15,6 @@ pub use event_stream::{ReplayFeed, ReplayStream};
 pub use generic_query::{GenericQuery, QueryErrorHandler};
 pub use replay::QueryReplay;
 pub use serialized_event::{SerializedEvent, SerializedSnapshot};
-pub use upcaster::{
-    EventUpcaster, SemanticVersion, SemanticVersionError, SemanticVersionEventUpcaster,
-    SemanticVersionEventUpcasterFunc,
-};
 pub use view_repository::{ViewContext, ViewRepository};
 
 mod context;
@@ -29,7 +25,6 @@ mod event_stream;
 mod generic_query;
 mod replay;
 mod serialized_event;
-mod upcaster;
 mod view_repository;
 
 // Documentation items

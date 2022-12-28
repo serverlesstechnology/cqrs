@@ -4,10 +4,7 @@ use std::marker::PhantomData;
 use async_trait::async_trait;
 use serde_json::Value;
 
-use crate::persist::serialized_event::{deserialize_events, serialize_events};
-use crate::persist::{
-    EventStoreAggregateContext, EventUpcaster, PersistedEventRepository, SerializedEvent,
-};
+use crate::persist::{EventStoreAggregateContext, PersistedEventRepository, SerializedEvent};
 use crate::{Aggregate, AggregateError, EventEnvelope, EventStore};
 
 enum SourceOfTruth {
@@ -80,7 +77,6 @@ where
 {
     repo: R,
     storage: SourceOfTruth,
-    event_upcasters: Option<Vec<Box<dyn EventUpcaster>>>,
     _phantom: PhantomData<A>,
 }
 
@@ -108,7 +104,6 @@ where
         Self {
             repo,
             storage: SourceOfTruth::EventStore,
-            event_upcasters: None,
             _phantom: PhantomData,
         }
     }
@@ -133,7 +128,6 @@ where
         Self {
             repo,
             storage: SourceOfTruth::AggregateStore,
-            event_upcasters: None,
             _phantom: PhantomData,
         }
     }
@@ -156,22 +150,7 @@ where
         Self {
             repo,
             storage: SourceOfTruth::Snapshot(snapshot_size),
-            event_upcasters: None,
             _phantom: PhantomData,
-        }
-    }
-
-    /// Configures the event store to use event upcasters when loading events.
-    /// The EventUpcasters within the Vec should be placed in the
-    /// order that they should be applied
-    ///
-    /// E.g., an upcaster for version 0.2.3 should be placed before an upcaster for version 0.2.4
-    pub fn with_upcasters(self, event_upcasters: Vec<Box<dyn EventUpcaster>>) -> Self {
-        Self {
-            repo: self.repo,
-            storage: self.storage,
-            event_upcasters: Some(event_upcasters),
-            _phantom: PhantomData::default(),
         }
     }
 }
@@ -188,11 +167,13 @@ where
         &self,
         aggregate_id: &str,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        let serialized_events = self.repo.get_events::<A>(aggregate_id).await?;
-        Ok(deserialize_events(
-            serialized_events,
-            &self.event_upcasters,
-        )?)
+        Ok(self
+            .repo
+            .get_events::<A>(aggregate_id)
+            .await?
+            .into_iter()
+            .map(EventEnvelope::<A>::try_from)
+            .collect::<Result<_, _>>()?)
     }
 
     async fn load_aggregate(
@@ -216,7 +197,10 @@ where
                     .repo
                     .get_last_events::<A>(aggregate_id, context.current_sequence)
                     .await?;
-                deserialize_events(serialized_events, &self.event_upcasters)?
+                serialized_events
+                    .into_iter()
+                    .map(EventEnvelope::<A>::try_from)
+                    .collect::<Result<_, _>>()?
             }
             SourceOfTruth::AggregateStore => {
                 vec![]
@@ -251,7 +235,10 @@ where
             }
         };
         let wrapped_events = self.wrap_events(&aggregate_id, last_sequence, events, metadata);
-        let serialized_events: Vec<SerializedEvent> = serialize_events(&wrapped_events)?;
+        let serialized_events: Vec<_> = wrapped_events
+            .iter()
+            .map(SerializedEvent::try_from)
+            .collect::<Result<_, _>>()?;
         let snapshot_update = snapshot_update.map(|s| (aggregate_id, s.0, s.1));
         self.repo
             .persist::<A>(&serialized_events, snapshot_update)
@@ -328,17 +315,7 @@ pub(crate) mod shared_test {
         SomethingWasDone,
     }
 
-    impl DomainEvent for TestEvents {
-        fn event_type(&self) -> String {
-            match self {
-                Self::Started => "Started".to_string(),
-                Self::SomethingWasDone => "SomethingWasDone".to_string(),
-            }
-        }
-        fn event_version(&self) -> String {
-            EVENT_VERSION.to_string()
-        }
-    }
+    impl DomainEvent for TestEvents {}
 
     #[derive(Debug, Serialize, Deserialize)]
     pub(crate) enum TestCommands {
@@ -512,18 +489,13 @@ pub(crate) mod shared_test {
     }
 
     pub(crate) const TEST_AGGREGATE_ID: &str = "test-aggregate-C";
-    pub(crate) const EVENT_VERSION: &str = "1.0";
 
     pub(crate) fn test_serialized_event(seq: usize, event: TestEvents) -> SerializedEvent {
-        let event_type = event.event_type();
-        let event_version = event.event_version();
         let payload = serde_json::to_value(event).unwrap();
         SerializedEvent::new(
             TEST_AGGREGATE_ID.to_string(),
             seq,
             "TestAggregate".to_string(),
-            event_type,
-            event_version,
             payload,
             serde_json::to_value(HashMap::<String, String>::new()).unwrap(),
         )
@@ -535,11 +507,10 @@ mod event_store_test {
     use std::collections::HashMap;
 
     use crate::persist::event_store::shared_test::{
-        test_serialized_event, MockRepo, TestAggregate, TestEvents, EVENT_VERSION,
-        TEST_AGGREGATE_ID,
+        test_serialized_event, MockRepo, TestAggregate, TestEvents, TEST_AGGREGATE_ID,
     };
     use crate::persist::{EventStoreAggregateContext, PersistedEventStore, PersistenceError};
-    use crate::{AggregateError, DomainEvent, EventStore};
+    use crate::{AggregateError, EventStore};
 
     #[tokio::test]
     async fn load() {
@@ -551,8 +522,6 @@ mod event_store_test {
         let events = store.load_events(TEST_AGGREGATE_ID).await.unwrap();
         let event = events.get(0).unwrap();
         assert_eq!(1, event.sequence);
-        assert_eq!("SomethingWasDone", event.payload.event_type());
-        assert_eq!(EVENT_VERSION, event.payload.event_version());
     }
 
     #[tokio::test]
@@ -654,13 +623,12 @@ pub(crate) mod snapshotted_store_test {
     use serde_json::json;
 
     use crate::persist::event_store::shared_test::{
-        test_serialized_event, MockRepo, TestAggregate, TestEvents, EVENT_VERSION,
-        TEST_AGGREGATE_ID,
+        test_serialized_event, MockRepo, TestAggregate, TestEvents, TEST_AGGREGATE_ID,
     };
     use crate::persist::{
         EventStoreAggregateContext, PersistedEventStore, PersistenceError, SerializedSnapshot,
     };
-    use crate::{AggregateError, DomainEvent, EventStore};
+    use crate::{AggregateError, EventStore};
 
     #[tokio::test]
     async fn load() {
@@ -672,8 +640,6 @@ pub(crate) mod snapshotted_store_test {
         let events = store.load_events(TEST_AGGREGATE_ID).await.unwrap();
         let event = events.get(0).unwrap();
         assert_eq!(1, event.sequence);
-        assert_eq!("SomethingWasDone", event.payload.event_type());
-        assert_eq!(EVENT_VERSION, event.payload.event_version());
     }
 
     #[tokio::test]
@@ -948,13 +914,12 @@ pub(crate) mod aggregate_store_test {
     use serde_json::json;
 
     use crate::persist::event_store::shared_test::{
-        test_serialized_event, MockRepo, TestAggregate, TestEvents, EVENT_VERSION,
-        TEST_AGGREGATE_ID,
+        test_serialized_event, MockRepo, TestAggregate, TestEvents, TEST_AGGREGATE_ID,
     };
     use crate::persist::{
         EventStoreAggregateContext, PersistedEventStore, PersistenceError, SerializedSnapshot,
     };
-    use crate::{AggregateError, DomainEvent, EventStore};
+    use crate::{AggregateError, EventStore};
 
     #[tokio::test]
     async fn load() {
@@ -966,8 +931,6 @@ pub(crate) mod aggregate_store_test {
         let events = store.load_events(TEST_AGGREGATE_ID).await.unwrap();
         let event = events.get(0).unwrap();
         assert_eq!(1, event.sequence);
-        assert_eq!("SomethingWasDone", event.payload.event_type());
-        assert_eq!(EVENT_VERSION, event.payload.event_version());
     }
 
     #[tokio::test]

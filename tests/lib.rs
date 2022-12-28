@@ -110,19 +110,7 @@ pub struct SomethingElse {
     pub description: String,
 }
 
-impl DomainEvent for TestEvent {
-    fn event_type(&self) -> String {
-        match self {
-            Self::Created(_) => "Created".to_string(),
-            Self::Tested(_) => "Tested".to_string(),
-            Self::SomethingElse(_) => "SomethingElse".to_string(),
-        }
-    }
-
-    fn event_version(&self) -> String {
-        "1.0".to_string()
-    }
-}
+impl DomainEvent for TestEvent {}
 
 pub enum TestCommand {
     CreateTest(CreateTest),

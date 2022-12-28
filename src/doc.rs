@@ -11,16 +11,7 @@ use crate::{Aggregate, DomainEvent, EventEnvelope, Query};
 pub enum MyEvents {
     SomethingWasDone,
 }
-impl DomainEvent for MyEvents {
-    fn event_type(&self) -> String {
-        match self {
-            Self::SomethingWasDone => "SomethingWasDone".to_string(),
-        }
-    }
-    fn event_version(&self) -> String {
-        "0.1.0".to_string()
-    }
-}
+impl DomainEvent for MyEvents {}
 #[derive(Debug, Serialize, Deserialize)]
 pub enum MyCommands {
     DoSomething,
@@ -142,18 +133,7 @@ pub enum CustomerEvent {
     EmailUpdated { new_email: String },
 }
 
-impl DomainEvent for CustomerEvent {
-    fn event_type(&self) -> String {
-        match self {
-            Self::NameAdded { .. } => "NameAdded".to_string(),
-            Self::EmailUpdated { .. } => "EmailUpdated".to_string(),
-        }
-    }
-
-    fn event_version(&self) -> String {
-        "1.0".to_string()
-    }
-}
+impl DomainEvent for CustomerEvent {}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CustomerCommand {
