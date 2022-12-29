@@ -23,4 +23,4 @@ will allow us to explore CQRS with simple unit tests.
 application. 
 
 [Chapter 6](advanced_topics.html) branches out to some of the more advanced topics permitted by these patterns,
-including event replay and upcasters.
+including event replay and upcasting.

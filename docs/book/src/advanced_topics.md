@@ -4,9 +4,8 @@ Running a CQRS application in production provides benefits and concerns differen
 These advanced topics cover these additional considerations.
 
 One of the primary reasons for using CQRS with event sourcing is to allow your domain model to change over time.
-For changes to the structure or payload of events we use 
-[event upcasters](advanced_event_upcasters.md) that translate a persisted older event 
-structure into the newer form.
+For changes to the structure or payload of events we use an [event upcasting](advanced_event_upcasting.md) pattern
+that translates a persisted older event structure into the newer form.
 
 The logic of queries and/or structure of the underlying views may also change over time. 
 The approach here is to use an 

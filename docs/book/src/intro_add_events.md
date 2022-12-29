@@ -42,26 +42,3 @@ pub enum BankAccountEvent {
 
 Again, all of our events are named in the past tense,
 [this is important](https://martinfowler.com/bliki/UbiquitousLanguage.html).
-
-Our events now need to implement `cqrs_es::DomainEvent<BankAccount>` to provide an `event_name` and `event_version`
-for each event.
-This will be important later in any production system when events need to be changed 
-(see [event upcasters](event_upcasters.md)).
-
-```rust
-impl DomainEvent for BankAccountEvent {
-    fn event_type(&self) -> String {
-        let event_type: &str = match self {
-            BankAccountEvent::AccountOpened { .. } => "AccountOpened",
-            BankAccountEvent::CustomerDepositedMoney { .. } => "CustomerDepositedMoney",
-            BankAccountEvent::CustomerWithdrewCash { .. } => "CustomerWithdrewCash",
-            BankAccountEvent::CustomerWroteCheck { .. } => "CustomerWroteCheck",
-        };
-        event_type.to_string()
-    }
-    
-    fn event_version(&self) -> String {
-        "1.0".to_string()
-    }
-}
-```
