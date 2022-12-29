@@ -22,4 +22,4 @@
   - [Persisted event store](application_event_store.md)
   - [Queries with persisted views](application_persisted_views.md)
   - [Including metadata](application_metadata.md)
-  - [Event upcasters](advanced_event_upcasters.md)
+  - [Event upcasting](advanced_event_upcasting.md)
