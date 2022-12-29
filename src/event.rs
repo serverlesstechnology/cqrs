@@ -19,11 +19,11 @@ use crate::aggregate::Aggregate;
 /// To simplify serialization, an event should be an enum, and each variant should carry any
 /// important information.
 ///
-/// Though the `DomainEvent` trait only has a single function, the events must also derive a
-/// number of standard traits.
+/// The `DomainEvent` trait is automatically derived for any struct that also implements-
 /// - `Clone` - events may be cloned throughout the framework, particularly when applied to queries
 /// - `Serialize` and `Deserialize` - required for persistence
 /// - `PartialEq` and `Debug` - needed for effective testing
+/// - `Sync` + `Send` - needed for ensuring events are threadsafe
 ///
 /// # Examples
 /// ```
