@@ -1,5 +1,11 @@
 # Change log
 
+#### `v0.4.6`
+- ***The primary branch is now set to `main`.***
+- Makes the runtime and TLS library configurable for the SQL based persistence crates.
+  - [Postgres](https://github.com/serverlesstechnology/postgres-es#runtime-and-tls-configuration)
+  - [Mysql](https://github.com/serverlesstechnology/mysql-es#runtime-and-tls-configuration)
+
 #### `v0.4.5`
 - Changes required for Rust 1.63 clippy additions.
 
