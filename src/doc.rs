@@ -1,7 +1,8 @@
+use std::fmt::{Display, Formatter};
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::fmt::{Display, Formatter};
 
 use crate::persist::{
     PersistedEventRepository, PersistenceError, ReplayStream, SerializedEvent, SerializedSnapshot,
@@ -18,6 +19,7 @@ impl DomainEvent for MyEvents {
             Self::SomethingWasDone => "SomethingWasDone".to_string(),
         }
     }
+
     fn event_version(&self) -> String {
         "0.1.0".to_string()
     }
@@ -33,8 +35,8 @@ pub struct MyAggregate;
 #[async_trait]
 impl Aggregate for MyAggregate {
     type Command = MyCommands;
-    type Event = MyEvents;
     type Error = MyUserError;
+    type Event = MyEvents;
     type Services = MyService;
 
     fn aggregate_type() -> String {
@@ -93,8 +95,8 @@ impl Query<MyAggregate> for MyQuery {
 #[async_trait]
 impl Aggregate for Customer {
     type Command = CustomerCommand;
-    type Event = CustomerEvent;
     type Error = CustomerError;
+    type Event = CustomerEvent;
     type Services = CustomerService;
 
     fn aggregate_type() -> String {
@@ -178,9 +180,8 @@ pub enum CustomerCommand {
 
 #[cfg(test)]
 mod doc_tests {
-    use crate::test::TestFramework;
-
     use super::*;
+    use crate::test::TestFramework;
 
     type CustomerTestFramework = TestFramework<Customer>;
 

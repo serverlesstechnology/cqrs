@@ -1,24 +1,29 @@
-use serde_json::Value;
 use std::fmt::{Display, Formatter};
 use std::num::ParseIntError;
 use std::str::FromStr;
 
+use serde_json::Value;
+
 use crate::persist::SerializedEvent;
 
-/// Used to upcast and event from an older type or version to the current form. This is needed
-/// to modify the structure of events older versions are already persisted.
+/// Used to upcast and event from an older type or version to the current form.
+/// This is needed to modify the structure of events older versions are already
+/// persisted.
 pub trait EventUpcaster: Send + Sync {
-    /// Examines and event type and version to understand if the event should be upcasted.
+    /// Examines and event type and version to understand if the event should be
+    /// upcasted.
     fn can_upcast(&self, event_type: &str, event_version: &str) -> bool;
 
     /// Modifies the serialized event to conform the the new structure.
     fn upcast(&self, event: SerializedEvent) -> SerializedEvent;
 }
 
-/// A helper type for creating the upcaster function for a `SemanticVersionEventUpcaster`.
+/// A helper type for creating the upcaster function for a
+/// `SemanticVersionEventUpcaster`.
 pub type SemanticVersionEventUpcasterFunc = dyn Fn(Value) -> Value + Send + Sync;
 
-/// A representation of a semantic version used in a `SemanticVersionEventUpcaster`.
+/// A representation of a semantic version used in a
+/// `SemanticVersionEventUpcaster`.
 #[derive(Debug, PartialOrd, PartialEq, Eq)]
 pub struct SemanticVersion {
     major_version: u32,
@@ -27,8 +32,8 @@ pub struct SemanticVersion {
 }
 
 impl SemanticVersion {
-    /// Identifies if one `SemanticVersion` supersedes another. Used to determine whether an
-    /// upcaster function should be applied.
+    /// Identifies if one `SemanticVersion` supersedes another. Used to
+    /// determine whether an upcaster function should be applied.
     ///
     /// E.g.,
     /// - for upcaster v0.2.3 with code v0.2.2 --> upcaster is applied
@@ -92,58 +97,59 @@ impl From<ParseIntError> for SemanticVersionError {
     }
 }
 
-/// This upcasts any event that has the same `event_type` and an `event_version` that is less than the
-/// version configured on the upcaster.
+/// This upcasts any event that has the same `event_type` and an `event_version`
+/// that is less than the version configured on the upcaster.
 ///
 /// ```
-/// use cqrs_es::persist::{EventUpcaster,SemanticVersionEventUpcaster};
+/// use cqrs_es::persist::{EventUpcaster, SemanticVersionEventUpcaster, SerializedEvent};
 /// use serde_json::Value;
-/// use cqrs_es::persist::SerializedEvent;
 ///
 /// let upcast_function = Box::new(|payload: Value| match payload {
-///             Value::Object(mut object_map) => {
-///                 object_map.insert("country".to_string(), "USA".into());
-///                 Value::Object(object_map)
-///             }
-///             _ => {
-///                 panic!("the event payload is not an object")
-///             }
-///         });
+///     Value::Object(mut object_map) => {
+///         object_map.insert("country".to_string(), "USA".into());
+///         Value::Object(object_map)
+///     }
+///     _ => {
+///         panic!("the event payload is not an object")
+///     }
+/// });
 /// let upcaster = SemanticVersionEventUpcaster::new("EventX", "2.3.4", upcast_function);
 ///
 /// let payload: Value = serde_json::from_str(
-///             r#"{
+///     r#"{
 ///                     "zip code": 98103,
 ///                     "state": "Washington"
 ///                    }"#,
-///         ).unwrap();
-///  let event = SerializedEvent::new(
-///             String::new(),
-///             0,
-///             String::new(),
-///             String::new(),
-///             String::new(),
-///             payload,
-///             Default::default(),
-///         );
+/// )
+/// .unwrap();
+/// let event = SerializedEvent::new(
+///     String::new(),
+///     0,
+///     String::new(),
+///     String::new(),
+///     String::new(),
+///     payload,
+///     Default::default(),
+/// );
 /// let upcasted_event = upcaster.upcast(event);
 ///
 /// let expected_payload: Value = serde_json::from_str(
-///             r#"{
+///     r#"{
 ///                     "zip code": 98103,
 ///                     "state": "Washington",
 ///                     "country": "USA"
 ///                    }"#,
-///         ).unwrap();
+/// )
+/// .unwrap();
 /// let expected_event = SerializedEvent::new(
-///             String::new(),
-///             0,
-///             String::new(),
-///             String::new(),
-///             "2.3.4".to_string(),
-///             expected_payload,
-///             Default::default(),
-///         );
+///     String::new(),
+///     0,
+///     String::new(),
+///     String::new(),
+///     "2.3.4".to_string(),
+///     expected_payload,
+///     Default::default(),
+/// );
 ///
 /// assert_eq!(upcasted_event, expected_event);
 /// ```
@@ -202,13 +208,11 @@ impl EventUpcaster for SemanticVersionEventUpcaster {
 mod test {
     use std::str::FromStr;
 
-    use crate::persist::SerializedEvent;
-    use serde_json::json;
-    use serde_json::Value;
+    use serde_json::{json, Value};
 
-    use crate::persist::SemanticVersionEventUpcasterFunc;
     use crate::persist::{
         EventUpcaster, SemanticVersion, SemanticVersionError, SemanticVersionEventUpcaster,
+        SemanticVersionEventUpcasterFunc, SerializedEvent,
     };
 
     fn semantic_version(major_version: u32, minor_version: u32, patch: u32) -> SemanticVersion {

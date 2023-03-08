@@ -1,6 +1,7 @@
+use std::fmt::{Display, Formatter};
+
 use crate::persist::SerializedEvent;
 use crate::AggregateError;
-use std::fmt::{Display, Formatter};
 
 /// Errors for implementations of a persistent event store.
 #[derive(Debug)]

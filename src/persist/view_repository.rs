@@ -1,6 +1,7 @@
+use async_trait::async_trait;
+
 use crate::persist::PersistenceError;
 use crate::{Aggregate, View};
-use async_trait::async_trait;
 
 /// Handles the database access needed for a GenericQuery.
 #[async_trait]
@@ -12,15 +13,15 @@ where
     /// Returns the current view instance.
     async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError>;
 
-    /// Returns the current view instance and context, used by the `GenericQuery` to update
-    /// views with committed events.
+    /// Returns the current view instance and context, used by the
+    /// `GenericQuery` to update views with committed events.
     async fn load_with_context(
         &self,
         view_id: &str,
     ) -> Result<Option<(V, ViewContext)>, PersistenceError>;
 
-    /// Updates the view instance and context, used by the `GenericQuery` to update
-    /// views with committed events.
+    /// Updates the view instance and context, used by the `GenericQuery` to
+    /// update views with committed events.
     async fn update_view(&self, view: V, context: ViewContext) -> Result<(), PersistenceError>;
 }
 

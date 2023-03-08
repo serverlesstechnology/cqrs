@@ -6,13 +6,14 @@ use async_trait::async_trait;
 use crate::event::EventEnvelope;
 use crate::{Aggregate, AggregateContext, AggregateError, EventStore};
 
-///  Simple memory store useful for application development and testing purposes.
+///  Simple memory store useful for application development and testing
+/// purposes.
 ///
 /// Creation and use in a constructing a `CqrsFramework`:
 /// ```
 /// # use cqrs_es::doc::{MyAggregate, MyService};
-/// use cqrs_es::CqrsFramework;
 /// use cqrs_es::mem_store::MemStore;
+/// use cqrs_es::CqrsFramework;
 ///
 /// let store = MemStore::<MyAggregate>::default();
 /// let cqrs = CqrsFramework::new(store, vec![], MyService);
@@ -147,7 +148,8 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
 }
 
 impl<A: Aggregate> MemStore<A> {
-    /// Method to wrap a set of events with the additional metadata needed for persistence and publishing
+    /// Method to wrap a set of events with the additional metadata needed for
+    /// persistence and publishing
     fn wrap_events(
         &self,
         aggregate_id: &str,

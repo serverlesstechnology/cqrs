@@ -1,14 +1,14 @@
-use async_trait::async_trait;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::sync::{Arc, RwLock};
 
-use serde::{Deserialize, Serialize};
-
+use async_trait::async_trait;
 use cqrs_es::mem_store::MemStore;
 use cqrs_es::test::TestFramework;
-use cqrs_es::Query;
-use cqrs_es::{Aggregate, AggregateError, CqrsFramework, DomainEvent, EventEnvelope, EventStore};
+use cqrs_es::{
+    Aggregate, AggregateError, CqrsFramework, DomainEvent, EventEnvelope, EventStore, Query,
+};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct TestAggregate {
@@ -38,8 +38,8 @@ pub struct TestService;
 #[async_trait]
 impl Aggregate for TestAggregate {
     type Command = TestCommand;
-    type Event = TestEvent;
     type Error = TestError;
+    type Event = TestEvent;
     type Services = TestService;
 
     fn aggregate_type() -> String {

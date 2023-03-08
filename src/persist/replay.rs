@@ -32,8 +32,8 @@ where
     Q: Query<A>,
     A: Aggregate,
 {
-    /// Create a new replay utility using the provided event repository as the source and the
-    /// query as the target.
+    /// Create a new replay utility using the provided event repository as the
+    /// source and the query as the target.
     pub fn new(repository: R, query: Q) -> Self {
         Self {
             repository,
@@ -50,7 +50,7 @@ where
     /// # use cqrs_es::doc::{MyAggregate, MyQuery, MyRepository};
     /// # use cqrs_es::persist::{GenericQuery, QueryReplay, ReplayStream};
     /// # fn config(mut replay: QueryReplay<MyRepository,MyQuery,MyAggregate>) {
-    /// replay.use_error_handler(Box::new(|e|panic!("{}",e)));
+    /// replay.use_error_handler(Box::new(|e| panic!("{}", e)));
     /// # }
     /// ```
     pub fn use_error_handler(&mut self, error_handler: Box<QueryErrorHandler>) {

@@ -6,8 +6,8 @@ use serde::Serialize;
 
 use crate::aggregate::Aggregate;
 
-/// A `DomainEvent` represents any business change in the state of an `Aggregate`. `DomainEvent`s
-/// are immutable, and when
+/// A `DomainEvent` represents any business change in the state of an
+/// `Aggregate`. `DomainEvent`s are immutable, and when
 /// [event sourcing](https://martinfowler.com/eaaDev/EventSourcing.html)
 /// is used they are the single source of truth.
 ///
@@ -16,12 +16,13 @@ use crate::aggregate::Aggregate;
 /// - EmailAddressChanged
 /// - DependencyAdded
 ///
-/// To simplify serialization, an event should be an enum, and each variant should carry any
-/// important information.
+/// To simplify serialization, an event should be an enum, and each variant
+/// should carry any important information.
 ///
-/// Though the `DomainEvent` trait only has a single function, the events must also derive a
-/// number of standard traits.
-/// - `Clone` - events may be cloned throughout the framework, particularly when applied to queries
+/// Though the `DomainEvent` trait only has a single function, the events must
+/// also derive a number of standard traits.
+/// - `Clone` - events may be cloned throughout the framework, particularly when
+///   applied to queries
 /// - `Serialize` and `Deserialize` - required for persistence
 /// - `PartialEq` and `Debug` - needed for effective testing
 ///
@@ -30,10 +31,10 @@ use crate::aggregate::Aggregate;
 /// # use cqrs_es::doc::Customer;
 /// # use cqrs_es::{Aggregate,DomainEvent};
 /// # use serde::{Serialize,Deserialize};
-/// #[derive(Clone,Debug,Serialize,Deserialize,PartialEq)]
+/// #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 /// pub enum CustomerEvent {
-///     NameChanged{ changed_name: String },
-///     EmailUpdated{ new_email: String },
+///     NameChanged { changed_name: String },
+///     EmailUpdated { new_email: String },
 /// }
 /// ```
 pub trait DomainEvent:
@@ -45,18 +46,19 @@ pub trait DomainEvent:
     fn event_version(&self) -> String;
 }
 
-/// `EventEnvelope` is a data structure that encapsulates an event with its pertinent
-/// information.
-/// All of the associated data will be transported and persisted together and will be available
-/// for queries.
+/// `EventEnvelope` is a data structure that encapsulates an event with its
+/// pertinent information.
+/// All of the associated data will be transported and persisted together and
+/// will be available for queries.
 ///
-/// Within any system an event must be unique based on the compound key composed of its:
+/// Within any system an event must be unique based on the compound key composed
+/// of its:
 /// - [`aggregate_type`](https://docs.rs/cqrs-es/latest/cqrs_es/trait.Aggregate.html#tymethod.aggregate_type)
 /// - `aggregate_id`
 /// - `sequence`
 ///
-/// Thus an `EventEnvelope` provides a uniqueness value along with an event `payload` and
-/// `metadata`.
+/// Thus an `EventEnvelope` provides a uniqueness value along with an event
+/// `payload` and `metadata`.
 #[derive(Debug)]
 pub struct EventEnvelope<A>
 where

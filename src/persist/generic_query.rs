@@ -6,8 +6,8 @@ use async_trait::async_trait;
 use crate::persist::{PersistenceError, ViewContext, ViewRepository};
 use crate::{Aggregate, EventEnvelope, Query, View};
 
-/// A simple query and view repository. This is used both to act as a `Query` for processing events
-/// and to return materialized views.
+/// A simple query and view repository. This is used both to act as a `Query`
+/// for processing events and to return materialized views.
 pub struct GenericQuery<R, V, A>
 where
     R: ViewRepository<V, A>,
@@ -44,14 +44,15 @@ where
             phantom: PhantomData::default(),
         }
     }
+
     /// Allows the user to apply a custom error handler to the query.
     /// Queries are infallible and _should_ never cause errors,
     /// but programming errors or other technical problems
     /// might. Adding an error handler allows the user to choose whether to
     /// panic the application, log the error or otherwise register the issue.
     ///
-    /// Use of an error handler is *strongly* recommended since without one any error encountered
-    /// by the query repository will simply be ignored.
+    /// Use of an error handler is *strongly* recommended since without one any
+    /// error encountered by the query repository will simply be ignored.
     ///
     /// _Example: An error handler that panics on any error._
     /// ```
@@ -59,7 +60,7 @@ where
     /// # use cqrs_es::persist::GenericQuery;
     /// # use cqrs_es::persist::doc::{MyViewRepository,MyView};
     /// # fn config(mut query: GenericQuery<MyViewRepository,MyView,MyAggregate>) {
-    /// query.use_error_handler(Box::new(|e|panic!("{}",e)));
+    /// query.use_error_handler(Box::new(|e| panic!("{}", e)));
     /// # }
     /// ```
     pub fn use_error_handler(&mut self, error_handler: Box<QueryErrorHandler>) {
@@ -134,11 +135,12 @@ where
 
 /// A convenience type for query error handlers.
 ///
-/// In a CQRS system queries are downstream services and can not return errors in a problem is encountered.
-/// This convenience type allows the user to define a function for handling persistence errors.
+/// In a CQRS system queries are downstream services and can not return errors
+/// in a problem is encountered. This convenience type allows the user to define
+/// a function for handling persistence errors.
 ///
-/// An error handler should be a method that takes a single `PersistenceError` parameter and has no
-/// result.
+/// An error handler should be a method that takes a single `PersistenceError`
+/// parameter and has no result.
 ///
 /// ```rust
 /// use cqrs_es::persist::{PersistenceError, QueryErrorHandler};
@@ -148,7 +150,7 @@ where
 /// }
 ///
 /// fn error_handler(error: PersistenceError) {
-///     panic!("{}",error);
+///     panic!("{}", error);
 /// }
 /// ```
 pub type QueryErrorHandler = dyn Fn(PersistenceError) + Send + Sync + 'static;

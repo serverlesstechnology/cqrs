@@ -69,10 +69,10 @@ fn test_source_of_truth() {
 }
 
 /// Storage engine using a database backing.
-/// This defaults to an event-sourced store (i.e., events are the single source of truth),
-/// but can be configured to be aggregate-sourced or use snapshots when a large number of events
-/// are associated with a single aggregate instance.
-///
+/// This defaults to an event-sourced store (i.e., events are the single source
+/// of truth), but can be configured to be aggregate-sourced or use snapshots
+/// when a large number of events are associated with a single aggregate
+/// instance.
 pub struct PersistedEventStore<R, A>
 where
     R: PersistedEventRepository,
@@ -99,7 +99,7 @@ where
     /// # use cqrs_es::persist::PersistedEventStore;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
     /// let repo = MyEventRepository::new(my_db_connection);
-    /// let store = PersistedEventStore::<MyEventRepository,MyAggregate>::new_event_store(repo);
+    /// let store = PersistedEventStore::<MyEventRepository, MyAggregate>::new_event_store(repo);
     /// let service = MyService;
     /// let cqrs = CqrsFramework::new(store, vec![], service);
     /// # }
@@ -115,8 +115,9 @@ where
 
     /// Creates a new `PersistedEventStore` from the provided event repository,
     /// using the serialized aggregate as the source of truth.
-    /// As with other `EventStore` implementations, committed events are stored but they are
-    /// not used as the source of truth when loading an aggregate.
+    /// As with other `EventStore` implementations, committed events are stored
+    /// but they are not used as the source of truth when loading an
+    /// aggregate.
     ///
     /// ```
     /// # use cqrs_es::doc::{MyAggregate, MyService};
@@ -125,7 +126,7 @@ where
     /// # use cqrs_es::persist::PersistedEventStore;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
     /// let repo = MyEventRepository::new(my_db_connection);
-    /// let store = PersistedEventStore::<MyEventRepository,MyAggregate>::new_aggregate_store(repo);
+    /// let store = PersistedEventStore::<MyEventRepository, MyAggregate>::new_aggregate_store(repo);
     /// let cqrs = CqrsFramework::new(store, vec![], MyService);
     /// # }
     /// ```
@@ -148,7 +149,8 @@ where
     /// # use cqrs_es::persist::PersistedEventStore;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
     /// let repo = MyEventRepository::new(my_db_connection);
-    /// let store = PersistedEventStore::<MyEventRepository,MyAggregate>::new_snapshot_store(repo, 100);
+    /// let store =
+    ///     PersistedEventStore::<MyEventRepository, MyAggregate>::new_snapshot_store(repo, 100);
     /// let cqrs = CqrsFramework::new(store, vec![], MyService);
     /// # }
     /// ```
@@ -165,7 +167,8 @@ where
     /// The EventUpcasters within the Vec should be placed in the
     /// order that they should be applied
     ///
-    /// E.g., an upcaster for version 0.2.3 should be placed before an upcaster for version 0.2.4
+    /// E.g., an upcaster for version 0.2.3 should be placed before an upcaster
+    /// for version 0.2.4
     pub fn with_upcasters(self, event_upcasters: Vec<Box<dyn EventUpcaster>>) -> Self {
         Self {
             repo: self.repo,
@@ -286,7 +289,8 @@ where
         Ok(Some((payload, next_snapshot)))
     }
 
-    /// Method to wrap a set of events with the additional metadata needed for persistence and publishing
+    /// Method to wrap a set of events with the additional metadata needed for
+    /// persistence and publishing
     fn wrap_events(
         &self,
         aggregate_id: &str,
@@ -341,6 +345,7 @@ pub(crate) mod shared_test {
                 Self::SomethingWasDone => "SomethingWasDone".to_string(),
             }
         }
+
         fn event_version(&self) -> String {
             EVENT_VERSION.to_string()
         }
@@ -380,13 +385,14 @@ pub(crate) mod shared_test {
     #[async_trait]
     impl Aggregate for TestAggregate {
         type Command = TestCommands;
-        type Event = TestEvents;
         type Error = TestError;
+        type Event = TestEvents;
         type Services = TestService;
 
         fn aggregate_type() -> String {
             "TestAggregate".to_string()
         }
+
         async fn handle(
             &self,
             command: Self::Command,
@@ -397,6 +403,7 @@ pub(crate) mod shared_test {
                 TestCommands::BadCommand => Err("the expected error message".into()),
             }
         }
+
         fn apply(&mut self, event: Self::Event) {
             match event {
                 TestEvents::Started => {}
@@ -435,6 +442,7 @@ pub(crate) mod shared_test {
                 persist_check: Mutex::new(None),
             }
         }
+
         pub(crate) fn with_last_events(
             last_events: Result<Vec<SerializedEvent>, PersistenceError>,
             snapshot: Result<Option<SerializedSnapshot>, PersistenceError>,
@@ -446,6 +454,7 @@ pub(crate) mod shared_test {
                 persist_check: Mutex::new(None),
             }
         }
+
         pub(crate) fn with_snapshot(
             result: Result<Option<SerializedSnapshot>, PersistenceError>,
         ) -> Self {
@@ -456,6 +465,7 @@ pub(crate) mod shared_test {
                 persist_check: Mutex::new(None),
             }
         }
+
         #[allow(clippy::type_complexity)]
         pub(crate) fn with_commit(
             test_function: Box<
@@ -479,6 +489,7 @@ pub(crate) mod shared_test {
         ) -> Result<Vec<SerializedEvent>, PersistenceError> {
             self.events_result.lock().unwrap().take().unwrap()
         }
+
         async fn get_last_events<A: Aggregate>(
             &self,
             _aggregate_id: &str,
@@ -486,12 +497,14 @@ pub(crate) mod shared_test {
         ) -> Result<Vec<SerializedEvent>, PersistenceError> {
             self.last_events_result.lock().unwrap().take().unwrap()
         }
+
         async fn get_snapshot<A: Aggregate>(
             &self,
             _aggregate_id: &str,
         ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
             self.snapshot_result.lock().unwrap().take().unwrap()
         }
+
         async fn persist<A: Aggregate>(
             &self,
             events: &[SerializedEvent],

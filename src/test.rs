@@ -1,8 +1,7 @@
 use crate::aggregate::Aggregate;
 
-/// A framework for rigorously testing the aggregate logic, one of the ***most important***
-/// parts of any DDD system.
-///
+/// A framework for rigorously testing the aggregate logic, one of the ***most
+/// important*** parts of any DDD system.
 pub struct TestFramework<A: Aggregate> {
     service: A::Services,
 }
@@ -24,8 +23,7 @@ where
     /// # use cqrs_es::doc::{MyAggregate, MyService};
     /// use cqrs_es::test::TestFramework;
     ///
-    /// let executor = TestFramework::<MyAggregate>::with(MyService)
-    ///     .given_no_previous_events();
+    /// let executor = TestFramework::<MyAggregate>::with(MyService).given_no_previous_events();
     /// ```
     #[must_use]
     pub fn given_no_previous_events(self) -> AggregateTestExecutor<A> {
@@ -34,14 +32,15 @@ where
             service: self.service,
         }
     }
+
     /// Initiates an aggregate test with a collection of previous events.
     ///
     /// ```
     /// # use cqrs_es::doc::{MyAggregate, MyEvents, MyService};
     /// use cqrs_es::test::TestFramework;
     ///
-    /// let executor = TestFramework::<MyAggregate>::with(MyService)
-    ///     .given(vec![MyEvents::SomethingWasDone]);
+    /// let executor =
+    ///     TestFramework::<MyAggregate>::with(MyService).given(vec![MyEvents::SomethingWasDone]);
     /// ```
     #[must_use]
     pub fn given(self, events: Vec<A::Event>) -> AggregateTestExecutor<A> {
@@ -65,15 +64,14 @@ impl<A> AggregateTestExecutor<A>
 where
     A: Aggregate,
 {
-    /// Consumes a command and using the state details previously passed provides a validator object
-    /// to test against.
+    /// Consumes a command and using the state details previously passed
+    /// provides a validator object to test against.
     ///
     /// ```
     /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyService};
     /// use cqrs_es::test::TestFramework;
     ///
-    /// let executor = TestFramework::<MyAggregate>::with(MyService)
-    ///     .given_no_previous_events();
+    /// let executor = TestFramework::<MyAggregate>::with(MyService).given_no_previous_events();
     ///
     /// let validator = executor.when(MyCommands::DoSomething);
     /// ```
@@ -129,8 +127,8 @@ impl<A: Aggregate> AggregateResultValidator<A> {
         assert_eq!(&events[..], &expected_events[..]);
     }
 
-    /// Verifies that the result is a `UserError` and returns the internal error payload for
-    /// further validation.
+    /// Verifies that the result is a `UserError` and returns the internal error
+    /// payload for further validation.
     ///
     /// ```
     /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents, MyService};
@@ -162,7 +160,7 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     ///     .when(MyCommands::BadCommand);
     ///
     /// let expected = MyUserError("the expected error message".to_string());
-    /// assert_eq!(expected,validator.inspect_result().unwrap_err());
+    /// assert_eq!(expected, validator.inspect_result().unwrap_err());
     /// ```
     pub fn inspect_result(self) -> Result<Vec<A::Event>, A::Error> {
         self.result

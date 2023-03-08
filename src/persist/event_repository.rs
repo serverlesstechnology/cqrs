@@ -1,10 +1,12 @@
-use crate::persist::event_stream::ReplayStream;
-use crate::persist::{PersistenceError, SerializedEvent, SerializedSnapshot};
-use crate::Aggregate;
 use async_trait::async_trait;
 use serde_json::Value;
 
-/// Handles the database access needed for operation of a PersistedSnapshotStore.
+use crate::persist::event_stream::ReplayStream;
+use crate::persist::{PersistenceError, SerializedEvent, SerializedSnapshot};
+use crate::Aggregate;
+
+/// Handles the database access needed for operation of a
+/// PersistedSnapshotStore.
 #[async_trait]
 pub trait PersistedEventRepository: Send + Sync {
     /// Returns all events for a single aggregate instance.

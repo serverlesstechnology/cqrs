@@ -1,9 +1,9 @@
 use std::convert::TryFrom;
 
-use crate::{Aggregate, DomainEvent, EventEnvelope};
 use serde_json::Value;
 
 use crate::persist::{EventStoreAggregateContext, EventUpcaster, PersistenceError};
+use crate::{Aggregate, DomainEvent, EventEnvelope};
 
 /// A serialized version of an event with metadata.
 /// Used by repositories to store and load events from a database.
