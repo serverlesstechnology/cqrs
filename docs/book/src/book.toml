@@ -1,7 +1,0 @@
-[book]
-authors = ["Dave Garred"]
-language = "en"
-multilingual = false
-src = "src"
-edition = "2021"
-title = "Getting started with CQRS using Rust"
