@@ -17,6 +17,7 @@ use crate::{Aggregate, AggregateContext, AggregateError, EventStore};
 /// let store = MemStore::<MyAggregate>::default();
 /// let cqrs = CqrsFramework::new(store, vec![], MyService);
 /// ```
+#[derive(Debug,Clone)]
 pub struct MemStore<A: Aggregate + Send + Sync> {
     events: Arc<LockedEventEnvelopeMap<A>>,
 }
@@ -52,6 +53,7 @@ impl<A: Aggregate> MemStore<A> {
     ///     None => {}
     /// };
     /// ```
+    #[deprecated(since = "0.4.9", note = "clone the MemStore instead")]
     pub fn get_events(&self) -> Arc<LockedEventEnvelopeMap<A>> {
         Arc::clone(&self.events)
     }

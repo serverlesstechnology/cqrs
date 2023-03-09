@@ -10,7 +10,7 @@ use cqrs_es::test::TestFramework;
 use cqrs_es::Query;
 use cqrs_es::{Aggregate, AggregateError, CqrsFramework, DomainEvent, EventEnvelope, EventStore};
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct TestAggregate {
     id: String,
     description: String,
@@ -288,13 +288,12 @@ fn test_framework_failure_test_b() {
 
 #[tokio::test]
 async fn framework_test() {
-    let event_store = MemStore::default();
-    let stored_events = event_store.get_events();
+    let event_store = MemStore::<TestAggregate>::default();
 
     let delivered_events = Default::default();
     let view = TestView::new(Arc::clone(&delivered_events));
 
-    let cqrs = CqrsFramework::new(event_store, vec![Box::new(view)], TestService);
+    let cqrs = CqrsFramework::new(event_store.clone(), vec![Box::new(view)], TestService);
     let uuid = uuid::Uuid::new_v4().to_string();
     let id = uuid.clone();
     let metadata = metadata();
@@ -308,7 +307,7 @@ async fn framework_test() {
     .await
     .unwrap_or_default();
 
-    assert_eq!(1, stored_events.read().unwrap().len());
+    assert_eq!(1, event_store.load_events(&id).await.unwrap().len());
     assert_eq!(1, delivered_events.read().unwrap().len());
 
     let test = "TEST_A";
@@ -323,10 +322,9 @@ async fn framework_test() {
     .unwrap_or_default();
 
     assert_eq!(2, delivered_events.read().unwrap().len());
-    let stored_event_count = stored_events
-        .read()
-        .unwrap()
-        .get(uuid.clone().as_str())
+    let stored_event_count = event_store
+        .load_events(uuid.clone().as_str())
+        .await
         .unwrap()
         .len();
     assert_eq!(2, stored_event_count);
@@ -349,10 +347,9 @@ async fn framework_test() {
     };
 
     assert_eq!(2, delivered_events.read().unwrap().len());
-    let stored_event_count = stored_events
-        .read()
-        .unwrap()
-        .get(uuid.clone().as_str())
+    let stored_event_count = event_store
+        .load_events(uuid.clone().as_str())
+        .await
         .unwrap()
         .len();
     assert_eq!(2, stored_event_count);
