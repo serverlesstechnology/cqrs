@@ -72,7 +72,7 @@ pub(crate) fn deserialize_events<A: Aggregate>(
                     if upcaster
                         .can_upcast(&upcasted_event.event_type, &upcasted_event.event_version)
                     {
-                        upcasted_event = upcaster.upcast(upcasted_event)
+                        upcasted_event = upcaster.upcast(upcasted_event);
                     }
                 }
                 upcasted_event

@@ -88,13 +88,11 @@ where
     }
 
     async fn load_mut(&self, view_id: String) -> Result<(V, ViewContext), PersistenceError> {
-        match self.view_repository.load_with_context(&view_id).await? {
-            None => {
-                let view_context = ViewContext::new(view_id, 0);
-                Ok((Default::default(), view_context))
-            }
-            Some((view, context)) => Ok((view, context)),
-        }
+        Ok(self
+            .view_repository
+            .load_with_context(&view_id)
+            .await?
+            .unwrap_or_else(|| (Default::default(), ViewContext::new(view_id, 0))))
     }
 
     pub(crate) async fn apply_events(
@@ -125,9 +123,8 @@ where
     A: Aggregate,
 {
     async fn dispatch(&self, view_id: &str, events: &[EventEnvelope<A>]) {
-        match self.apply_events(view_id, events).await {
-            Ok(_) => {}
-            Err(err) => self.handle_error(err),
+        if let Err(err) = self.apply_events(view_id, events).await {
+            self.handle_error(err);
         };
     }
 }

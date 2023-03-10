@@ -244,7 +244,7 @@ fn test_framework_test() {
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
         }))
-        .then_expect_error_message("test already performed")
+        .then_expect_error_message("test already performed");
 }
 
 #[test]
@@ -276,14 +276,14 @@ fn test_framework_failure_test_b() {
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
         }))
-        .then_expect_error_message("some error message")
+        .then_expect_error_message("some error message");
 }
 
 #[tokio::test]
 async fn framework_test() {
     let event_store = MemStore::<TestAggregate>::default();
 
-    let delivered_events = Default::default();
+    let delivered_events = Arc::default();
     let view = TestView::new(Arc::clone(&delivered_events));
 
     let cqrs = CqrsFramework::new(event_store.clone(), vec![Box::new(view)], TestService);
@@ -334,7 +334,7 @@ async fn framework_test() {
         .unwrap_err();
     match err {
         AggregateError::UserError(payload) => {
-            assert_eq!("test already performed", payload.0.as_str())
+            assert_eq!("test already performed", payload.0.as_str());
         }
         _ => panic!("not the expected error"),
     };

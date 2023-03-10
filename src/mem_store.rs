@@ -17,7 +17,7 @@ use crate::{Aggregate, AggregateContext, AggregateError, EventStore};
 /// let store = MemStore::<MyAggregate>::default();
 /// let cqrs = CqrsFramework::new(store, vec![], MyService);
 /// ```
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub struct MemStore<A: Aggregate + Send + Sync> {
     events: Arc<LockedEventEnvelopeMap<A>>,
 }
@@ -44,13 +44,10 @@ impl<A: Aggregate> MemStore<A> {
     /// //...
     /// let all_locked_events = store.get_events();
     /// let unlocked_events = all_locked_events.read().unwrap();
-    /// match unlocked_events.get("test-aggregate-id-C450D1A") {
-    ///     Some(events) => {
-    ///         for event in events {
-    ///             println!("{:?}", event);
-    ///         }
+    /// if let Some(events) = unlocked_events.get("test-aggregate-id-C450D1A") {
+    ///     for event in events {
+    ///         println!("{:?}", event);
     ///     }
-    ///     None => {}
     /// };
     /// ```
     #[deprecated(since = "0.4.9", note = "clone the MemStore instead")]
@@ -65,14 +62,9 @@ impl<A: Aggregate> MemStore<A> {
         // uninteresting unwrap: this will not be used in production, for tests only
         let event_map = self.events.read().unwrap();
         let mut committed_events: Vec<EventEnvelope<A>> = Vec::new();
-        match event_map.get(aggregate_id) {
-            None => {}
-            Some(events) => {
-                for event in events {
-                    committed_events.push(event.clone());
-                }
-            }
-        };
+        for event in event_map.get(aggregate_id).into_iter().flatten() {
+            committed_events.push(event.clone());
+        }
         Ok(committed_events)
     }
 
@@ -142,8 +134,10 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
             new_events_qty, &aggregate_id
         );
         // uninteresting unwrap: this is not a struct for production use
-        let mut event_map = self.events.write().unwrap();
-        event_map.insert(aggregate_id, new_events);
+        self.events
+            .write()
+            .unwrap()
+            .insert(aggregate_id, new_events);
         Ok(wrapped_events)
     }
 }
@@ -158,20 +152,18 @@ impl<A: Aggregate> MemStore<A> {
         base_metadata: HashMap<String, String>,
     ) -> Vec<EventEnvelope<A>> {
         let mut sequence = current_sequence;
-        let mut wrapped_events: Vec<EventEnvelope<A>> = Vec::new();
-        for payload in resultant_events {
-            sequence += 1;
-            let aggregate_id: String = aggregate_id.to_string();
-            let sequence = sequence;
-            let metadata = base_metadata.clone();
-            wrapped_events.push(EventEnvelope {
-                aggregate_id,
-                sequence,
-                payload,
-                metadata,
-            });
-        }
-        wrapped_events
+        resultant_events
+            .into_iter()
+            .map(|payload| {
+                sequence += 1;
+                EventEnvelope {
+                    aggregate_id: aggregate_id.to_string(),
+                    sequence,
+                    payload,
+                    metadata: base_metadata.clone(),
+                }
+            })
+            .collect()
     }
 }
 /// Holds context for a pure event store implementation for MemStore.

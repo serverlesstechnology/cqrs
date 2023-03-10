@@ -158,8 +158,7 @@ where
     ///
     /// async fn do_something(cqrs: MyFramework) -> Result<(),AggregateError<MyUserError>>  {
     ///     let command = MyCommands::DoSomething;
-    ///     let mut metadata = HashMap::new();
-    ///     metadata.insert("time".to_string(), chrono::Utc::now().to_rfc3339());
+    ///     let metadata = HashMap::from([("time".to_string(), chrono::Utc::now().to_rfc3339())]);
     ///
     ///     cqrs.execute_with_metadata("agg-id-F39A0C", command, metadata).await
     /// }
@@ -172,10 +171,10 @@ where
     ) -> Result<(), AggregateError<A::Error>> {
         let aggregate_context = self.store.load_aggregate(aggregate_id).await?;
         let aggregate = aggregate_context.aggregate();
-        let resultant_events = match aggregate.handle(command, &self.service).await {
-            Ok(events) => events,
-            Err(err) => return Err(AggregateError::UserError(err)),
-        };
+        let resultant_events = aggregate
+            .handle(command, &self.service)
+            .await
+            .map_err(AggregateError::UserError)?;
         let committed_events = self
             .store
             .commit(resultant_events, aggregate_context, metadata)

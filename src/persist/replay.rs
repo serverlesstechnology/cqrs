@@ -60,7 +60,7 @@ where
     /// Replay the events of a single aggregate instance.
     pub async fn replay(&self, aggregate_id: &str) -> Result<(), AggregateError<A::Error>> {
         let mut stream = self.repository.stream_events::<A>(aggregate_id).await?;
-        while let Some(event) = stream.next::<A>().await {
+        while let Some(event) = stream.next().await {
             self.apply(event).await;
         }
         Ok(())
@@ -69,7 +69,7 @@ where
     /// Replay the events of all aggregate instances within the database.
     pub async fn replay_all(&self) -> Result<(), AggregateError<A::Error>> {
         let mut stream = self.repository.stream_all_events::<A>().await?;
-        while let Some(event) = stream.next::<A>().await {
+        while let Some(event) = stream.next().await {
             self.apply(event).await;
         }
         Ok(())
