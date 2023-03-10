@@ -210,6 +210,7 @@ mod test {
             patch,
         }
     }
+
     #[test]
     fn parse_version() {
         assert_eq!(
@@ -228,9 +229,25 @@ mod test {
             semantic_version(2, 3, 4),
             SemanticVersion::from_str("2.3.4.5").unwrap()
         );
+    }
+
+    #[test]
+    fn parse_version_invalid() {
         assert_eq!(
             Err(SemanticVersionError),
             SemanticVersion::from_str("not_a_version")
+        );
+        assert_eq!(
+            Err(SemanticVersionError),
+            SemanticVersion::from_str("")
+        );
+        assert_eq!(
+            Err(SemanticVersionError),
+            SemanticVersion::from_str("2.")
+        );
+        assert_eq!(
+            Err(SemanticVersionError),
+            SemanticVersion::from_str("2.3.")
         );
     }
 
