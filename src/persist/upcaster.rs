@@ -237,18 +237,9 @@ mod test {
             Err(SemanticVersionError),
             SemanticVersion::from_str("not_a_version")
         );
-        assert_eq!(
-            Err(SemanticVersionError),
-            SemanticVersion::from_str("")
-        );
-        assert_eq!(
-            Err(SemanticVersionError),
-            SemanticVersion::from_str("2.")
-        );
-        assert_eq!(
-            Err(SemanticVersionError),
-            SemanticVersion::from_str("2.3.")
-        );
+        assert_eq!(Err(SemanticVersionError), SemanticVersion::from_str(""));
+        assert_eq!(Err(SemanticVersionError), SemanticVersion::from_str("2."));
+        assert_eq!(Err(SemanticVersionError), SemanticVersion::from_str("2.3."));
     }
 
     #[test]
