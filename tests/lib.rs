@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
 use std::sync::{Arc, RwLock};
 
 use serde::{Deserialize, Serialize};
@@ -16,15 +15,9 @@ pub struct TestAggregate {
     description: String,
     tests: Vec<String>,
 }
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
 pub struct TestError(String);
-impl Display for TestError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl std::error::Error for TestError {}
 
 impl From<&str> for TestError {
     fn from(msg: &str) -> Self {
