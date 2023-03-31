@@ -1,0 +1,20 @@
+#!/bin/bash
+# Ensures there are no formatting errors.
+#
+TMP_DIR="_GIT_COMMIT_CHECK_DIR"
+CURRENT_DIR=`pwd`
+trap _reset_dirs EXIT
+function _reset_dirs () {
+    cd $CURRENT_DIR
+    rm -rf $TMP_DIR
+}
+mkdir $TMP_DIR
+git checkout-index --prefix=$TMP_DIR/ -af
+cd $TMP_DIR
+cargo fmt --check
+if [ $? -ne 0 ]; then
+    echo
+    echo -e "\033[0;31mInvalid formatting, please run 'cargo fmt' \033[0m"
+    exit 1
+fi
+
