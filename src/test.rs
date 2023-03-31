@@ -81,6 +81,24 @@ where
         let result = when::<A>(self.events, command, self.service);
         AggregateResultValidator { result }
     }
+
+    /// Adds additional events to an aggregate test.
+    ///
+    /// ```
+    /// # use cqrs_es::doc::{MyAggregate, MyEvents, MyService};
+    /// use cqrs_es::test::TestFramework;
+    ///
+    /// let executor = TestFramework::<MyAggregate>::with(MyService)
+    ///     .given(vec![MyEvents::SomethingWasDone])
+    ///     .and(vec![MyEvents::SomethingElseWasDone]);
+    /// ```
+    #[must_use]
+    pub fn and(self, new_events: Vec<A::Event>) -> Self {
+        let mut events = self.events;
+        events.extend(new_events);
+        let service = self.service;
+        AggregateTestExecutor { events, service }
+    }
 }
 
 #[tokio::main(flavor = "current_thread")]
