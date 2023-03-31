@@ -97,10 +97,7 @@ where
         let mut events = self.events;
         events.extend(new_events);
         let service = self.service;
-        AggregateTestExecutor {
-            events,
-            service,
-        }
+        AggregateTestExecutor { events, service }
     }
 }
 

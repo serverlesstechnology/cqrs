@@ -16,7 +16,7 @@ impl DomainEvent for MyEvents {
     fn event_type(&self) -> String {
         match self {
             Self::SomethingWasDone => "SomethingWasDone".to_string(),
-            MyEvents::SomethingElseWasDone =>  "SomethingElseWasDone".to_string(),
+            MyEvents::SomethingElseWasDone => "SomethingElseWasDone".to_string(),
         }
     }
     fn event_version(&self) -> String {
