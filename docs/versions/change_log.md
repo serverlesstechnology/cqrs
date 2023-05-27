@@ -1,5 +1,8 @@
 # Change log
 
+#### `v0.4.9`
+- Added the `when_async` and `and` methods to the test executor to support `async` test frameworks and Gherkin testing.
+
 #### `v0.4.8`
 - ***The primary branch is now set to `main`.***
 - Makes the runtime and TLS library configurable for the SQL based persistence crates.
