@@ -1,5 +1,6 @@
 use crate::persist::SerializedEvent;
 use crate::AggregateError;
+use std::error;
 
 /// Errors for implementations of a persistent event store.
 #[derive(Debug, thiserror::Error)]
@@ -45,5 +46,18 @@ impl From<serde_json::Error> for PersistenceError {
 impl From<tokio::sync::mpsc::error::SendError<Result<SerializedEvent, Self>>> for PersistenceError {
     fn from(err: tokio::sync::mpsc::error::SendError<Result<SerializedEvent, Self>>) -> Self {
         Self::UnknownError(Box::new(err))
+    }
+}
+
+impl<T: error::Error> From<serde_json::error::Error> for AggregateError<T> {
+    fn from(err: serde_json::error::Error) -> Self {
+        match err.classify() {
+            serde_json::error::Category::Data | serde_json::error::Category::Syntax => {
+                Self::DeserializationError(Box::new(err))
+            }
+            serde_json::error::Category::Io | serde_json::error::Category::Eof => {
+                Self::UnexpectedError(Box::new(err))
+            }
+        }
     }
 }

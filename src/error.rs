@@ -35,16 +35,3 @@ pub enum AggregateError<T: error::Error> {
     #[error("{0}")]
     UnexpectedError(Box<dyn error::Error + Send + Sync + 'static>),
 }
-
-impl<T: error::Error> From<serde_json::error::Error> for AggregateError<T> {
-    fn from(err: serde_json::error::Error) -> Self {
-        match err.classify() {
-            serde_json::error::Category::Data | serde_json::error::Category::Syntax => {
-                Self::DeserializationError(Box::new(err))
-            }
-            serde_json::error::Category::Io | serde_json::error::Category::Eof => {
-                Self::UnexpectedError(Box::new(err))
-            }
-        }
-    }
-}
