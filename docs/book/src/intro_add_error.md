@@ -5,7 +5,7 @@ An error to indicate a violation of the business rules, and a set of services th
 
 ### User error
 
-The `Aggregate` trait can return an error` from its `handle` method indicating that some rule of the business logic was violated,
+The `Aggregate` trait can return an error from its `handle` method indicating that some rule of the business logic was violated,
 this information will usually be returned to the user as an error message.
 For example, an attempt to withdraw more money from a bank account than the current balance would return this error
 and the user would be informed that the balance was not sufficient for this transaction.
