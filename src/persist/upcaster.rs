@@ -285,9 +285,12 @@ mod test {
             payload,
             Value::default(),
         );
-        println!("{}", event.payload);
+
         let upcasted_event = upcaster.upcast(event);
-        println!("{}", upcasted_event.payload);
+
+        let expected: Value =
+            serde_json::from_str(r#"{"id":"CUST4829","name":"George Steinbrenner"}"#).unwrap();
+        assert_eq!(expected, upcasted_event.payload);
     }
     #[test]
     fn semantic_version_upcaster_upcast_for_documentation() {

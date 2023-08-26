@@ -5,7 +5,7 @@ authors = ["Dave Garred <dave.garred@serverlesstechnology.com>"]
 edition = "2021"
 license = "Apache-2.0"
 keywords = ["cqrs", "event-sourcing", "serverless"]
-description = "A lightweight, opinionated CQRS and event sourcing framework targeting serverless architectures."
+description = "A lightweight, opinionated CQRS and event sourcing framework."
 documentation = "https://docs.rs/cqrs-es"
 repository = "https://github.com/serverlesstechnology/cqrs"
 readme = "README.md"
@@ -20,5 +20,5 @@ thiserror = "^1.0.37"
 tokio = { version = "1", features = ["macros", "sync", "rt"] }
 
 [dev-dependencies]
-uuid = { version = "1.3", features = ["v4"] }
+uuid = { version = "1.4", features = ["v4"] }
 chrono = { version = "^0.4.24", default-features = false, features = ["clock"] }

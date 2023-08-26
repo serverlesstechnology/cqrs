@@ -9,7 +9,7 @@ use cqrs_es::test::TestFramework;
 use cqrs_es::Query;
 use cqrs_es::{Aggregate, AggregateError, CqrsFramework, DomainEvent, EventEnvelope, EventStore};
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq)]
 pub struct TestAggregate {
     id: String,
     description: String,
@@ -217,7 +217,14 @@ async fn test_mem_store() {
         let event = stored_envelope.payload;
         agg.apply(event);
     }
-    println!("{:#?}", agg);
+    assert_eq!(
+        agg,
+        TestAggregate {
+            id: "test_event_A".to_string(),
+            description: "something else happening here".to_string(),
+            tests: vec!["test A".to_string(), "test B".to_string()],
+        }
+    );
 }
 
 type ThisTestFramework = TestFramework<TestAggregate>;

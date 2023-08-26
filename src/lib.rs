@@ -2,7 +2,6 @@
 #![deny(missing_docs)]
 #![deny(clippy::all)]
 #![warn(rust_2018_idioms)]
-// #![warn(clippy::pedantic,missing_debug_implementations)]
 #![doc = include_str!("../README.md")]
 //!
 pub use crate::aggregate::*;
