@@ -1,5 +1,9 @@
 # Change log
 
+#### `v0.4.10`
+- Updated dependencies.
+- Rust minimum version changed to 1.63.0
+
 #### `v0.4.9`
 - Added the `when_async` and `and` methods to the test executor to support `async` test frameworks and Gherkin testing.
 
