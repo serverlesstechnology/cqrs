@@ -10,7 +10,7 @@ documentation = "https://docs.rs/cqrs-es"
 repository = "https://github.com/serverlesstechnology/cqrs"
 readme = "README.md"
 exclude = ["docs"]
-rust-version = "1.61.0"
+rust-version = "1.63.0"
 
 [dependencies]
 async-trait = "0.1"
