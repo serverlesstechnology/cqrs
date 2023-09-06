@@ -41,7 +41,7 @@ current aggregate logic.
 
 The `EventUpcaster` trait provides the functionality to make this conversion.
 A persistence repository will use any configured upcasters to 'upcast' events as they are loaded.
-For each event, the stored `eveent_type` and `event_version` will be compared to each upcaster to determine if it 
+For each event, the stored `event_type` and `event_version` will be compared to each upcaster to determine if it 
 should be upcast, and the to upcast it if needed.
 ```rust
 pub trait EventUpcaster: Send + Sync {
