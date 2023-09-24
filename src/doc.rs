@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::persist::{
-    PersistedEventRepository, PersistenceError, ReplayStream, SerializedEvent, SerializedSnapshot,
+    MpscReplayStream, PersistedEventRepository, PersistenceError, SerializedEvent,
+    SerializedSnapshot,
 };
 use crate::{Aggregate, DomainEvent, EventEnvelope, Query};
 
@@ -195,7 +196,7 @@ mod doc_tests {
 
 pub struct MyRepository;
 #[async_trait]
-impl PersistedEventRepository for MyRepository {
+impl PersistedEventRepository<MpscReplayStream> for MyRepository {
     async fn get_events<A: Aggregate>(
         &self,
         _aggregate_id: &str,
@@ -229,11 +230,11 @@ impl PersistedEventRepository for MyRepository {
     async fn stream_events<A: Aggregate>(
         &self,
         _aggregate_id: &str,
-    ) -> Result<ReplayStream, PersistenceError> {
+    ) -> Result<MpscReplayStream, PersistenceError> {
         todo!()
     }
 
-    async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
+    async fn stream_all_events<A: Aggregate>(&self) -> Result<MpscReplayStream, PersistenceError> {
         todo!()
     }
 }

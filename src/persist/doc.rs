@@ -1,5 +1,5 @@
 use crate::doc::MyAggregate;
-use crate::persist::event_stream::ReplayStream;
+use crate::persist::event_stream::MpscReplayStream;
 use crate::persist::{
     PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot, ViewContext,
     ViewRepository,
@@ -67,7 +67,7 @@ impl MyEventRepository {
 }
 
 #[async_trait]
-impl PersistedEventRepository for MyEventRepository {
+impl PersistedEventRepository<MpscReplayStream> for MyEventRepository {
     async fn get_events<A: Aggregate>(
         &self,
         _aggregate_id: &str,
@@ -101,11 +101,11 @@ impl PersistedEventRepository for MyEventRepository {
     async fn stream_events<A: Aggregate>(
         &self,
         _aggregate_id: &str,
-    ) -> Result<ReplayStream, PersistenceError> {
+    ) -> Result<MpscReplayStream, PersistenceError> {
         todo!()
     }
 
-    async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
+    async fn stream_all_events<A: Aggregate>(&self) -> Result<MpscReplayStream, PersistenceError> {
         todo!()
     }
 }

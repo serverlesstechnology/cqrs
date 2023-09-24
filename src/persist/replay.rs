@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::persist::{PersistedEventRepository, PersistenceError, QueryErrorHandler};
+use crate::persist::{PersistedEventRepository, PersistenceError, QueryErrorHandler, ReplayStream};
 use crate::{Aggregate, AggregateError, EventEnvelope, Query};
 
 /// A utility for replaying committed events to a `Query`.
@@ -14,23 +14,25 @@ use crate::{Aggregate, AggregateError, EventEnvelope, Query};
 ///     replay.replay_all();
 /// }
 /// ```
-pub struct QueryReplay<R, Q, A>
+pub struct QueryReplay<R, Q, A, RS>
 where
-    R: PersistedEventRepository,
+    R: PersistedEventRepository<RS>,
     Q: Query<A>,
     A: Aggregate,
+    RS: ReplayStream,
 {
     repository: R,
     query: Q,
     error_handler: Option<Box<QueryErrorHandler>>,
-    phantom_data: PhantomData<A>,
+    phantom_data: PhantomData<(A, RS)>,
 }
 
-impl<R, Q, A> QueryReplay<R, Q, A>
+impl<R, Q, A, RS> QueryReplay<R, Q, A, RS>
 where
-    R: PersistedEventRepository,
+    R: PersistedEventRepository<RS>,
     Q: Query<A>,
     A: Aggregate,
+    RS: ReplayStream,
 {
     /// Create a new replay utility using the provided event repository as the source and the
     /// query as the target.
@@ -48,8 +50,8 @@ where
     /// _Example: An error handler that panics on any error._
     /// ```
     /// # use cqrs_es::doc::{MyAggregate, MyQuery, MyRepository};
-    /// # use cqrs_es::persist::{GenericQuery, QueryReplay, ReplayStream};
-    /// # fn config(mut replay: QueryReplay<MyRepository,MyQuery,MyAggregate>) {
+    /// # use cqrs_es::persist::{GenericQuery, QueryReplay, MpscReplayStream};
+    /// # fn config(mut replay: QueryReplay<MyRepository,MyQuery,MyAggregate,MpscReplayStream>) {
     /// replay.use_error_handler(Box::new(|e|panic!("{}",e)));
     /// # }
     /// ```

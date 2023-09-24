@@ -11,7 +11,7 @@ pub use context::EventStoreAggregateContext;
 pub use error::PersistenceError;
 pub use event_repository::PersistedEventRepository;
 pub use event_store::PersistedEventStore;
-pub use event_stream::{ReplayFeed, ReplayStream};
+pub use event_stream::{MpscReplayStream, ReplayFeed, ReplayStream};
 pub use generic_query::{GenericQuery, QueryErrorHandler};
 pub use replay::QueryReplay;
 pub use serialized_event::{SerializedEvent, SerializedSnapshot};
