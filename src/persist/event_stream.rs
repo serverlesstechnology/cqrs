@@ -1,6 +1,7 @@
-use crate::persist::{PersistenceError, SerializedEvent};
+use crate::persist::{PersistenceError, SerializedEvent, EventUpcaster};
 use crate::{Aggregate, EventEnvelope};
 use tokio::sync::mpsc::{Receiver, Sender};
+
 
 /// Accesses a domain event stream for a particular aggregate.
 ///
@@ -16,14 +17,38 @@ impl ReplayStream {
         (ReplayFeed { sender }, Self { queue })
     }
 
-    /// Receive the next event or error in the stream, if no event is available this will block.
+    /// Receive the next upcasted event or error in the stream, if no event is available this will block.
     pub async fn next<A: Aggregate>(
         &mut self,
+        event_upcasters: &Option<Vec<Box<dyn EventUpcaster>>>,
     ) -> Option<Result<EventEnvelope<A>, PersistenceError>> {
         self.queue
             .recv()
             .await
-            .map(|result| result.and_then(TryInto::try_into))
+            .map(|result| {
+                result
+                    .and_then(|serialized_event| upcast_event(serialized_event, event_upcasters).try_into())
+            })
+    }
+}
+
+fn upcast_event(
+    event: SerializedEvent,
+    upcasters: &Option<Vec<Box<dyn EventUpcaster>>>,
+) -> SerializedEvent {
+    match upcasters {
+        None => event,
+        Some(upcasters) => {
+            let mut upcasted_event = event;
+            for upcaster in upcasters {
+                if upcaster
+                    .can_upcast(&upcasted_event.event_type, &upcasted_event.event_version)
+                {
+                    upcasted_event = upcaster.upcast(upcasted_event);
+                }
+            }
+            upcasted_event
+        }
     }
 }
 
@@ -54,7 +79,7 @@ mod test {
             .await
             .unwrap();
         drop(feed);
-        let found = stream.next::<MyAggregate>().await;
+        let found = stream.next::<MyAggregate>(&None).await;
         assert!(
             matches!(
                 found.unwrap().unwrap_err(),
