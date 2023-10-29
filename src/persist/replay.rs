@@ -1,7 +1,9 @@
 use std::marker::PhantomData;
 
+use crate::persist::{
+    EventUpcaster, PersistedEventRepository, PersistenceError, QueryErrorHandler,
+};
 use crate::{Aggregate, AggregateError, EventEnvelope, Query};
-use crate::persist::{EventUpcaster, PersistedEventRepository, PersistenceError, QueryErrorHandler};
 
 /// A utility for replaying committed events to a `Query`.
 ///
@@ -15,10 +17,10 @@ use crate::persist::{EventUpcaster, PersistedEventRepository, PersistenceError, 
 /// }
 /// ```
 pub struct QueryReplay<R, Q, A>
-    where
-        R: PersistedEventRepository,
-        Q: Query<A>,
-        A: Aggregate,
+where
+    R: PersistedEventRepository,
+    Q: Query<A>,
+    A: Aggregate,
 {
     repository: R,
     query: Q,
@@ -28,10 +30,10 @@ pub struct QueryReplay<R, Q, A>
 }
 
 impl<R, Q, A> QueryReplay<R, Q, A>
-    where
-        R: PersistedEventRepository,
-        Q: Query<A>,
-        A: Aggregate
+where
+    R: PersistedEventRepository,
+    Q: Query<A>,
+    A: Aggregate,
 {
     /// Create a new replay utility using the provided event repository as the source and the
     /// query as the target.
@@ -59,7 +61,6 @@ impl<R, Q, A> QueryReplay<R, Q, A>
             phantom_data: self.phantom_data,
         }
     }
-
 
     /// Allows the user to apply a custom error handler to the query replay.
     ///
@@ -114,14 +115,14 @@ mod test {
     use std::sync::{Arc, Mutex};
 
     use async_trait::async_trait;
-    use serde_json::{json, Value};
     use serde_json::Value::Object;
+    use serde_json::{json, Value};
 
-    use crate::{EventEnvelope, Query};
     use crate::doc::{MyAggregate, MyEvents};
     use crate::persist::event_store::shared_test::MockRepo;
     use crate::persist::replay::QueryReplay;
     use crate::persist::{SemanticVersionEventUpcaster, SerializedEvent};
+    use crate::{EventEnvelope, Query};
 
     #[derive(Debug)]
     struct MockQuery {
@@ -189,7 +190,6 @@ mod test {
             metadata: HashMap::default(),
         }];
 
-
         // a "legacy" event that contains a single property
         // that the upcasting function should remove to upcast
         // to the expected event
@@ -211,13 +211,9 @@ mod test {
 
         let event_repo = MockRepo::with_events(Ok(ser_events.clone()));
         let (query, event_list) = MockQuery::new();
-        let query_replay = QueryReplay::new(event_repo, query)
-            .with_upcasters(vec![Box::new(SemanticVersionEventUpcaster::new(
-                "SomethingWasDone",
-                "0.1.0",
-                Box::new(upcasting_fn),
-            ))])
-            ;
+        let query_replay = QueryReplay::new(event_repo, query).with_upcasters(vec![Box::new(
+            SemanticVersionEventUpcaster::new("SomethingWasDone", "0.1.0", Box::new(upcasting_fn)),
+        )]);
 
         query_replay.replay(AGGREGATE_ID).await.unwrap();
 
@@ -227,12 +223,9 @@ mod test {
         // query all
         let event_repo = MockRepo::with_events(Ok(ser_events));
         let (query, event_list) = MockQuery::new();
-        let query_replay = QueryReplay::new(event_repo, query)
-            .with_upcasters(vec![Box::new(SemanticVersionEventUpcaster::new(
-                "SomethingWasDone",
-                "0.1.0",
-                Box::new(upcasting_fn),
-            ))]);
+        let query_replay = QueryReplay::new(event_repo, query).with_upcasters(vec![Box::new(
+            SemanticVersionEventUpcaster::new("SomethingWasDone", "0.1.0", Box::new(upcasting_fn)),
+        )]);
         query_replay.replay_all().await.unwrap();
 
         let events = event_list.lock().unwrap().to_owned();

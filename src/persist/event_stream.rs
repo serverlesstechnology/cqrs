@@ -1,7 +1,6 @@
-use crate::persist::{PersistenceError, SerializedEvent, EventUpcaster};
+use crate::persist::{EventUpcaster, PersistenceError, SerializedEvent};
 use crate::{Aggregate, EventEnvelope};
 use tokio::sync::mpsc::{Receiver, Sender};
-
 
 /// Accesses a domain event stream for a particular aggregate.
 ///
@@ -22,13 +21,11 @@ impl ReplayStream {
         &mut self,
         event_upcasters: &Option<Vec<Box<dyn EventUpcaster>>>,
     ) -> Option<Result<EventEnvelope<A>, PersistenceError>> {
-        self.queue
-            .recv()
-            .await
-            .map(|result| {
-                result
-                    .and_then(|serialized_event| upcast_event(serialized_event, event_upcasters).try_into())
+        self.queue.recv().await.map(|result| {
+            result.and_then(|serialized_event| {
+                upcast_event(serialized_event, event_upcasters).try_into()
             })
+        })
     }
 }
 
@@ -41,9 +38,7 @@ fn upcast_event(
         Some(upcasters) => {
             let mut upcasted_event = event;
             for upcaster in upcasters {
-                if upcaster
-                    .can_upcast(&upcasted_event.event_type, &upcasted_event.event_version)
-                {
+                if upcaster.can_upcast(&upcasted_event.event_type, &upcasted_event.event_version) {
                     upcasted_event = upcaster.upcast(upcasted_event);
                 }
             }
