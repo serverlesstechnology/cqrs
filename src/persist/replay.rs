@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 
-use crate::persist::{PersistedEventRepository, PersistenceError, QueryErrorHandler};
+use crate::persist::{
+    EventUpcaster, PersistedEventRepository, PersistenceError, QueryErrorHandler,
+};
 use crate::{Aggregate, AggregateError, EventEnvelope, Query};
 
 /// A utility for replaying committed events to a `Query`.
@@ -22,6 +24,7 @@ where
 {
     repository: R,
     query: Q,
+    event_upcasters: Option<Vec<Box<dyn EventUpcaster>>>,
     error_handler: Option<Box<QueryErrorHandler>>,
     phantom_data: PhantomData<A>,
 }
@@ -38,8 +41,24 @@ where
         Self {
             repository,
             query,
+            event_upcasters: None,
             error_handler: None,
             phantom_data: PhantomData::default(),
+        }
+    }
+
+    /// Configures the query replayer to use event upcasters when replaying.
+    /// The EventUpcasters within the Vec should be placed in the
+    /// order that they should be applied
+    ///
+    /// E.g., an upcaster for version 0.2.3 should be placed before an upcaster for version 0.2.4
+    pub fn with_upcasters(self, event_upcasters: Vec<Box<dyn EventUpcaster>>) -> Self {
+        Self {
+            repository: self.repository,
+            query: self.query,
+            error_handler: self.error_handler,
+            event_upcasters: Some(event_upcasters),
+            phantom_data: self.phantom_data,
         }
     }
 
@@ -60,7 +79,7 @@ where
     /// Replay the events of a single aggregate instance.
     pub async fn replay(&self, aggregate_id: &str) -> Result<(), AggregateError<A::Error>> {
         let mut stream = self.repository.stream_events::<A>(aggregate_id).await?;
-        while let Some(event) = stream.next().await {
+        while let Some(event) = stream.next(&self.event_upcasters).await {
             self.apply(event).await;
         }
         Ok(())
@@ -69,7 +88,7 @@ where
     /// Replay the events of all aggregate instances within the database.
     pub async fn replay_all(&self) -> Result<(), AggregateError<A::Error>> {
         let mut stream = self.repository.stream_all_events::<A>().await?;
-        while let Some(event) = stream.next().await {
+        while let Some(event) = stream.next(&self.event_upcasters).await {
             self.apply(event).await;
         }
         Ok(())
@@ -96,11 +115,13 @@ mod test {
     use std::sync::{Arc, Mutex};
 
     use async_trait::async_trait;
+    use serde_json::Value::Object;
+    use serde_json::{json, Value};
 
     use crate::doc::{MyAggregate, MyEvents};
     use crate::persist::event_store::shared_test::MockRepo;
     use crate::persist::replay::QueryReplay;
-    use crate::persist::SerializedEvent;
+    use crate::persist::{SemanticVersionEventUpcaster, SerializedEvent};
     use crate::{EventEnvelope, Query};
 
     #[derive(Debug)]
@@ -158,6 +179,57 @@ mod test {
 
         let events = event_list.lock().unwrap().to_owned();
         assert_events_eq(&events, &expected_events);
+    }
+
+    #[tokio::test]
+    async fn query_replay_with_upcasting() {
+        let expected_events = vec![EventEnvelope {
+            aggregate_id: AGGREGATE_ID.to_string(),
+            sequence: 1,
+            payload: MyEvents::SomethingWasDone,
+            metadata: HashMap::default(),
+        }];
+
+        // a "legacy" event that contains a single property
+        // that the upcasting function should remove to upcast
+        // to the expected event
+        let ser_events: Vec<SerializedEvent> = vec![SerializedEvent {
+            aggregate_id: AGGREGATE_ID.to_string(),
+            sequence: 1,
+            aggregate_type: "MyAggregate".to_string(),
+            event_type: "SomethingWasDone".to_string(),
+            event_version: "0.0.1".to_string(),
+            payload: json!({"LegacyName": ()}),
+            metadata: Object(Default::default()),
+        }];
+
+        fn upcasting_fn(_payload: Value) -> Value {
+            // We return an implemented event, which indicates
+            // that an "upcast" has happened
+            json!({"SomethingWasDone": ()})
+        }
+
+        let event_repo = MockRepo::with_events(Ok(ser_events.clone()));
+        let (query, event_list) = MockQuery::new();
+        let query_replay = QueryReplay::new(event_repo, query).with_upcasters(vec![Box::new(
+            SemanticVersionEventUpcaster::new("SomethingWasDone", "0.1.0", Box::new(upcasting_fn)),
+        )]);
+
+        query_replay.replay(AGGREGATE_ID).await.unwrap();
+
+        let events = event_list.lock().unwrap().to_owned();
+        assert_events_eq(&expected_events, &events);
+
+        // query all
+        let event_repo = MockRepo::with_events(Ok(ser_events));
+        let (query, event_list) = MockQuery::new();
+        let query_replay = QueryReplay::new(event_repo, query).with_upcasters(vec![Box::new(
+            SemanticVersionEventUpcaster::new("SomethingWasDone", "0.1.0", Box::new(upcasting_fn)),
+        )]);
+        query_replay.replay_all().await.unwrap();
+
+        let events = event_list.lock().unwrap().to_owned();
+        assert_events_eq(&expected_events, &events);
     }
 
     fn assert_events_eq(
