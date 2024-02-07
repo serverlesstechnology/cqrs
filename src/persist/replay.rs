@@ -43,7 +43,7 @@ where
             query,
             event_upcasters: None,
             error_handler: None,
-            phantom_data: PhantomData::default(),
+            phantom_data: PhantomData,
         }
     }
 

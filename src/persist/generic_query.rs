@@ -41,7 +41,7 @@ where
         Self {
             view_repository,
             error_handler: None,
-            phantom: PhantomData::default(),
+            phantom: PhantomData,
         }
     }
     /// Allows the user to apply a custom error handler to the query.

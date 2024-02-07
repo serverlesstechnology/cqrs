@@ -10,7 +10,7 @@ documentation = "https://docs.rs/cqrs-es"
 repository = "https://github.com/serverlesstechnology/cqrs"
 readme = "README.md"
 exclude = ["docs"]
-rust-version = "1.63.0"
+rust-version = "1.71.0"
 
 [dependencies]
 async-trait = "0.1"
@@ -20,5 +20,5 @@ thiserror = "^1.0.37"
 tokio = { version = "1", features = ["macros", "sync", "rt"] }
 
 [dev-dependencies]
-uuid = { version = "1.4", features = ["v4"] }
+uuid = { version = "1.7", features = ["v4"] }
 chrono = { version = "^0.4.24", default-features = false, features = ["clock"] }
