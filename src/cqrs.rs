@@ -179,6 +179,9 @@ where
             .store
             .commit(resultant_events, aggregate_context, metadata)
             .await?;
+        if committed_events.is_empty() {
+            return Ok(());
+        }
         for processor in &self.queries {
             let dispatch_events = committed_events.as_slice();
             processor.dispatch(aggregate_id, dispatch_events).await;
