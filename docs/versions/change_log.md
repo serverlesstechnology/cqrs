@@ -1,5 +1,10 @@
 # Change log
 
+#### `v0.4.11`
+- Commits with no produced events will not invoke downstream queries.
+- Updates per Clippy due to Rust compiler changes.
+- Rust minimum version changed to 1.71.0
+
 #### `v0.4.10`
 - Updated dependencies.
 - Rust minimum version changed to 1.63.0
