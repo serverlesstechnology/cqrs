@@ -394,15 +394,6 @@ pub(crate) mod shared_test {
         }
     }
 
-    pub(crate) struct MockEventIterator;
-    impl Iterator for MockEventIterator {
-        type Item = Result<SerializedEvent, PersistenceError>;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            todo!()
-        }
-    }
-
     pub(crate) struct MockRepo {
         events_result: Mutex<Option<Result<Vec<SerializedEvent>, PersistenceError>>>,
         last_events_result: Mutex<Option<Result<Vec<SerializedEvent>, PersistenceError>>>,

@@ -14,7 +14,7 @@ use crate::{AggregateContext, AggregateError};
 /// 1. Loading all previous events for the aggregate instance.
 /// 1. Applying these events, in order, to a new `Aggregate` in order to reach the correct state.
 /// 1. Using the recreated `Aggregate` to handle an inbound `Command` producing events or an error
-/// (see `handle` method in this trait).
+///    (see `handle` method in this trait).
 /// 1. Persisting any generated events or roll back in the event of an error.
 ///
 /// To manage these tasks we use a `CqrsFramework`.
