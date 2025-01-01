@@ -99,7 +99,7 @@ where
     /// # use cqrs_es::persist::PersistedEventStore;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
     /// let repo = MyEventRepository::new(my_db_connection);
-    /// let store = PersistedEventStore::<MyEventRepository,MyAggregate>::new_event_store(repo);
+    /// let store = PersistedEventStore::<MyEventRepository, MyAggregate>::new_event_store(repo);
     /// let service = MyService;
     /// let cqrs = CqrsFramework::new(store, vec![], service);
     /// # }
@@ -125,7 +125,7 @@ where
     /// # use cqrs_es::persist::PersistedEventStore;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
     /// let repo = MyEventRepository::new(my_db_connection);
-    /// let store = PersistedEventStore::<MyEventRepository,MyAggregate>::new_aggregate_store(repo);
+    /// let store = PersistedEventStore::<MyEventRepository, MyAggregate>::new_aggregate_store(repo);
     /// let cqrs = CqrsFramework::new(store, vec![], MyService);
     /// # }
     /// ```
@@ -148,7 +148,8 @@ where
     /// # use cqrs_es::persist::PersistedEventStore;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
     /// let repo = MyEventRepository::new(my_db_connection);
-    /// let store = PersistedEventStore::<MyEventRepository,MyAggregate>::new_snapshot_store(repo, 100);
+    /// let store =
+    ///     PersistedEventStore::<MyEventRepository, MyAggregate>::new_snapshot_store(repo, 100);
     /// let cqrs = CqrsFramework::new(store, vec![], MyService);
     /// # }
     /// ```

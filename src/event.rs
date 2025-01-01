@@ -31,10 +31,10 @@ use crate::aggregate::Aggregate;
 /// # use cqrs_es::doc::Customer;
 /// # use cqrs_es::{Aggregate,DomainEvent};
 /// # use serde::{Serialize,Deserialize};
-/// #[derive(Clone,Debug,Serialize,Deserialize,PartialEq)]
+/// #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 /// pub enum CustomerEvent {
-///     NameChanged{ changed_name: String },
-///     EmailUpdated{ new_email: String },
+///     NameChanged { changed_name: String },
+///     EmailUpdated { new_email: String },
 /// }
 /// ```
 pub trait DomainEvent:

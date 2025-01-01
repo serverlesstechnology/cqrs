@@ -11,8 +11,8 @@ use crate::{Aggregate, AggregateContext, AggregateError, EventStore};
 /// Creation and use in a constructing a `CqrsFramework`:
 /// ```
 /// # use cqrs_es::doc::{MyAggregate, MyService};
-/// use cqrs_es::CqrsFramework;
 /// use cqrs_es::mem_store::MemStore;
+/// use cqrs_es::CqrsFramework;
 ///
 /// let store = MemStore::<MyAggregate>::default();
 /// let cqrs = CqrsFramework::new(store, vec![], MyService);

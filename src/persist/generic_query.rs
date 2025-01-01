@@ -59,7 +59,7 @@ where
     /// # use cqrs_es::persist::GenericQuery;
     /// # use cqrs_es::persist::doc::{MyViewRepository,MyView};
     /// # fn config(mut query: GenericQuery<MyViewRepository,MyView,MyAggregate>) {
-    /// query.use_error_handler(Box::new(|e|panic!("{}",e)));
+    /// query.use_error_handler(Box::new(|e| panic!("{}", e)));
     /// # }
     /// ```
     pub fn use_error_handler(&mut self, error_handler: Box<QueryErrorHandler>) {
@@ -145,7 +145,7 @@ where
 /// }
 ///
 /// fn error_handler(error: PersistenceError) {
-///     panic!("{}",error);
+///     panic!("{}", error);
 /// }
 /// ```
 pub type QueryErrorHandler = dyn Fn(PersistenceError) + Send + Sync + 'static;

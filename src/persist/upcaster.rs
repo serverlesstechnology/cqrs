@@ -78,54 +78,56 @@ impl From<ParseIntError> for SemanticVersionError {
 /// version configured on the upcaster.
 ///
 /// ```
-/// use cqrs_es::persist::{EventUpcaster,SemanticVersionEventUpcaster};
-/// use serde_json::Value;
 /// use cqrs_es::persist::SerializedEvent;
+/// use cqrs_es::persist::{EventUpcaster, SemanticVersionEventUpcaster};
+/// use serde_json::Value;
 ///
 /// let upcast_function = Box::new(|payload: Value| match payload {
-///             Value::Object(mut object_map) => {
-///                 object_map.insert("country".to_string(), "USA".into());
-///                 Value::Object(object_map)
-///             }
-///             _ => {
-///                 panic!("the event payload is not an object")
-///             }
-///         });
+///     Value::Object(mut object_map) => {
+///         object_map.insert("country".to_string(), "USA".into());
+///         Value::Object(object_map)
+///     }
+///     _ => {
+///         panic!("the event payload is not an object")
+///     }
+/// });
 /// let upcaster = SemanticVersionEventUpcaster::new("EventX", "2.3.4", upcast_function);
 ///
 /// let payload: Value = serde_json::from_str(
-///             r#"{
+///     r#"{
 ///                     "zip code": 98103,
 ///                     "state": "Washington"
 ///                    }"#,
-///         ).unwrap();
-///  let event = SerializedEvent::new(
-///             String::new(),
-///             0,
-///             String::new(),
-///             String::new(),
-///             String::new(),
-///             payload,
-///             Default::default(),
-///         );
+/// )
+/// .unwrap();
+/// let event = SerializedEvent::new(
+///     String::new(),
+///     0,
+///     String::new(),
+///     String::new(),
+///     String::new(),
+///     payload,
+///     Default::default(),
+/// );
 /// let upcasted_event = upcaster.upcast(event);
 ///
 /// let expected_payload: Value = serde_json::from_str(
-///             r#"{
+///     r#"{
 ///                     "zip code": 98103,
 ///                     "state": "Washington",
 ///                     "country": "USA"
 ///                    }"#,
-///         ).unwrap();
+/// )
+/// .unwrap();
 /// let expected_event = SerializedEvent::new(
-///             String::new(),
-///             0,
-///             String::new(),
-///             String::new(),
-///             "2.3.4".to_string(),
-///             expected_payload,
-///             Default::default(),
-///         );
+///     String::new(),
+///     0,
+///     String::new(),
+///     String::new(),
+///     "2.3.4".to_string(),
+///     expected_payload,
+///     Default::default(),
+/// );
 ///
 /// assert_eq!(upcasted_event, expected_event);
 /// ```

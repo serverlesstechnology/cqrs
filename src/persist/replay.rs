@@ -69,7 +69,7 @@ where
     /// # use cqrs_es::doc::{MyAggregate, MyQuery, MyRepository};
     /// # use cqrs_es::persist::{GenericQuery, QueryReplay, ReplayStream};
     /// # fn config(mut replay: QueryReplay<MyRepository,MyQuery,MyAggregate>) {
-    /// replay.use_error_handler(Box::new(|e|panic!("{}",e)));
+    /// replay.use_error_handler(Box::new(|e| panic!("{}", e)));
     /// # }
     /// ```
     pub fn use_error_handler(&mut self, error_handler: Box<QueryErrorHandler>) {

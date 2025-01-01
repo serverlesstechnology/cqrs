@@ -20,8 +20,7 @@ where
     /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyService};
     /// use cqrs_es::test::TestFramework;
     ///
-    /// let executor = TestFramework::<MyAggregate>::with(MyService)
-    ///     .given_no_previous_events();
+    /// let executor = TestFramework::<MyAggregate>::with(MyService).given_no_previous_events();
     ///
     /// let validator = executor.when(MyCommands::DoSomething);
     /// ```
@@ -41,8 +40,7 @@ where
     ///
     /// #[tokio::test]
     /// async fn test() {
-    ///     let executor = TestFramework::<MyAggregate>::with(MyService)
-    ///         .given_no_previous_events();
+    ///     let executor = TestFramework::<MyAggregate>::with(MyService).given_no_previous_events();
     ///
     ///     let validator = executor.when_async(MyCommands::DoSomething).await;
     /// }

@@ -11,13 +11,12 @@
 //!
 //! CustomerTestFramework::with(CustomerService::default())
 //!     .given_no_previous_events()
-//!     .when(CustomerCommand::AddCustomerName{
-//!             name: "John Doe".to_string()
-//!         })
-//!     .then_expect_events(vec![
-//!         CustomerEvent::NameAdded{
-//!             name: "John Doe".to_string()
-//!         }]);
+//!     .when(CustomerCommand::AddCustomerName {
+//!         name: "John Doe".to_string(),
+//!     })
+//!     .then_expect_events(vec![CustomerEvent::NameAdded {
+//!         name: "John Doe".to_string(),
+//!     }]);
 //! # }
 //! ```
 mod executor;
