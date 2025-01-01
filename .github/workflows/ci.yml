@@ -11,11 +11,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [msrv, stable, nightly, macos, windows]
+        build: [stable, nightly, macos, windows]
         include:
-          - build: msrv
-            os: ubuntu-latest
-            rust: 1.70.0
           - build: stable
             os: ubuntu-latest
             rust: stable
@@ -50,3 +47,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: EmbarkStudios/cargo-deny-action@v1
+
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Get MSRV from Cargo.toml
+        run: |
+          MSRV=$(grep 'rust-version' Cargo.toml | sed 's/.*= *"\(.*\)".*/\1/')
+          echo "MSRV=$MSRV" >> $GITHUB_ENV
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.MSRV }}
+      - uses: taiki-e/install-action@cargo-no-dev-deps
+      - run: cargo no-dev-deps check --all
