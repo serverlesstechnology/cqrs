@@ -1,4 +1,5 @@
-use async_trait::async_trait;
+use std::future::Future;
+
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -63,7 +64,6 @@ use crate::DomainEvent;
 ///     }
 /// }
 /// ```
-#[async_trait]
 pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// Specifies the inbound command used to make changes in the state of the Aggregate.
     type Command;
@@ -118,11 +118,11 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # fn apply(&mut self, event: Self::Event) {}
     /// # }
     /// ```
-    async fn handle(
+    fn handle(
         &self,
         command: Self::Command,
         service: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error>;
+    ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send;
     /// This is used to update the aggregate's state once an event has been committed.
     /// Any events returned from the `handle` method will be applied using this method
     /// in order to populate the state of the aggregate instance.

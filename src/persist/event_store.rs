@@ -309,6 +309,7 @@ where
 #[cfg(test)]
 pub(crate) mod shared_test {
     use std::collections::HashMap;
+    use std::future::Future;
     use std::sync::Mutex;
 
     use async_trait::async_trait;
@@ -363,7 +364,6 @@ pub(crate) mod shared_test {
         pub(crate) something_happened: usize,
     }
 
-    #[async_trait]
     impl Aggregate for TestAggregate {
         type Command = TestCommands;
         type Event = TestEvents;
@@ -373,15 +373,16 @@ pub(crate) mod shared_test {
         fn aggregate_type() -> String {
             "TestAggregate".to_string()
         }
-        async fn handle(
+        fn handle(
             &self,
             command: Self::Command,
             _service: &Self::Services,
-        ) -> Result<Vec<Self::Event>, Self::Error> {
-            match command {
+        ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
+            let result = match command {
                 TestCommands::DoSomething => Ok(vec![TestEvents::SomethingWasDone]),
                 TestCommands::BadCommand => Err("the expected error message".into()),
-            }
+            };
+            std::future::ready(result)
         }
         fn apply(&mut self, event: Self::Event) {
             match event {

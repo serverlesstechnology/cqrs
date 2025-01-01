@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use std::collections::HashMap;
+use std::future::Future;
 use std::sync::{Arc, RwLock};
 
 use serde::{Deserialize, Serialize};
@@ -28,7 +29,6 @@ impl From<&str> for TestError {
 #[derive(Clone, Debug)]
 pub struct TestService;
 
-#[async_trait]
 impl Aggregate for TestAggregate {
     type Command = TestCommand;
     type Event = TestEvent;
@@ -39,36 +39,38 @@ impl Aggregate for TestAggregate {
         "TestAggregate".to_string()
     }
 
-    async fn handle(
+    fn handle(
         &self,
         command: Self::Command,
         _service: &Self::Services,
-    ) -> Result<Vec<TestEvent>, Self::Error> {
-        match &command {
-            TestCommand::CreateTest(command) => {
-                let event = TestEvent::Created(Created {
-                    id: command.id.to_string(),
-                });
-                Ok(vec![event])
-            }
-
-            TestCommand::ConfirmTest(command) => {
-                for test in &self.tests {
-                    if test == &command.test_name {
-                        return Err("test already performed".into());
-                    }
+    ) -> impl Future<Output = Result<Vec<TestEvent>, Self::Error>> + Send {
+        async move {
+            match &command {
+                TestCommand::CreateTest(command) => {
+                    let event = TestEvent::Created(Created {
+                        id: command.id.to_string(),
+                    });
+                    Ok(vec![event])
                 }
-                let event = TestEvent::Tested(Tested {
-                    test_name: command.test_name.to_string(),
-                });
-                Ok(vec![event])
-            }
 
-            TestCommand::DoSomethingElse(command) => {
-                let event = TestEvent::SomethingElse(SomethingElse {
-                    description: command.description.clone(),
-                });
-                Ok(vec![event])
+                TestCommand::ConfirmTest(command) => {
+                    for test in &self.tests {
+                        if test == &command.test_name {
+                            return Err("test already performed".into());
+                        }
+                    }
+                    let event = TestEvent::Tested(Tested {
+                        test_name: command.test_name.to_string(),
+                    });
+                    Ok(vec![event])
+                }
+
+                TestCommand::DoSomethingElse(command) => {
+                    let event = TestEvent::SomethingElse(SomethingElse {
+                        description: command.description.clone(),
+                    });
+                    Ok(vec![event])
+                }
             }
         }
     }
