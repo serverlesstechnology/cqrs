@@ -34,18 +34,8 @@ impl SemanticVersion {
     /// - for upcaster v0.2.3 with code v0.2.2 --> upcaster is applied
     /// - for upcaster v0.2.2 with code v0.2.2 --> upcaster is _not_ applied
     pub fn supersedes(&self, other: &Self) -> bool {
-        if other.major_version < self.major_version {
-            return true;
-        }
-        if other.major_version == self.major_version {
-            if other.minor_version < self.minor_version {
-                return true;
-            }
-            if other.minor_version == self.minor_version && other.patch < self.patch {
-                return true;
-            }
-        }
-        false
+        (self.major_version, self.minor_version, self.patch)
+            > (other.major_version, other.minor_version, other.patch)
     }
 }
 
@@ -167,11 +157,8 @@ impl EventUpcaster for SemanticVersionEventUpcaster {
         if event_type != self.event_type {
             return false;
         }
-        let event_version = match SemanticVersion::from_str(event_version) {
-            Ok(result) => result,
-            Err(_) => {
-                return false;
-            }
+        let Ok(event_version) = SemanticVersion::from_str(event_version) else {
+            return false;
         };
         self.event_version.supersedes(&event_version)
     }
@@ -346,7 +333,7 @@ mod test {
     fn test_upcast() -> Box<SemanticVersionEventUpcasterFunc> {
         Box::new(|mut payload| {
             let current_id = payload.get("id").unwrap().to_string();
-            let updated_id = format!("CUST{}", current_id);
+            let updated_id = format!("CUST{current_id}");
             *payload.get_mut("id").unwrap() = json!(updated_id);
             payload
         })

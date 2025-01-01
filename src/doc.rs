@@ -160,39 +160,6 @@ pub enum CustomerCommand {
     UpdateEmail { new_email: String },
 }
 
-#[cfg(test)]
-mod doc_tests {
-    use crate::test::TestFramework;
-
-    use super::*;
-
-    type CustomerTestFramework = TestFramework<Customer>;
-
-    #[test]
-    fn test_add_name() {
-        CustomerTestFramework::with(CustomerService::default())
-            .given_no_previous_events()
-            .when(CustomerCommand::AddCustomerName {
-                name: "John Doe".to_string(),
-            })
-            .then_expect_events(vec![CustomerEvent::NameAdded {
-                name: "John Doe".to_string(),
-            }]);
-    }
-
-    #[test]
-    fn test_add_name_again() {
-        CustomerTestFramework::with(CustomerService::default())
-            .given(vec![CustomerEvent::NameAdded {
-                name: "John Doe".to_string(),
-            }])
-            .when(CustomerCommand::AddCustomerName {
-                name: "John Doe".to_string(),
-            })
-            .then_expect_error_message("a name has already been added for this customer");
-    }
-}
-
 pub struct MyRepository;
 #[async_trait]
 impl PersistedEventRepository for MyRepository {
@@ -235,5 +202,38 @@ impl PersistedEventRepository for MyRepository {
 
     async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
         todo!()
+    }
+}
+
+#[cfg(test)]
+mod doc_tests {
+    use crate::test::TestFramework;
+
+    use super::*;
+
+    type CustomerTestFramework = TestFramework<Customer>;
+
+    #[test]
+    fn test_add_name() {
+        CustomerTestFramework::with(CustomerService)
+            .given_no_previous_events()
+            .when(CustomerCommand::AddCustomerName {
+                name: "John Doe".to_string(),
+            })
+            .then_expect_events(vec![CustomerEvent::NameAdded {
+                name: "John Doe".to_string(),
+            }]);
+    }
+
+    #[test]
+    fn test_add_name_again() {
+        CustomerTestFramework::with(CustomerService)
+            .given(vec![CustomerEvent::NameAdded {
+                name: "John Doe".to_string(),
+            }])
+            .when(CustomerCommand::AddCustomerName {
+                name: "John Doe".to_string(),
+            })
+            .then_expect_error_message("a name has already been added for this customer");
     }
 }

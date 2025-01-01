@@ -71,7 +71,7 @@ where
         let mut events = self.events;
         events.extend(new_events);
         let service = self.service;
-        AggregateTestExecutor { events, service }
+        Self { events, service }
     }
 
     pub(crate) fn new(events: Vec<A::Event>, service: A::Services) -> Self {
