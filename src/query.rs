@@ -23,8 +23,10 @@ pub trait Query<A: Aggregate>: Send + Sync {
 /// A `View` represents a materialized view, generally serialized for persistence, that is updated by a query.
 /// This a read element in a CQRS system.
 ///
-pub trait View<A: Aggregate>: Debug + Default + Serialize + DeserializeOwned + Send + Sync {
+pub trait View: Debug + Default + Serialize + DeserializeOwned + Send + Sync {
+    /// The event type that this view is constructed from
+    type Event;
     /// Each implemented view is responsible for updating its state based on events passed via
     /// this method.
-    fn update(&mut self, event: &EventEnvelope<A>);
+    fn apply(&mut self, event: &Self::Event);
 }

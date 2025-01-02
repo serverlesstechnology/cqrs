@@ -6,7 +6,7 @@ use async_trait::async_trait;
 #[async_trait]
 pub trait ViewRepository<V, A>: Send + Sync
 where
-    V: View<A>,
+    V: View<Event = A::Event>,
     A: Aggregate,
 {
     /// Returns the current view instance.
