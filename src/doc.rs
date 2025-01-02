@@ -30,14 +30,11 @@ pub struct MyAggregate;
 
 #[async_trait]
 impl Aggregate for MyAggregate {
+    const TYPE: &'static str = "MyAggregate";
     type Command = MyCommands;
     type Event = MyEvents;
     type Error = MyUserError;
     type Services = MyService;
-
-    fn aggregate_type() -> String {
-        "MyAggregate".to_string()
-    }
 
     async fn handle(
         &self,
@@ -83,14 +80,11 @@ impl Query<MyAggregate> for MyQuery {
 
 #[async_trait]
 impl Aggregate for Customer {
+    const TYPE: &'static str = "Customer";
     type Command = CustomerCommand;
     type Event = CustomerEvent;
     type Error = CustomerError;
     type Services = CustomerService;
-
-    fn aggregate_type() -> String {
-        "Customer".to_string()
-    }
 
     async fn handle(
         &self,
