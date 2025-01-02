@@ -1,0 +1,45 @@
+Resources:
+  Events:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "AggregateTypeAndId"
+          AttributeType: "S"
+        -
+          AttributeName: "AggregateIdSequence"
+          AttributeType: "N"
+      KeySchema:
+        -
+          AttributeName: "AggregateTypeAndId"
+          KeyType: "HASH"
+        -
+          AttributeName: "AggregateIdSequence"
+          KeyType: "RANGE"
+      BillingMode: PAY_PER_REQUEST
+
+  Snapshots:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "AggregateTypeAndId"
+          AttributeType: "S"
+      KeySchema:
+        -
+          AttributeName: "AggregateTypeAndId"
+          KeyType: "HASH"
+      BillingMode: PAY_PER_REQUEST
+
+  TestViewTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "ViewId"
+          AttributeType: "S"
+      KeySchema:
+        -
+          AttributeName: "ViewId"
+          KeyType: "HASH"
+      BillingMode: PAY_PER_REQUEST

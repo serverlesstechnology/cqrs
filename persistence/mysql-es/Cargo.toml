@@ -1,0 +1,31 @@
+[package]
+name = "mysql-es"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+keywords.workspace = true
+description = "A MySql implementation of an event repository for cqrs-es."
+repository.workspace = true
+documentation = "https://docs.rs/mysql-es"
+readme = "README.md"
+
+[dependencies]
+cqrs-es = "0.4.12"
+
+async-trait = "0.1"
+futures = "0.3"
+serde = { workspace = true, features = ["derive"]}
+serde_json = "1.0"
+sqlx = { version = "0.8", features = [ "mysql", "json"] }
+tokio = { workspace = true, features = ["rt"] }
+
+[dev-dependencies]
+uuid.workspace = true
+
+[features]
+default = ["runtime-tokio-rustls"]
+runtime-async-std-native-tls = ["sqlx/runtime-async-std-native-tls"]
+runtime-tokio-native-tls = ["sqlx/runtime-tokio-native-tls"]
+runtime-async-std-rustls = ["sqlx/runtime-async-std-rustls"]
+runtime-tokio-rustls = ["sqlx/runtime-tokio-rustls"]
