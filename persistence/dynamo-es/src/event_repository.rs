@@ -1,6 +1,6 @@
 use std::collections::HashMap;
+use std::future::Future;
 
-use async_trait::async_trait;
 use aws_sdk_dynamodb::operation::query::builders::QueryFluentBuilder;
 use aws_sdk_dynamodb::operation::query::QueryOutput;
 use aws_sdk_dynamodb::operation::scan::builders::ScanFluentBuilder;
@@ -272,90 +272,101 @@ fn serialized_event(
     })
 }
 
-#[async_trait]
 impl PersistedEventRepository for DynamoEventRepository {
-    async fn get_events<A: Aggregate>(
+    fn get_events<A: Aggregate>(
         &self,
         aggregate_id: &str,
-    ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-        let request = self
-            .query_events(&A::aggregate_type(), aggregate_id)
-            .await?;
-        Ok(request)
+    ) -> impl Future<Output = Result<Vec<SerializedEvent>, PersistenceError>> + Send {
+        async move {
+            let request = self
+                .query_events(&A::aggregate_type(), aggregate_id)
+                .await?;
+            Ok(request)
+        }
     }
 
-    async fn get_last_events<A: Aggregate>(
+    fn get_last_events<A: Aggregate>(
         &self,
         aggregate_id: &str,
         number_events: usize,
-    ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-        Ok(self
-            .query_events_from(&A::aggregate_type(), aggregate_id, number_events)
-            .await?)
+    ) -> impl Future<Output = Result<Vec<SerializedEvent>, PersistenceError>> + Send {
+        async move {
+            Ok(self
+                .query_events_from(&A::aggregate_type(), aggregate_id, number_events)
+                .await?)
+        }
     }
 
-    async fn get_snapshot<A: Aggregate>(
+    fn get_snapshot<A: Aggregate>(
         &self,
         aggregate_id: &str,
-    ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
-        let query_output = self
-            .query_table(&A::aggregate_type(), aggregate_id, &self.snapshot_table)
-            .await?;
-        let query_items_vec = match query_output.items {
-            None => return Ok(None),
-            Some(items) => items,
-        };
-        if query_items_vec.is_empty() {
-            return Ok(None);
-        }
-        let query_item = query_items_vec.first().unwrap();
-        let aggregate = att_as_value(query_item, "Payload")?;
-        let current_sequence = att_as_number(query_item, "CurrentSequence")?;
-        let current_snapshot = att_as_number(query_item, "CurrentSnapshot")?;
+    ) -> impl Future<Output = Result<Option<SerializedSnapshot>, PersistenceError>> + Send {
+        async move {
+            let query_output = self
+                .query_table(&A::aggregate_type(), aggregate_id, &self.snapshot_table)
+                .await?;
+            let query_items_vec = match query_output.items {
+                None => return Ok(None),
+                Some(items) => items,
+            };
+            if query_items_vec.is_empty() {
+                return Ok(None);
+            }
+            let query_item = query_items_vec.first().unwrap();
+            let aggregate = att_as_value(query_item, "Payload")?;
+            let current_sequence = att_as_number(query_item, "CurrentSequence")?;
+            let current_snapshot = att_as_number(query_item, "CurrentSnapshot")?;
 
-        Ok(Some(SerializedSnapshot {
-            aggregate_id: aggregate_id.to_string(),
-            aggregate,
-            current_sequence,
-            current_snapshot,
-        }))
+            Ok(Some(SerializedSnapshot {
+                aggregate_id: aggregate_id.to_string(),
+                aggregate,
+                current_sequence,
+                current_snapshot,
+            }))
+        }
     }
 
-    async fn persist<A: Aggregate>(
+    fn persist<A: Aggregate>(
         &self,
         events: &[SerializedEvent],
         snapshot_update: Option<(String, Value, usize)>,
-    ) -> Result<(), PersistenceError> {
-        match snapshot_update {
-            None => {
-                self.insert_events(events).await?;
+    ) -> impl Future<Output = Result<(), PersistenceError>> + Send {
+        async move {
+            match snapshot_update {
+                None => {
+                    self.insert_events(events).await?;
+                }
+                Some((aggregate_id, aggregate, current_snapshot)) => {
+                    self.update_snapshot::<A>(aggregate, aggregate_id, current_snapshot, events)
+                        .await?;
+                }
             }
-            Some((aggregate_id, aggregate, current_snapshot)) => {
-                self.update_snapshot::<A>(aggregate, aggregate_id, current_snapshot, events)
-                    .await?;
-            }
+            Ok(())
         }
-        Ok(())
     }
 
-    async fn stream_events<A: Aggregate>(
+    fn stream_events<A: Aggregate>(
         &self,
         aggregate_id: &str,
-    ) -> Result<ReplayStream, PersistenceError> {
-        let query = self
-            .create_query(&self.event_table, &A::aggregate_type(), aggregate_id)
-            .await
-            .limit(self.stream_channel_size as i32);
-        Ok(stream_events(query, self.stream_channel_size))
+    ) -> impl Future<Output = Result<ReplayStream, PersistenceError>> + Send {
+        async move {
+            let query = self
+                .create_query(&self.event_table, &A::aggregate_type(), aggregate_id)
+                .await
+                .limit(self.stream_channel_size as i32);
+            Ok(stream_events(query, self.stream_channel_size))
+        }
     }
 
-    async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
+    fn stream_all_events<A: Aggregate>(
+        &self,
+    ) -> impl Future<Output = Result<ReplayStream, PersistenceError>> + Send {
         let scan = self
             .client
             .scan()
             .table_name(&self.event_table)
             .limit(self.stream_channel_size as i32);
-        Ok(stream_all_events(scan, self.stream_channel_size))
+        std::future::ready(Ok(stream_all_events(scan, self.stream_channel_size)))
     }
 }
 

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::future::Future;
 use std::marker::PhantomData;
 
-use async_trait::async_trait;
 use serde_json::Value;
 
 use crate::persist::serialized_event::{deserialize_events, serialize_events};
@@ -178,7 +177,6 @@ where
     }
 }
 
-#[async_trait]
 impl<R, A> EventStore<A> for PersistedEventStore<R, A>
 where
     R: PersistedEventRepository,
@@ -464,49 +462,54 @@ pub(crate) mod shared_test {
 
     #[async_trait]
     impl PersistedEventRepository for MockRepo {
-        async fn get_events<A: Aggregate>(
+        fn get_events<A: Aggregate>(
             &self,
             _aggregate_id: &str,
-        ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-            self.events_result.lock().unwrap().take().unwrap()
+        ) -> impl Future<Output = Result<Vec<SerializedEvent>, PersistenceError>> + Send {
+            std::future::ready(self.events_result.lock().unwrap().take().unwrap())
         }
-        async fn get_last_events<A: Aggregate>(
+        fn get_last_events<A: Aggregate>(
             &self,
             _aggregate_id: &str,
             _number_events: usize,
-        ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-            self.last_events_result.lock().unwrap().take().unwrap()
+        ) -> impl Future<Output = Result<Vec<SerializedEvent>, PersistenceError>> + Send {
+            std::future::ready(self.last_events_result.lock().unwrap().take().unwrap())
         }
-        async fn get_snapshot<A: Aggregate>(
+        fn get_snapshot<A: Aggregate>(
             &self,
             _aggregate_id: &str,
-        ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
-            self.snapshot_result.lock().unwrap().take().unwrap()
+        ) -> impl Future<Output = Result<Option<SerializedSnapshot>, PersistenceError>> + Send
+        {
+            std::future::ready(self.snapshot_result.lock().unwrap().take().unwrap())
         }
-        async fn persist<A: Aggregate>(
+        fn persist<A: Aggregate>(
             &self,
             events: &[SerializedEvent],
             snapshot_update: Option<(String, Value, usize)>,
-        ) -> Result<(), PersistenceError> {
+        ) -> impl Future<Output = Result<(), PersistenceError>> + Send {
             let test = self.persist_check.lock().unwrap().take().unwrap();
             test(events, snapshot_update);
-            Ok(())
+            std::future::ready(Ok(()))
         }
 
-        async fn stream_events<A: Aggregate>(
+        fn stream_events<A: Aggregate>(
             &self,
             _aggregate_id: &str,
-        ) -> Result<ReplayStream, PersistenceError> {
-            self.stream_all_events::<A>().await
+        ) -> impl Future<Output = Result<ReplayStream, PersistenceError>> + Send {
+            self.stream_all_events::<A>()
         }
 
-        async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
-            let events = self.events_result.lock().unwrap().take().unwrap()?;
-            let (mut feed, stream) = ReplayStream::new(events.len());
-            for event in events {
-                feed.push(Ok(event)).await?;
+        fn stream_all_events<A: Aggregate>(
+            &self,
+        ) -> impl Future<Output = Result<ReplayStream, PersistenceError>> + Send {
+            async move {
+                let events = self.events_result.lock().unwrap().take().unwrap()?;
+                let (mut feed, stream) = ReplayStream::new(events.len());
+                for event in events {
+                    feed.push(Ok(event)).await?;
+                }
+                Ok(stream)
             }
-            Ok(stream)
         }
     }
 

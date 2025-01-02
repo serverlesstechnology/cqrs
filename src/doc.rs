@@ -166,47 +166,49 @@ pub enum CustomerCommand {
 }
 
 pub struct MyRepository;
-#[async_trait]
+
 impl PersistedEventRepository for MyRepository {
-    async fn get_events<A: Aggregate>(
+    fn get_events<A: Aggregate>(
         &self,
         _aggregate_id: &str,
-    ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-        todo!()
+    ) -> impl Future<Output = Result<Vec<SerializedEvent>, PersistenceError>> + Send {
+        async { todo!() }
     }
 
-    async fn get_last_events<A: Aggregate>(
+    fn get_last_events<A: Aggregate>(
         &self,
         _aggregate_id: &str,
         _number_events: usize,
-    ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-        todo!()
+    ) -> impl Future<Output = Result<Vec<SerializedEvent>, PersistenceError>> + Send {
+        async { todo!() }
     }
 
-    async fn get_snapshot<A: Aggregate>(
+    fn get_snapshot<A: Aggregate>(
         &self,
         _aggregate_id: &str,
-    ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
-        todo!()
+    ) -> impl Future<Output = Result<Option<SerializedSnapshot>, PersistenceError>> + Send {
+        async { todo!() }
     }
 
-    async fn persist<A: Aggregate>(
+    fn persist<A: Aggregate>(
         &self,
         _events: &[SerializedEvent],
         _snapshot_update: Option<(String, Value, usize)>,
-    ) -> Result<(), PersistenceError> {
-        todo!()
+    ) -> impl Future<Output = Result<(), PersistenceError>> + Send {
+        async { todo!() }
     }
 
-    async fn stream_events<A: Aggregate>(
+    fn stream_events<A: Aggregate>(
         &self,
         _aggregate_id: &str,
-    ) -> Result<ReplayStream, PersistenceError> {
-        todo!()
+    ) -> impl Future<Output = Result<ReplayStream, PersistenceError>> + Send {
+        async { todo!() }
     }
 
-    async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
-        todo!()
+    fn stream_all_events<A: Aggregate>(
+        &self,
+    ) -> impl Future<Output = Result<ReplayStream, PersistenceError>> + Send {
+        async { todo!() }
     }
 }
 
