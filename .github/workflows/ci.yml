@@ -11,20 +11,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [stable, nightly, macos, windows]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        rust: [stable]
         include:
-          - build: stable
-            os: ubuntu-latest
-            rust: stable
-          - build: nightly
-            os: ubuntu-latest
+          - os: ubuntu-latest
             rust: nightly
-          - build: macos
-            os: macos-latest
-            rust: stable
-          - build: windows
-            os: windows-latest
-            rust: stable
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
