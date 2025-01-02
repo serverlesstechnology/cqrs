@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::future::Future;
 use std::marker::PhantomData;
 
 use async_trait::async_trait;
@@ -185,79 +186,90 @@ where
 {
     type AC = EventStoreAggregateContext<A>;
 
-    async fn load_events(
+    fn load_events(
         &self,
         aggregate_id: &str,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        let serialized_events = self.repo.get_events::<A>(aggregate_id).await?;
-        Ok(deserialize_events(
-            serialized_events,
-            &self.event_upcasters,
-        )?)
+    ) -> impl Future<Output = Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>>> + Send {
+        async move {
+            let serialized_events = self.repo.get_events::<A>(aggregate_id).await?;
+            Ok(deserialize_events(
+                serialized_events,
+                &self.event_upcasters,
+            )?)
+        }
     }
 
-    async fn load_aggregate(
+    fn load_aggregate(
         &self,
         aggregate_id: &str,
-    ) -> Result<EventStoreAggregateContext<A>, AggregateError<A::Error>> {
-        let mut context: EventStoreAggregateContext<A> =
-            if let SourceOfTruth::EventStore = self.storage {
-                EventStoreAggregateContext::context_for(aggregate_id, true)
-            } else {
-                let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
-                match snapshot {
-                    Some(snapshot) => snapshot.try_into()?,
-                    None => EventStoreAggregateContext::context_for(aggregate_id, false),
+    ) -> impl Future<Output = Result<EventStoreAggregateContext<A>, AggregateError<A::Error>>> + Send
+    {
+        async move {
+            let mut context: EventStoreAggregateContext<A> =
+                if let SourceOfTruth::EventStore = self.storage {
+                    EventStoreAggregateContext::context_for(aggregate_id, true)
+                } else {
+                    let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
+                    match snapshot {
+                        Some(snapshot) => snapshot.try_into()?,
+                        None => EventStoreAggregateContext::context_for(aggregate_id, false),
+                    }
+                };
+            let events_to_apply = match self.storage {
+                SourceOfTruth::EventStore => self.load_events(aggregate_id).await?,
+                SourceOfTruth::Snapshot(_) => {
+                    let serialized_events = self
+                        .repo
+                        .get_last_events::<A>(aggregate_id, context.current_sequence)
+                        .await?;
+                    deserialize_events(serialized_events, &self.event_upcasters)?
+                }
+                SourceOfTruth::AggregateStore => {
+                    vec![]
                 }
             };
-        let events_to_apply = match self.storage {
-            SourceOfTruth::EventStore => self.load_events(aggregate_id).await?,
-            SourceOfTruth::Snapshot(_) => {
-                let serialized_events = self
-                    .repo
-                    .get_last_events::<A>(aggregate_id, context.current_sequence)
-                    .await?;
-                deserialize_events(serialized_events, &self.event_upcasters)?
+            for envelope in events_to_apply {
+                context.current_sequence = envelope.sequence;
+                let event = envelope.payload;
+                context.aggregate.apply(event);
             }
-            SourceOfTruth::AggregateStore => {
-                vec![]
-            }
-        };
-        for envelope in events_to_apply {
-            context.current_sequence = envelope.sequence;
-            let event = envelope.payload;
-            context.aggregate.apply(event);
+            Ok(context)
         }
-        Ok(context)
     }
 
-    async fn commit(
+    fn commit(
         &self,
         events: Vec<A::Event>,
         context: EventStoreAggregateContext<A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
+    ) -> impl Future<Output = Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>>> + Send {
         let aggregate_id = context.aggregate_id.clone();
         let last_sequence = context.current_sequence;
-
         let commit_snapshot_to_event = self
             .storage
             .commit_snapshot_with_addl_events(context.current_sequence, events.len());
-        let snapshot_update: Option<(Value, usize)> = if commit_snapshot_to_event == 0 {
-            None
-        } else {
-            match self.storage {
-                SourceOfTruth::EventStore => None,
-                _ => Self::update_snapshot_with_events(&events, context, commit_snapshot_to_event)?,
-            }
-        };
-        let wrapped_events = Self::wrap_events(&aggregate_id, last_sequence, events, metadata);
-        let serialized_events: Vec<SerializedEvent> = serialize_events(&wrapped_events)?;
-        let snapshot_update = snapshot_update.map(|s| (aggregate_id, s.0, s.1));
-        self.repo
-            .persist::<A>(&serialized_events, snapshot_update)
-            .await?;
-        Ok(wrapped_events)
+
+        async move {
+            let snapshot_update: Option<(Value, usize)> = if commit_snapshot_to_event == 0 {
+                None
+            } else {
+                match self.storage {
+                    SourceOfTruth::EventStore => None,
+                    _ => Self::update_snapshot_with_events(
+                        &events,
+                        context,
+                        commit_snapshot_to_event,
+                    )?,
+                }
+            };
+            let wrapped_events = Self::wrap_events(&aggregate_id, last_sequence, events, metadata);
+            let serialized_events: Vec<SerializedEvent> = serialize_events(&wrapped_events)?;
+            let snapshot_update = snapshot_update.map(|s| (aggregate_id, s.0, s.1));
+            self.repo
+                .persist::<A>(&serialized_events, snapshot_update)
+                .await?;
+            Ok(wrapped_events)
+        }
     }
 }
 

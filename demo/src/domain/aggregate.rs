@@ -1,4 +1,5 @@
-use async_trait::async_trait;
+use std::future::Future;
+
 use cqrs_es::Aggregate;
 use serde::{Deserialize, Serialize};
 
@@ -12,7 +13,6 @@ pub struct BankAccount {
     balance: f64,
 }
 
-#[async_trait]
 impl Aggregate for BankAccount {
     type Command = BankAccountCommand;
     type Event = BankAccountEvent;
@@ -26,61 +26,63 @@ impl Aggregate for BankAccount {
 
     // The aggregate logic goes here. Note that this will be the _bulk_ of a CQRS system
     // so expect to use helper functions elsewhere to keep the code clean.
-    async fn handle(
+    fn handle(
         &self,
         command: Self::Command,
         services: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error> {
-        match command {
-            BankAccountCommand::OpenAccount { account_id } => {
-                Ok(vec![BankAccountEvent::AccountOpened { account_id }])
-            }
-            BankAccountCommand::DepositMoney { amount } => {
-                let balance = self.balance + amount;
-                Ok(vec![BankAccountEvent::CustomerDepositedMoney {
-                    amount,
-                    balance,
-                }])
-            }
-            BankAccountCommand::WithdrawMoney { amount, atm_id } => {
-                let balance = self.balance - amount;
-                if balance < 0_f64 {
-                    return Err("funds not available".into());
+    ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
+        async move {
+            match command {
+                BankAccountCommand::OpenAccount { account_id } => {
+                    Ok(vec![BankAccountEvent::AccountOpened { account_id }])
                 }
-                if services
-                    .services
-                    .atm_withdrawal(&atm_id, amount)
-                    .await
-                    .is_err()
-                {
-                    return Err("atm rule violation".into());
-                };
-                Ok(vec![BankAccountEvent::CustomerWithdrewCash {
-                    amount,
-                    balance,
-                }])
-            }
-            BankAccountCommand::WriteCheck {
-                check_number,
-                amount,
-            } => {
-                let balance = self.balance - amount;
-                if balance < 0_f64 {
-                    return Err("funds not available".into());
+                BankAccountCommand::DepositMoney { amount } => {
+                    let balance = self.balance + amount;
+                    Ok(vec![BankAccountEvent::CustomerDepositedMoney {
+                        amount,
+                        balance,
+                    }])
                 }
-                if services
-                    .services
-                    .validate_check(&self.account_id, &check_number)
-                    .await
-                    .is_err()
-                {
-                    return Err("check invalid".into());
-                };
-                Ok(vec![BankAccountEvent::CustomerWroteCheck {
+                BankAccountCommand::WithdrawMoney { amount, atm_id } => {
+                    let balance = self.balance - amount;
+                    if balance < 0_f64 {
+                        return Err("funds not available".into());
+                    }
+                    if services
+                        .services
+                        .atm_withdrawal(&atm_id, amount)
+                        .await
+                        .is_err()
+                    {
+                        return Err("atm rule violation".into());
+                    };
+                    Ok(vec![BankAccountEvent::CustomerWithdrewCash {
+                        amount,
+                        balance,
+                    }])
+                }
+                BankAccountCommand::WriteCheck {
                     check_number,
                     amount,
-                    balance,
-                }])
+                } => {
+                    let balance = self.balance - amount;
+                    if balance < 0_f64 {
+                        return Err("funds not available".into());
+                    }
+                    if services
+                        .services
+                        .validate_check(&self.account_id, &check_number)
+                        .await
+                        .is_err()
+                    {
+                        return Err("check invalid".into());
+                    };
+                    Ok(vec![BankAccountEvent::CustomerWroteCheck {
+                        check_number,
+                        amount,
+                        balance,
+                    }])
+                }
             }
         }
     }

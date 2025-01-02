@@ -1,7 +1,6 @@
 use std::collections::HashMap;
+use std::future::Future;
 use std::sync::{Arc, RwLock};
-
-use async_trait::async_trait;
 
 use crate::event::EventEnvelope;
 use crate::{Aggregate, AggregateContext, AggregateError, EventStore};
@@ -79,54 +78,58 @@ impl<A: Aggregate> MemStore<A> {
     }
 }
 
-#[async_trait]
 impl<A: Aggregate> EventStore<A> for MemStore<A> {
     type AC = MemStoreAggregateContext<A>;
 
-    async fn load_events(
+    fn load_events(
         &self,
         aggregate_id: &str,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        let events = self.load_committed_events(aggregate_id)?;
-        println!(
-            "loading: {} events for aggregate ID '{}'",
-            &events.len(),
-            &aggregate_id
-        );
-        Ok(events)
+    ) -> impl Future<Output = Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>>> + Send {
+        let result = self.load_committed_events(aggregate_id).inspect(|events| {
+            println!(
+                "loading: {} events for aggregate ID '{}'",
+                &events.len(),
+                &aggregate_id
+            );
+        });
+        std::future::ready(result)
     }
 
-    async fn load_aggregate(
+    fn load_aggregate(
         &self,
         aggregate_id: &str,
-    ) -> Result<MemStoreAggregateContext<A>, AggregateError<A::Error>> {
-        let committed_events = self.load_events(aggregate_id).await?;
+    ) -> impl Future<Output = Result<MemStoreAggregateContext<A>, AggregateError<A::Error>>> + Send
+    {
         let mut aggregate = A::default();
         let mut current_sequence = 0;
-        for envelope in committed_events {
-            current_sequence = envelope.sequence;
-            let event = envelope.payload;
-            aggregate.apply(event);
+
+        async move {
+            let committed_events = self.load_events(aggregate_id).await?;
+            for envelope in committed_events {
+                current_sequence = envelope.sequence;
+                let event = envelope.payload;
+                aggregate.apply(event);
+            }
+            Ok(MemStoreAggregateContext {
+                aggregate_id: aggregate_id.to_string(),
+                aggregate,
+                current_sequence,
+            })
         }
-        Ok(MemStoreAggregateContext {
-            aggregate_id: aggregate_id.to_string(),
-            aggregate,
-            current_sequence,
-        })
     }
 
-    async fn commit(
+    fn commit(
         &self,
         events: Vec<A::Event>,
         context: MemStoreAggregateContext<A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
+    ) -> impl Future<Output = Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>>> + Send {
         let aggregate_id = context.aggregate_id;
         let current_sequence = context.current_sequence;
         let wrapped_events = Self::wrap_events(&aggregate_id, current_sequence, events, metadata);
         let new_events_qty = wrapped_events.len();
         if new_events_qty == 0 {
-            return Ok(Vec::default());
+            return std::future::ready(Ok(Vec::default()));
         }
         let aggregate_id = Self::aggregate_id(&wrapped_events);
         let mut new_events = self.load_committed_events(&aggregate_id).unwrap();
@@ -142,7 +145,7 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
             .write()
             .unwrap()
             .insert(aggregate_id, new_events);
-        Ok(wrapped_events)
+        std::future::ready(Ok(wrapped_events))
     }
 }
 
