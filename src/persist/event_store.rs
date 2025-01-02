@@ -323,7 +323,6 @@ pub(crate) mod shared_test {
     use std::future::Future;
     use std::sync::Mutex;
 
-    use async_trait::async_trait;
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
 
@@ -460,7 +459,6 @@ pub(crate) mod shared_test {
         }
     }
 
-    #[async_trait]
     impl PersistedEventRepository for MockRepo {
         fn get_events<A: Aggregate>(
             &self,
