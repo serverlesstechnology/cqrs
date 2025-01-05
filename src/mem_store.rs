@@ -55,7 +55,7 @@ impl<A: Aggregate> MemStore<A> {
         Arc::clone(&self.events)
     }
 
-    fn load_commited_events(
+    fn load_committed_events(
         &self,
         aggregate_id: &str,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
@@ -68,7 +68,7 @@ impl<A: Aggregate> MemStore<A> {
         Ok(committed_events)
     }
 
-    fn aggregate_id(&self, events: &[EventEnvelope<A>]) -> String {
+    fn aggregate_id(events: &[EventEnvelope<A>]) -> String {
         // uninteresting unwrap: this is not a struct for production use
         let &first_event = events.iter().peekable().peek().unwrap();
         first_event.aggregate_id.to_string()
@@ -83,7 +83,7 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
         &self,
         aggregate_id: &str,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        let events = self.load_commited_events(aggregate_id)?;
+        let events = self.load_committed_events(aggregate_id)?;
         println!(
             "loading: {} events for aggregate ID '{}'",
             &events.len(),
@@ -119,13 +119,13 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
         let aggregate_id = context.aggregate_id;
         let current_sequence = context.current_sequence;
-        let wrapped_events = self.wrap_events(&aggregate_id, current_sequence, events, metadata);
+        let wrapped_events = Self::wrap_events(&aggregate_id, current_sequence, events, metadata);
         let new_events_qty = wrapped_events.len();
         if new_events_qty == 0 {
             return Ok(Vec::default());
         }
-        let aggregate_id = self.aggregate_id(&wrapped_events);
-        let mut new_events = self.load_commited_events(&aggregate_id).unwrap();
+        let aggregate_id = Self::aggregate_id(&wrapped_events);
+        let mut new_events = self.load_committed_events(&aggregate_id).unwrap();
         for event in &wrapped_events {
             new_events.push(event.clone());
         }
@@ -145,7 +145,6 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
 impl<A: Aggregate> MemStore<A> {
     /// Method to wrap a set of events with the additional metadata needed for persistence and publishing
     fn wrap_events(
-        &self,
         aggregate_id: &str,
         current_sequence: usize,
         resultant_events: Vec<A::Event>,

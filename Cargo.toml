@@ -1,6 +1,7 @@
 [workspace]
 members = [
     ".",
+    "demo",
     "persistence/dynamo-es",
     "persistence/mysql-es",
     "persistence/postgres-es",
