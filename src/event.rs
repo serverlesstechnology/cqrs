@@ -6,8 +6,9 @@ use serde::Serialize;
 
 use crate::aggregate::Aggregate;
 
-/// A `DomainEvent` represents any business change in the state of an `Aggregate`. `DomainEvent`s
-/// are immutable, and when
+/// A `DomainEvent` represents any business change in the state of an `Aggregate`.
+///
+/// `DomainEvent`s are immutable, and when
 /// [event sourcing](https://martinfowler.com/eaaDev/EventSourcing.html)
 /// is used they are the single source of truth.
 ///

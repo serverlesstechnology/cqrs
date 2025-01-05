@@ -69,10 +69,10 @@ fn test_source_of_truth() {
 }
 
 /// Storage engine using a database backing.
+///
 /// This defaults to an event-sourced store (i.e., events are the single source of truth),
 /// but can be configured to be aggregate-sourced or use snapshots when a large number of events
 /// are associated with a single aggregate instance.
-///
 pub struct PersistedEventStore<R, A>
 where
     R: PersistedEventRepository,
@@ -80,7 +80,7 @@ where
 {
     repo: R,
     storage: SourceOfTruth,
-    event_upcasters: Option<Vec<Box<dyn EventUpcaster>>>,
+    event_upcasters: Vec<Box<dyn EventUpcaster>>,
     _phantom: PhantomData<A>,
 }
 
@@ -108,7 +108,7 @@ where
         Self {
             repo,
             storage: SourceOfTruth::EventStore,
-            event_upcasters: None,
+            event_upcasters: vec![],
             _phantom: PhantomData,
         }
     }
@@ -133,7 +133,7 @@ where
         Self {
             repo,
             storage: SourceOfTruth::AggregateStore,
-            event_upcasters: None,
+            event_upcasters: vec![],
             _phantom: PhantomData,
         }
     }
@@ -156,7 +156,7 @@ where
         Self {
             repo,
             storage: SourceOfTruth::Snapshot(snapshot_size),
-            event_upcasters: None,
+            event_upcasters: vec![],
             _phantom: PhantomData,
         }
     }
@@ -170,7 +170,7 @@ where
         Self {
             repo: self.repo,
             storage: self.storage,
-            event_upcasters: Some(event_upcasters),
+            event_upcasters,
             _phantom: PhantomData,
         }
     }
@@ -250,7 +250,7 @@ where
                 _ => Self::update_snapshot_with_events(&events, context, commit_snapshot_to_event)?,
             }
         };
-        let wrapped_events = self.wrap_events(&aggregate_id, last_sequence, events, metadata);
+        let wrapped_events = Self::wrap_events(&aggregate_id, last_sequence, events, metadata);
         let serialized_events: Vec<SerializedEvent> = serialize_events(&wrapped_events)?;
         let snapshot_update = snapshot_update.map(|s| (aggregate_id, s.0, s.1));
         self.repo
@@ -283,7 +283,6 @@ where
 
     /// Method to wrap a set of events with the additional metadata needed for persistence and publishing
     fn wrap_events(
-        &self,
         aggregate_id: &str,
         last_sequence: usize,
         resultant_events: Vec<A::Event>,
@@ -488,17 +487,12 @@ pub(crate) mod shared_test {
         }
 
         async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
-            let result = self.events_result.lock().unwrap().take().unwrap();
-            match result {
-                Ok(events) => {
-                    let (mut feed, stream) = ReplayStream::new(events.len());
-                    for event in events {
-                        feed.push(Ok(event)).await?;
-                    }
-                    Ok(stream)
-                }
-                Err(err) => Err(err),
+            let events = self.events_result.lock().unwrap().take().unwrap()?;
+            let (mut feed, stream) = ReplayStream::new(events.len());
+            for event in events {
+                feed.push(Ok(event)).await?;
             }
+            Ok(stream)
         }
     }
 
@@ -540,7 +534,7 @@ mod event_store_test {
         )]));
         let store = PersistedEventStore::<MockRepo, TestAggregate>::new_event_store(repo);
         let events = store.load_events(TEST_AGGREGATE_ID).await.unwrap();
-        let event = events.get(0).unwrap();
+        let event = events.first().unwrap();
         assert_eq!(1, event.sequence);
         assert_eq!("SomethingWasDone", event.payload.event_type());
         assert_eq!(EVENT_VERSION, event.payload.event_version());
@@ -550,8 +544,8 @@ mod event_store_test {
     async fn load_error() {
         let repo = MockRepo::with_events(Err(PersistenceError::OptimisticLockError));
         let store = PersistedEventStore::<MockRepo, TestAggregate>::new_event_store(repo);
-        let result = store.load_events(TEST_AGGREGATE_ID).await;
-        match result {
+
+        match store.load_events(TEST_AGGREGATE_ID).await {
             Err(AggregateError::AggregateConflict) => {}
             _ => panic!("expected technical error"),
         }
@@ -628,7 +622,7 @@ mod event_store_test {
             .await
             .unwrap();
         assert_eq!(3, event_envelopes.len());
-        let event = event_envelopes.get(0).unwrap();
+        let event = event_envelopes.first().unwrap();
         assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
         assert_eq!(TestEvents::Started, event.payload);
         assert_eq!(
@@ -661,7 +655,7 @@ pub(crate) mod snapshotted_store_test {
         )]));
         let store = PersistedEventStore::<MockRepo, TestAggregate>::new_snapshot_store(repo, 2);
         let events = store.load_events(TEST_AGGREGATE_ID).await.unwrap();
-        let event = events.get(0).unwrap();
+        let event = events.first().unwrap();
         assert_eq!(1, event.sequence);
         assert_eq!("SomethingWasDone", event.payload.event_type());
         assert_eq!(EVENT_VERSION, event.payload.event_version());
@@ -731,7 +725,7 @@ pub(crate) mod snapshotted_store_test {
     async fn commit_one_event() {
         let repo = MockRepo::with_commit(Box::new(|events, snapshot_update| {
             assert_eq!(1, events.len());
-            let event = events.get(0).unwrap();
+            let event = events.first().unwrap();
             assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
             assert_eq!(1, event.sequence);
 
@@ -749,7 +743,7 @@ pub(crate) mod snapshotted_store_test {
             .await
             .unwrap();
         assert_eq!(1, event_envelopes.len());
-        let event = event_envelopes.get(0).unwrap();
+        let event = event_envelopes.first().unwrap();
         assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
         assert_eq!(TestEvents::Started, event.payload);
     }
@@ -758,7 +752,7 @@ pub(crate) mod snapshotted_store_test {
     async fn commit_one_event_with_previous() {
         let repo = MockRepo::with_commit(Box::new(|events, snapshot_update| {
             assert_eq!(1, events.len());
-            let event = events.get(0).unwrap();
+            let event = events.first().unwrap();
             assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
             assert_eq!(3, event.sequence);
 
@@ -780,7 +774,7 @@ pub(crate) mod snapshotted_store_test {
             .await
             .unwrap();
         assert_eq!(1, event_envelopes.len());
-        let event = event_envelopes.get(0).unwrap();
+        let event = event_envelopes.first().unwrap();
         assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
         assert_eq!(TestEvents::SomethingWasDone, event.payload);
     }
@@ -826,7 +820,7 @@ pub(crate) mod snapshotted_store_test {
             .await
             .unwrap();
         assert_eq!(3, event_envelopes.len());
-        let event = event_envelopes.get(0).unwrap();
+        let event = event_envelopes.first().unwrap();
         assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
         assert_eq!(TestEvents::Started, event.payload);
         assert_eq!(
@@ -872,7 +866,7 @@ pub(crate) mod snapshotted_store_test {
             .await
             .unwrap();
         assert_eq!(2, event_envelopes.len());
-        let first_event = event_envelopes.get(0).unwrap();
+        let first_event = event_envelopes.first().unwrap();
         assert_eq!(TEST_AGGREGATE_ID, first_event.aggregate_id);
         assert_eq!(TestEvents::SomethingWasDone, first_event.payload);
         let last_event = event_envelopes.get(1).unwrap();
@@ -923,7 +917,7 @@ pub(crate) mod snapshotted_store_test {
             .await
             .unwrap();
         assert_eq!(5, event_envelopes.len());
-        let first_event = event_envelopes.get(0).unwrap();
+        let first_event = event_envelopes.first().unwrap();
         assert_eq!(TEST_AGGREGATE_ID, first_event.aggregate_id);
         assert_eq!(TestEvents::Started, first_event.payload);
         let last_event = event_envelopes.get(4).unwrap();
@@ -955,7 +949,7 @@ pub(crate) mod aggregate_store_test {
         )]));
         let store = PersistedEventStore::<MockRepo, TestAggregate>::new_aggregate_store(repo);
         let events = store.load_events(TEST_AGGREGATE_ID).await.unwrap();
-        let event = events.get(0).unwrap();
+        let event = events.first().unwrap();
         assert_eq!(1, event.sequence);
         assert_eq!("SomethingWasDone", event.payload.event_type());
         assert_eq!(EVENT_VERSION, event.payload.event_version());
@@ -1059,7 +1053,7 @@ pub(crate) mod aggregate_store_test {
             .await
             .unwrap();
         assert_eq!(3, event_envelopes.len());
-        let event = event_envelopes.get(0).unwrap();
+        let event = event_envelopes.first().unwrap();
         assert_eq!(TEST_AGGREGATE_ID, event.aggregate_id);
         assert_eq!(TestEvents::Started, event.payload);
         assert_eq!(

@@ -4,7 +4,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 
 /// Accesses a domain event stream for a particular aggregate.
 ///
-/// _Note: design expected to change after [implemention of RFC 2996](https://github.com/rust-lang/rust/issues/79024)._
+/// _Note: design expected to change after [implementation of RFC 2996](https://github.com/rust-lang/rust/issues/79024)._
 pub struct ReplayStream {
     queue: Receiver<Result<SerializedEvent, PersistenceError>>,
 }
@@ -19,31 +19,12 @@ impl ReplayStream {
     /// Receive the next upcasted event or error in the stream, if no event is available this will block.
     pub async fn next<A: Aggregate>(
         &mut self,
-        event_upcasters: &Option<Vec<Box<dyn EventUpcaster>>>,
+        upcasters: &[Box<dyn EventUpcaster>],
     ) -> Option<Result<EventEnvelope<A>, PersistenceError>> {
-        self.queue.recv().await.map(|result| {
-            result.and_then(|serialized_event| {
-                upcast_event(serialized_event, event_upcasters).try_into()
-            })
-        })
-    }
-}
-
-fn upcast_event(
-    event: SerializedEvent,
-    upcasters: &Option<Vec<Box<dyn EventUpcaster>>>,
-) -> SerializedEvent {
-    match upcasters {
-        None => event,
-        Some(upcasters) => {
-            let mut upcasted_event = event;
-            for upcaster in upcasters {
-                if upcaster.can_upcast(&upcasted_event.event_type, &upcasted_event.event_version) {
-                    upcasted_event = upcaster.upcast(upcasted_event);
-                }
-            }
-            upcasted_event
-        }
+        self.queue
+            .recv()
+            .await
+            .map(|result| result.and_then(|event| event.upcast(upcasters).try_into()))
     }
 }
 
@@ -74,7 +55,7 @@ mod test {
             .await
             .unwrap();
         drop(feed);
-        let found = stream.next::<MyAggregate>(&None).await;
+        let found = stream.next::<MyAggregate>(&[]).await;
         assert!(
             matches!(
                 found.unwrap().unwrap_err(),
