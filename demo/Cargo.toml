@@ -14,11 +14,11 @@ default-run = "cqrs-demo"
 
 [dependencies]
 cqrs-es = {path = "../", version = "0.4.12" }
-postgres-es = { path = "../persistence/postgres-es", version = "0.4.12" }
+postgres-es = { path = "../persistence/postgres-es" }
 
 async-trait = "0.1"
 axum = "0.6"
-serde = { version = "1.0", features = ["derive"]}
+serde = { workspace = true, features = ["derive"]}
 serde_json = "1.0"
 sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-rustls", "json"] }
 chrono = { version = "^0.4.20", default-features = false, features = ["clock"] }
