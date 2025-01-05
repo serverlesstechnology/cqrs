@@ -16,13 +16,13 @@ Together these provide a number of benefits:
 
 Things that could be helpful:
 - [User guide](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
-- [Demo application](https://github.com/serverlesstechnology/cqrs-demo) using the axum http server.
+- [Demo application](./demo/) using the axum http server.
 - [Change log](https://github.com/serverlesstechnology/cqrs/blob/main/docs/versions/change_log.md)
 
 Three backing data stores are supported:
-- [PostgreSQL](https://www.postgresql.org/) - [postgres-es](https://crates.io/crates/postgres-es)
-- [MySQL](https://www.mysql.com/) - [mysql-es](https://crates.io/crates/mysql-es)
-- [DynamoDb](https://aws.amazon.com/dynamodb/) - [dynamo-es](https://crates.io/crates/dynamo-es)
+- [PostgreSQL](https://www.postgresql.org/) - [postgres-es](./persistence/postgres-es/)
+- [MySQL](https://www.mysql.com/) - [mysql-es](./persistence/mysql-es/)
+- [DynamoDb](https://aws.amazon.com/dynamodb/) - [dynamo-es](./persistence/dynamo-es/)
 
 Other data stores supported supported elsewhere:
 - [SQLite](https://www.sqlite.org/) - [sqlite-es](https://crates.io/crates/sqlite-es)

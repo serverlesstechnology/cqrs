@@ -1,0 +1,11 @@
+services:
+  dynamodb-local:
+    command: "-jar DynamoDBLocal.jar -sharedDb"
+    image: amazon/dynamodb-local:latest
+    container_name: dynamodb-local
+    environment:
+      AWS_ACCESS_KEY_ID: 'TESTAWSID'
+      AWS_SECRET_ACCESS_KEY: 'TESTAWSKEY'
+      AWS_DEFAULT_REGION: 'us-west-2'
+    ports:
+      - 8000:8000

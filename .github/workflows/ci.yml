@@ -6,8 +6,15 @@ on:
 name: Continuous integration
 
 jobs:
+
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check --all --all-targets
+
   test:
-    name: test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -22,6 +29,35 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
       - run: cargo test
+
+  test-persistence:
+    name: test persistence
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        db: [postgres, mysql]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: |
+          cd persistence/${{ matrix.db }}-es
+          docker compose up -d
+          cargo test
+          docker compose down
+
+  # test-dynamo:
+  #   name: test persistence (dynamo)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@stable
+  #     - name: Set up DynamoDB test environment
+  #       run: |
+  #         cd persistence/dynamo-es
+  #         docker compose up -d
+  #         ./db/create_tables.sh
+  #         cargo test
+  #         docker compose down
 
   fmt:
     name: format
