@@ -6,8 +6,15 @@ on:
 name: Continuous integration
 
 jobs:
+
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check --all --all-targets
+
   test:
-    name: test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

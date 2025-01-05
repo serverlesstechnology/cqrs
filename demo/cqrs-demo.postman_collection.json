@@ -1,0 +1,163 @@
+{
+	"info": {
+		"_postman_id": "8ee552bb-c88e-4e10-8e9a-a553373e2b6f",
+		"name": "cqrs-demo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "command - OpenAccount",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.globals.set(\"account_id\", \"ACCT-\" + (Math.random().toString(16)+\"000000000\").substr(2,8));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"OpenAccount\": {\n        \"account_id\": \"{{account_id}}\"\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:3030/account/{{account_id}}",
+					"host": [
+						"localhost"
+					],
+					"port": "3030",
+					"path": [
+						"account",
+						"{{account_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "command - DepositMoney",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"DepositMoney\": {\n        \"amount\": 1000.0\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:3030/account/{{account_id}}",
+					"host": [
+						"localhost"
+					],
+					"port": "3030",
+					"path": [
+						"account",
+						"{{account_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "command - WithdrawMoney",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"WithdrawMoney\": {\n        \"atm_id\": \"ATM-N468290\",\n        \"amount\": 400.0\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:3030/account/{{account_id}}",
+					"host": [
+						"localhost"
+					],
+					"port": "3030",
+					"path": [
+						"account",
+						"{{account_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "command - WriteCheck",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"WriteCheck\": {\n        \"check_number\": \"1170\",\n        \"amount\": 256.28\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:3030/account/{{account_id}}",
+					"host": [
+						"localhost"
+					],
+					"port": "3030",
+					"path": [
+						"account",
+						"{{account_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "query - Account",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"amount\": 1000.0\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:3030/account/{{account_id}}",
+					"host": [
+						"localhost"
+					],
+					"port": "3030",
+					"path": [
+						"account",
+						"{{account_id}}"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

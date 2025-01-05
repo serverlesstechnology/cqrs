@@ -16,7 +16,7 @@ Together these provide a number of benefits:
 
 Things that could be helpful:
 - [User guide](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
-- [Demo application](https://github.com/serverlesstechnology/cqrs-demo) using the axum http server.
+- [Demo application](./demo/) using the axum http server.
 - [Change log](https://github.com/serverlesstechnology/cqrs/blob/main/docs/versions/change_log.md)
 
 Three backing data stores are supported:
