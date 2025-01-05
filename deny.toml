@@ -7,26 +7,16 @@
 db-path = "~/.cargo/advisory-db"
 # The url(s) of the advisory databases to use
 db-urls = ["https://github.com/rustsec/advisory-db"]
-# The lint level for security vulnerabilities
-vulnerability = "deny"
-# The lint level for unmaintained crates
-unmaintained = "warn"
 # The lint level for crates that have been yanked from their source registry
 yanked = "warn"
-# The lint level for crates with security notices. Note that as of
-# 2019-12-17 there are no security notice advisories in
-# https://github.com/rustsec/advisory-db
-notice = "warn"
 
 [licenses]
-unlicensed = "deny"
 allow = [
     "MIT",
+    "Unicode-3.0",
     "Unicode-DFS-2016",
     "Apache-2.0",
 ]
-copyleft = "deny"
-default = "deny"
 confidence-threshold = 1.0
 
 [bans]
