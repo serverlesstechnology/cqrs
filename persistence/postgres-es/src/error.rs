@@ -15,10 +15,10 @@ pub enum PostgresAggregateError {
 impl Display for PostgresAggregateError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            PostgresAggregateError::OptimisticLock => write!(f, "optimistic lock error"),
-            PostgresAggregateError::UnknownError(error) => write!(f, "{}", error),
-            PostgresAggregateError::DeserializationError(error) => write!(f, "{}", error),
-            PostgresAggregateError::ConnectionError(error) => write!(f, "{}", error),
+            Self::OptimisticLock => write!(f, "optimistic lock error"),
+            Self::UnknownError(error) => write!(f, "{}", error),
+            Self::DeserializationError(error) => write!(f, "{}", error),
+            Self::ConnectionError(error) => write!(f, "{}", error),
         }
     }
 }
@@ -32,13 +32,13 @@ impl From<sqlx::Error> for PostgresAggregateError {
             Error::Database(database_error) => {
                 if let Some(code) = database_error.code() {
                     if code.as_ref() == "23505" {
-                        return PostgresAggregateError::OptimisticLock;
+                        return Self::OptimisticLock;
                     }
                 }
-                PostgresAggregateError::UnknownError(Box::new(err))
+                Self::UnknownError(Box::new(err))
             }
-            Error::Io(_) | Error::Tls(_) => PostgresAggregateError::ConnectionError(Box::new(err)),
-            _ => PostgresAggregateError::UnknownError(Box::new(err)),
+            Error::Io(_) | Error::Tls(_) => Self::ConnectionError(Box::new(err)),
+            _ => Self::UnknownError(Box::new(err)),
         }
     }
 }
@@ -46,14 +46,12 @@ impl From<sqlx::Error> for PostgresAggregateError {
 impl<T: std::error::Error> From<PostgresAggregateError> for AggregateError<T> {
     fn from(err: PostgresAggregateError) -> Self {
         match err {
-            PostgresAggregateError::OptimisticLock => AggregateError::AggregateConflict,
-            PostgresAggregateError::ConnectionError(error) => {
-                AggregateError::DatabaseConnectionError(error)
-            }
+            PostgresAggregateError::OptimisticLock => Self::AggregateConflict,
+            PostgresAggregateError::ConnectionError(error) => Self::DatabaseConnectionError(error),
             PostgresAggregateError::DeserializationError(error) => {
-                AggregateError::DeserializationError(error)
+                Self::DeserializationError(error)
             }
-            PostgresAggregateError::UnknownError(error) => AggregateError::UnexpectedError(error),
+            PostgresAggregateError::UnknownError(error) => Self::UnexpectedError(error),
         }
     }
 }
@@ -62,10 +60,10 @@ impl From<serde_json::Error> for PostgresAggregateError {
     fn from(err: serde_json::Error) -> Self {
         match err.classify() {
             serde_json::error::Category::Data | serde_json::error::Category::Syntax => {
-                PostgresAggregateError::DeserializationError(Box::new(err))
+                Self::DeserializationError(Box::new(err))
             }
             serde_json::error::Category::Io | serde_json::error::Category::Eof => {
-                PostgresAggregateError::UnknownError(Box::new(err))
+                Self::UnknownError(Box::new(err))
             }
         }
     }
@@ -74,14 +72,10 @@ impl From<serde_json::Error> for PostgresAggregateError {
 impl From<PostgresAggregateError> for PersistenceError {
     fn from(err: PostgresAggregateError) -> Self {
         match err {
-            PostgresAggregateError::OptimisticLock => PersistenceError::OptimisticLockError,
-            PostgresAggregateError::ConnectionError(error) => {
-                PersistenceError::ConnectionError(error)
-            }
-            PostgresAggregateError::DeserializationError(error) => {
-                PersistenceError::UnknownError(error)
-            }
-            PostgresAggregateError::UnknownError(error) => PersistenceError::UnknownError(error),
+            PostgresAggregateError::OptimisticLock => Self::OptimisticLockError,
+            PostgresAggregateError::ConnectionError(error) => Self::ConnectionError(error),
+            PostgresAggregateError::DeserializationError(error) => Self::UnknownError(error),
+            PostgresAggregateError::UnknownError(error) => Self::UnknownError(error),
         }
     }
 }

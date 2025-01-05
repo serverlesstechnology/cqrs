@@ -25,10 +25,10 @@ pub enum BankAccountEvent {
 impl DomainEvent for BankAccountEvent {
     fn event_type(&self) -> String {
         match self {
-            BankAccountEvent::AccountOpened { .. } => "AccountOpened".to_string(),
-            BankAccountEvent::CustomerDepositedMoney { .. } => "CustomerDepositedMoney".to_string(),
-            BankAccountEvent::CustomerWithdrewCash { .. } => "CustomerWithdrewCash".to_string(),
-            BankAccountEvent::CustomerWroteCheck { .. } => "CustomerWroteCheck".to_string(),
+            Self::AccountOpened { .. } => "AccountOpened".to_string(),
+            Self::CustomerDepositedMoney { .. } => "CustomerDepositedMoney".to_string(),
+            Self::CustomerWithdrewCash { .. } => "CustomerWithdrewCash".to_string(),
+            Self::CustomerWroteCheck { .. } => "CustomerWroteCheck".to_string(),
         }
     }
 

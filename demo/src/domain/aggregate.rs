@@ -6,7 +6,7 @@ use crate::domain::commands::BankAccountCommand;
 use crate::domain::events::{BankAccountError, BankAccountEvent};
 use crate::services::BankAccountServices;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct BankAccount {
     account_id: String,
     balance: f64,
@@ -103,15 +103,6 @@ impl Aggregate for BankAccount {
             } => {
                 self.balance = balance;
             }
-        }
-    }
-}
-
-impl Default for BankAccount {
-    fn default() -> Self {
-        BankAccount {
-            account_id: "".to_string(),
-            balance: 0_f64,
         }
     }
 }

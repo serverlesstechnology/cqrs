@@ -21,12 +21,12 @@ pub enum DynamoAggregateError {
 impl Display for DynamoAggregateError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            DynamoAggregateError::OptimisticLock => write!(f, "optimistic lock error"),
-            DynamoAggregateError::MissingAttribute(attribute) => write!(f, "missing attribute: {}", attribute),
-            DynamoAggregateError::ConnectionError(msg) => write!(f, "{}", msg),
-            DynamoAggregateError::DeserializationError(msg) => write!(f, "{}", msg),
-            DynamoAggregateError::UnknownError(msg) => write!(f, "{}", msg),
-            DynamoAggregateError::TransactionListTooLong(length) => write!(f, "Too many operations: {}, DynamoDb supports only up to 25 operations per transactions", length),
+            Self::OptimisticLock => write!(f, "optimistic lock error"),
+            Self::MissingAttribute(attribute) => write!(f, "missing attribute: {}", attribute),
+            Self::ConnectionError(msg) => write!(f, "{}", msg),
+            Self::DeserializationError(msg) => write!(f, "{}", msg),
+            Self::UnknownError(msg) => write!(f, "{}", msg),
+            Self::TransactionListTooLong(length) => write!(f, "Too many operations: {}, DynamoDb supports only up to 25 operations per transactions", length),
         }
     }
 }
@@ -36,27 +36,23 @@ impl std::error::Error for DynamoAggregateError {}
 impl<T: std::error::Error> From<DynamoAggregateError> for AggregateError<T> {
     fn from(error: DynamoAggregateError) -> Self {
         match error {
-            DynamoAggregateError::OptimisticLock => AggregateError::AggregateConflict,
-            DynamoAggregateError::ConnectionError(err) => {
-                AggregateError::DatabaseConnectionError(err)
-            }
-            DynamoAggregateError::DeserializationError(err) => {
-                AggregateError::DeserializationError(err)
-            }
+            DynamoAggregateError::OptimisticLock => Self::AggregateConflict,
+            DynamoAggregateError::ConnectionError(err) => Self::DatabaseConnectionError(err),
+            DynamoAggregateError::DeserializationError(err) => Self::DeserializationError(err),
             DynamoAggregateError::TransactionListTooLong(_) => {
-                AggregateError::UnexpectedError(Box::new(error))
+                Self::UnexpectedError(Box::new(error))
             }
-            DynamoAggregateError::MissingAttribute(err) => AggregateError::UnexpectedError(
-                Box::new(DynamoAggregateError::MissingAttribute(err)),
-            ),
-            DynamoAggregateError::UnknownError(err) => AggregateError::UnexpectedError(err),
+            DynamoAggregateError::MissingAttribute(err) => {
+                Self::UnexpectedError(Box::new(DynamoAggregateError::MissingAttribute(err)))
+            }
+            DynamoAggregateError::UnknownError(err) => Self::UnexpectedError(err),
         }
     }
 }
 
 impl From<serde_json::Error> for DynamoAggregateError {
     fn from(err: serde_json::Error) -> Self {
-        DynamoAggregateError::UnknownError(Box::new(err))
+        Self::UnknownError(Box::new(err))
     }
 }
 
@@ -66,12 +62,12 @@ impl From<SdkError<TransactWriteItemsError>> for DynamoAggregateError {
             if let TransactWriteItemsError::TransactionCanceledException(cancellation) = err.err() {
                 for reason in cancellation.cancellation_reasons() {
                     if reason.code() == Some("ConditionalCheckFailed") {
-                        return DynamoAggregateError::OptimisticLock;
+                        return Self::OptimisticLock;
                     }
                 }
             }
         }
-        DynamoAggregateError::UnknownError(Box::new(error))
+        Self::UnknownError(Box::new(error))
     }
 }
 
@@ -83,7 +79,7 @@ impl From<SdkError<QueryError>> for DynamoAggregateError {
 
 impl From<BuildError> for DynamoAggregateError {
     fn from(error: BuildError) -> Self {
-        DynamoAggregateError::UnknownError(Box::new(error))
+        Self::UnknownError(Box::new(error))
     }
 }
 
@@ -100,18 +96,14 @@ fn unknown_error<T: StdError + Send + Sync + 'static>(error: SdkError<T>) -> Dyn
 impl From<DynamoAggregateError> for PersistenceError {
     fn from(error: DynamoAggregateError) -> Self {
         match error {
-            DynamoAggregateError::OptimisticLock => PersistenceError::OptimisticLockError,
-            DynamoAggregateError::ConnectionError(err) => PersistenceError::ConnectionError(err),
-            DynamoAggregateError::DeserializationError(err) => {
-                PersistenceError::DeserializationError(err)
+            DynamoAggregateError::OptimisticLock => Self::OptimisticLockError,
+            DynamoAggregateError::ConnectionError(err) => Self::ConnectionError(err),
+            DynamoAggregateError::DeserializationError(err) => Self::DeserializationError(err),
+            DynamoAggregateError::TransactionListTooLong(_) => Self::UnknownError(Box::new(error)),
+            DynamoAggregateError::MissingAttribute(err) => {
+                Self::UnknownError(Box::new(DynamoAggregateError::MissingAttribute(err)))
             }
-            DynamoAggregateError::TransactionListTooLong(_) => {
-                PersistenceError::UnknownError(Box::new(error))
-            }
-            DynamoAggregateError::MissingAttribute(err) => PersistenceError::UnknownError(
-                Box::new(DynamoAggregateError::MissingAttribute(err)),
-            ),
-            DynamoAggregateError::UnknownError(err) => PersistenceError::UnknownError(err),
+            DynamoAggregateError::UnknownError(err) => Self::UnknownError(err),
         }
     }
 }

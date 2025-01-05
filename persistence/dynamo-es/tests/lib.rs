@@ -121,9 +121,9 @@ async fn upcasted_event() {
         .item("EventType", AttributeValue::S("NameAdded".to_string()))
         .item(
             "Payload",
-            AttributeValue::B(Blob::new("{\"NameAdded\": {}}".as_bytes())),
+            AttributeValue::B(Blob::new(b"{\"NameAdded\": {}}")),
         )
-        .item("Metadata", AttributeValue::B(Blob::new("{}".as_bytes())))
+        .item("Metadata", AttributeValue::B(Blob::new(b"{}")))
         .send()
         .await
         .unwrap();

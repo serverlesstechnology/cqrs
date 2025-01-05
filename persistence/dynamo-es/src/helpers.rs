@@ -58,12 +58,9 @@ pub(crate) fn att_as_number(
 ) -> Result<usize, DynamoAggregateError> {
     let attribute = require_attribute(values, attribute_name)?;
     match attribute.as_n() {
-        Ok(attribute_as_n) => match attribute_as_n.parse::<usize>() {
-            Ok(attribute_number) => Ok(attribute_number),
-            Err(_) => Err(DynamoAggregateError::MissingAttribute(
-                attribute_name.to_string(),
-            )),
-        },
+        Ok(attribute_as_n) => attribute_as_n
+            .parse::<usize>()
+            .map_err(|_| DynamoAggregateError::MissingAttribute(attribute_name.to_string())),
         Err(_) => Err(DynamoAggregateError::MissingAttribute(
             attribute_name.to_string(),
         )),
@@ -87,10 +84,9 @@ pub(crate) fn require_attribute<'a>(
     values: &'a HashMap<String, AttributeValue>,
     attribute_name: &str,
 ) -> Result<&'a AttributeValue, DynamoAggregateError> {
-    match values.get(attribute_name) {
-        Some(attribute) => Ok(attribute),
-        None => Err(DynamoAggregateError::MissingAttribute(
+    values
+        .get(attribute_name)
+        .ok_or(DynamoAggregateError::MissingAttribute(
             attribute_name.to_string(),
-        )),
-    }
+        ))
 }
