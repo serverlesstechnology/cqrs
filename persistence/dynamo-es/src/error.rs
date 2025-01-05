@@ -22,11 +22,11 @@ impl Display for DynamoAggregateError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::OptimisticLock => write!(f, "optimistic lock error"),
-            Self::MissingAttribute(attribute) => write!(f, "missing attribute: {}", attribute),
-            Self::ConnectionError(msg) => write!(f, "{}", msg),
-            Self::DeserializationError(msg) => write!(f, "{}", msg),
-            Self::UnknownError(msg) => write!(f, "{}", msg),
-            Self::TransactionListTooLong(length) => write!(f, "Too many operations: {}, DynamoDb supports only up to 25 operations per transactions", length),
+            Self::MissingAttribute(attribute) => write!(f, "missing attribute: {attribute}"),
+            Self::ConnectionError(msg) => write!(f, "{msg}"),
+            Self::DeserializationError(msg) => write!(f, "{msg}"),
+            Self::UnknownError(msg) => write!(f, "{msg}"),
+            Self::TransactionListTooLong(length) => write!(f, "Too many operations: {length}, DynamoDb supports only up to 25 operations per transactions"),
         }
     }
 }

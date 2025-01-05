@@ -172,7 +172,7 @@ impl DynamoEventRepository {
             .expression_attribute_names("#sequence", "AggregateIdSequence")
             .expression_attribute_values(
                 ":agg_type_id",
-                AttributeValue::S(format!("{}:{}", aggregate_type, aggregate_id)),
+                AttributeValue::S(format!("{aggregate_type}:{aggregate_id}")),
             )
             .expression_attribute_values(":sequence", AttributeValue::N(last_sequence.to_string()))
             .send()
@@ -246,7 +246,7 @@ impl DynamoEventRepository {
             .expression_attribute_names("#agg_type_id", "AggregateTypeAndId")
             .expression_attribute_values(
                 ":agg_type_id",
-                AttributeValue::S(format!("{}:{}", aggregate_type, aggregate_id)),
+                AttributeValue::S(format!("{aggregate_type}:{aggregate_id}")),
             )
     }
 }
@@ -505,7 +505,7 @@ mod test {
             .unwrap_err();
         match result {
             DynamoAggregateError::OptimisticLock => {}
-            _ => panic!("invalid error result found during insert: {}", result),
+            _ => panic!("invalid error result found during insert: {result}"),
         };
 
         let events = event_repo.get_events::<TestAggregate>(&id).await.unwrap();
@@ -627,7 +627,7 @@ mod test {
             .unwrap_err();
         match result {
             DynamoAggregateError::OptimisticLock => {}
-            _ => panic!("invalid error result found during insert: {}", result),
+            _ => panic!("invalid error result found during insert: {result}"),
         };
 
         let snapshot = repo.get_snapshot::<TestAggregate>(&id).await.unwrap();

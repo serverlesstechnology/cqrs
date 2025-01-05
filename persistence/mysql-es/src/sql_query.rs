@@ -14,28 +14,28 @@ impl SqlQueryFactory {
             event_table: event_table.to_string(),
             select_events: format!("
 SELECT aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata
-  FROM {}
+  FROM {event_table}
   WHERE aggregate_type = ? AND aggregate_id = ?
-  ORDER BY sequence", event_table),
+  ORDER BY sequence"),
             insert_event: format!("
-INSERT INTO {} (aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata)
-VALUES (?, ?, ?, ?, ?, ?, ?)", event_table),
+INSERT INTO {event_table} (aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata)
+VALUES (?, ?, ?, ?, ?, ?, ?)"),
             all_events: format!("
 SELECT aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata
-  FROM {}
+  FROM {event_table}
   WHERE aggregate_type = ?
-  ORDER BY sequence", event_table),
+  ORDER BY sequence"),
             insert_snapshot: format!("
-INSERT INTO {} (aggregate_type, aggregate_id, last_sequence, current_snapshot, payload)
-VALUES (?, ?, ?, ?, ?)", snapshot_table),
+INSERT INTO {snapshot_table} (aggregate_type, aggregate_id, last_sequence, current_snapshot, payload)
+VALUES (?, ?, ?, ?, ?)"),
             update_snapshot: format!("
-UPDATE {}
+UPDATE {snapshot_table}
   SET last_sequence= ? , payload= ?, current_snapshot= ?
-  WHERE aggregate_type= ? AND aggregate_id= ? AND current_snapshot= ?", snapshot_table),
+  WHERE aggregate_type= ? AND aggregate_id= ? AND current_snapshot= ?"),
             select_snapshot: format!("
 SELECT aggregate_type, aggregate_id, last_sequence, current_snapshot, payload
-  FROM {}
-  WHERE aggregate_type = ? AND aggregate_id = ?", snapshot_table)
+  FROM {snapshot_table}
+  WHERE aggregate_type = ? AND aggregate_id = ?")
         }
     }
     pub fn select_events(&self) -> &str {

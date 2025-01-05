@@ -37,18 +37,11 @@ where
     /// }
     /// ```
     pub fn new(view_name: &str, pool: Pool<Postgres>) -> Self {
-        let insert_sql = format!(
-            "INSERT INTO {} (payload, version, view_id) VALUES ( $1, $2, $3 )",
-            view_name
-        );
-        let update_sql = format!(
-            "UPDATE {} SET payload= $1 , version= $2 WHERE view_id= $3",
-            view_name
-        );
-        let select_sql = format!(
-            "SELECT version,payload FROM {} WHERE view_id= $1",
-            view_name
-        );
+        let insert_sql =
+            format!("INSERT INTO {view_name} (payload, version, view_id) VALUES ( $1, $2, $3 )");
+        let update_sql =
+            format!("UPDATE {view_name} SET payload= $1 , version= $2 WHERE view_id= $3");
+        let select_sql = format!("SELECT version,payload FROM {view_name} WHERE view_id= $1");
         Self {
             insert_sql,
             update_sql,

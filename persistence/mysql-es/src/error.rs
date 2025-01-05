@@ -16,9 +16,9 @@ impl Display for MysqlAggregateError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::OptimisticLock => write!(f, "optimistic lock error"),
-            Self::ConnectionError(error) => write!(f, "{}", error),
-            Self::DeserializationError(error) => write!(f, "{}", error),
-            Self::UnknownError(error) => write!(f, "{}", error),
+            Self::ConnectionError(error) => write!(f, "{error}"),
+            Self::DeserializationError(error) => write!(f, "{error}"),
+            Self::UnknownError(error) => write!(f, "{error}"),
         }
     }
 }

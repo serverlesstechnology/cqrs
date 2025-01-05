@@ -15,7 +15,7 @@ pub async fn query_handler(
     let view = match state.account_query.load(&account_id).await {
         Ok(view) => view,
         Err(err) => {
-            println!("Error: {:#?}\n", err);
+            println!("Error: {err:#?}\n");
             return (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()).into_response();
         }
     };
@@ -38,7 +38,7 @@ pub async fn command_handler(
     {
         Ok(_) => StatusCode::NO_CONTENT.into_response(),
         Err(err) => {
-            println!("Error: {:#?}\n", err);
+            println!("Error: {err:#?}\n");
             (StatusCode::BAD_REQUEST, err.to_string()).into_response()
         }
     }
