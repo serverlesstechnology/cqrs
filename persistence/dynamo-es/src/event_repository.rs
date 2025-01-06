@@ -196,9 +196,8 @@ impl DynamoEventRepository {
         let expected_snapshot = current_snapshot - 1;
         let (mut transactions, current_sequence) =
             Self::build_event_put_transactions(&self.event_table, events);
-        let aggregate_type_and_id =
-            AttributeValue::S(format!("{}:{}", A::aggregate_type(), &aggregate_id));
-        let aggregate_type = AttributeValue::S(A::aggregate_type());
+        let aggregate_type_and_id = AttributeValue::S(format!("{}:{}", A::TYPE, &aggregate_id));
+        let aggregate_type = AttributeValue::S(A::TYPE.to_string());
         let aggregate_id = AttributeValue::S(aggregate_id);
         let current_sequence = AttributeValue::N(current_sequence.to_string());
         let current_snapshot = AttributeValue::N(current_snapshot.to_string());
@@ -278,9 +277,7 @@ impl PersistedEventRepository for DynamoEventRepository {
         &self,
         aggregate_id: &str,
     ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-        let request = self
-            .query_events(&A::aggregate_type(), aggregate_id)
-            .await?;
+        let request = self.query_events(A::TYPE, aggregate_id).await?;
         Ok(request)
     }
 
@@ -290,7 +287,7 @@ impl PersistedEventRepository for DynamoEventRepository {
         number_events: usize,
     ) -> Result<Vec<SerializedEvent>, PersistenceError> {
         Ok(self
-            .query_events_from(&A::aggregate_type(), aggregate_id, number_events)
+            .query_events_from(A::TYPE, aggregate_id, number_events)
             .await?)
     }
 
@@ -299,7 +296,7 @@ impl PersistedEventRepository for DynamoEventRepository {
         aggregate_id: &str,
     ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
         let query_output = self
-            .query_table(&A::aggregate_type(), aggregate_id, &self.snapshot_table)
+            .query_table(A::TYPE, aggregate_id, &self.snapshot_table)
             .await?;
         let query_items_vec = match query_output.items {
             None => return Ok(None),
@@ -343,7 +340,7 @@ impl PersistedEventRepository for DynamoEventRepository {
         aggregate_id: &str,
     ) -> Result<ReplayStream, PersistenceError> {
         let query = self
-            .create_query(&self.event_table, &A::aggregate_type(), aggregate_id)
+            .create_query(&self.event_table, A::TYPE, aggregate_id)
             .await
             .limit(self.stream_channel_size as i32);
         Ok(stream_events(query, self.stream_channel_size))

@@ -47,7 +47,7 @@ impl PersistedEventRepository for PostgresEventRepository {
         aggregate_id: &str,
     ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
         let row: PgRow = match sqlx::query(self.query_factory.select_snapshot())
-            .bind(A::aggregate_type())
+            .bind(A::TYPE)
             .bind(aggregate_id)
             .fetch_optional(&self.pool)
             .await
@@ -89,7 +89,7 @@ impl PersistedEventRepository for PostgresEventRepository {
     ) -> Result<ReplayStream, PersistenceError> {
         Ok(stream_events(
             self.query_factory.select_events().to_string(),
-            A::aggregate_type(),
+            A::TYPE.to_string(),
             aggregate_id.to_string(),
             self.pool.clone(),
             self.stream_channel_size,
@@ -100,7 +100,7 @@ impl PersistedEventRepository for PostgresEventRepository {
     async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
         Ok(stream_events(
             self.query_factory.all_events().to_string(),
-            A::aggregate_type(),
+            A::TYPE.to_string(),
             "".to_string(),
             self.pool.clone(),
             self.stream_channel_size,
@@ -140,7 +140,7 @@ impl PostgresEventRepository {
         query: &str,
     ) -> Result<Vec<SerializedEvent>, PersistenceError> {
         let mut rows = sqlx::query(query)
-            .bind(A::aggregate_type())
+            .bind(A::TYPE)
             .bind(aggregate_id)
             .fetch(&self.pool);
         let mut result: Vec<SerializedEvent> = Default::default();
@@ -239,7 +239,7 @@ impl PostgresEventRepository {
             .persist_events::<A>(self.query_factory.insert_event(), &mut tx, events)
             .await?;
         sqlx::query(self.query_factory.insert_snapshot())
-            .bind(A::aggregate_type())
+            .bind(A::TYPE)
             .bind(aggregate_id.as_str())
             .bind(current_sequence as i32)
             .bind(current_snapshot as i32)
@@ -264,7 +264,7 @@ impl PostgresEventRepository {
 
         let aggregate_payload = serde_json::to_value(&aggregate)?;
         let result = sqlx::query(self.query_factory.update_snapshot())
-            .bind(A::aggregate_type())
+            .bind(A::TYPE)
             .bind(aggregate_id.as_str())
             .bind(current_sequence as i32)
             .bind(current_snapshot as i32)
@@ -330,7 +330,7 @@ impl PostgresEventRepository {
             let payload = serde_json::to_value(&event.payload)?;
             let metadata = serde_json::to_value(&event.metadata)?;
             sqlx::query(inser_event_query)
-                .bind(A::aggregate_type())
+                .bind(A::TYPE)
                 .bind(event.aggregate_id.as_str())
                 .bind(event.sequence as i32)
                 .bind(event_type)

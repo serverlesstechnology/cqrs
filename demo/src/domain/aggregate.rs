@@ -14,15 +14,12 @@ pub struct BankAccount {
 
 #[async_trait]
 impl Aggregate for BankAccount {
+    // This identifier should be unique to the system.
+    const TYPE: &'static str = "account";
     type Command = BankAccountCommand;
     type Event = BankAccountEvent;
     type Error = BankAccountError;
     type Services = BankAccountServices;
-
-    // This identifier should be unique to the system.
-    fn aggregate_type() -> String {
-        "account".to_string()
-    }
 
     // The aggregate logic goes here. Note that this will be the _bulk_ of a CQRS system
     // so expect to use helper functions elsewhere to keep the code clean.
