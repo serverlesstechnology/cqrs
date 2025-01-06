@@ -8,7 +8,7 @@ pub(crate) mod tests {
     use serde_json::Value;
     use std::fmt::{Display, Formatter};
 
-    #[derive(Debug, Serialize, Deserialize, PartialEq)]
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Default)]
     pub(crate) struct TestAggregate {
         pub(crate) id: String,
         pub(crate) description: String,
@@ -37,16 +37,6 @@ pub(crate) mod tests {
         fn apply(&mut self, _e: Self::Event) {}
     }
 
-    impl Default for TestAggregate {
-        fn default() -> Self {
-            TestAggregate {
-                id: "".to_string(),
-                description: "".to_string(),
-                tests: Vec::new(),
-            }
-        }
-    }
-
     #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
     pub(crate) enum TestEvent {
         Created(Created),
@@ -72,9 +62,9 @@ pub(crate) mod tests {
     impl DomainEvent for TestEvent {
         fn event_type(&self) -> String {
             match self {
-                TestEvent::Created(_) => "Created".to_string(),
-                TestEvent::Tested(_) => "Tested".to_string(),
-                TestEvent::SomethingElse(_) => "SomethingElse".to_string(),
+                Self::Created(_) => "Created".to_string(),
+                Self::Tested(_) => "Tested".to_string(),
+                Self::SomethingElse(_) => "SomethingElse".to_string(),
             }
         }
 
@@ -125,9 +115,9 @@ pub(crate) mod tests {
         SerializedEvent {
             aggregate_id: id.to_string(),
             sequence,
-            aggregate_type: TestAggregate::aggregate_type().to_string(),
-            event_type: event.event_type().to_string(),
-            event_version: event.event_version().to_string(),
+            aggregate_type: TestAggregate::aggregate_type(),
+            event_type: event.event_type(),
+            event_version: event.event_version(),
             payload,
             metadata: Default::default(),
         }

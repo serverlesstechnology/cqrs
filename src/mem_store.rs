@@ -59,12 +59,16 @@ impl<A: Aggregate> MemStore<A> {
         &self,
         aggregate_id: &str,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        // uninteresting unwrap: this will not be used in production, for tests only
-        let event_map = self.events.read().unwrap();
-        let mut committed_events: Vec<EventEnvelope<A>> = Vec::new();
-        for event in event_map.get(aggregate_id).into_iter().flatten() {
-            committed_events.push(event.clone());
-        }
+        let committed_events = self
+            .events
+            .read()
+            .unwrap() // uninteresting unwrap: this will not be used in production, for tests only
+            .get(aggregate_id)
+            .into_iter()
+            .flatten()
+            .cloned()
+            .collect();
+
         Ok(committed_events)
     }
 

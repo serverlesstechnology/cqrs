@@ -15,11 +15,11 @@ see [the init script](db/init.sql) for the expected table configuration.
 
 Clone this repository
 
-    git clone https://github.com/serverlesstechnology/cqrs-demo
+    git clone https://github.com/serverlesstechnology/cqrs
 
 Enter the project folder and start a docker instance of PostgreSql
 
-    cd cqrs-demo
+    cd cqrs/demo
     docker-compose up -d
 
 Start the application

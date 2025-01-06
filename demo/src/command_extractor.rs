@@ -37,8 +37,8 @@ where
 
         // Parse and deserialize the request body as the command payload.
         let body = Bytes::from_request(req, state).await?;
-        let command: BankAccountCommand = serde_json::from_slice(body.as_ref())?;
-        Ok(CommandExtractor(metadata, command))
+        let command: BankAccountCommand = serde_json::from_slice(&body)?;
+        Ok(Self(metadata, command))
     }
 }
 
@@ -56,12 +56,12 @@ impl IntoResponse for CommandExtractionError {
 
 impl From<axum::extract::rejection::BytesRejection> for CommandExtractionError {
     fn from(_: axum::extract::rejection::BytesRejection) -> Self {
-        CommandExtractionError
+        Self
     }
 }
 
 impl From<serde_json::Error> for CommandExtractionError {
     fn from(_: serde_json::Error) -> Self {
-        CommandExtractionError
+        Self
     }
 }

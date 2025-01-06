@@ -37,15 +37,10 @@ where
     /// }
     /// ```
     pub fn new(view_name: &str, pool: Pool<MySql>) -> Self {
-        let insert_sql = format!(
-            "INSERT INTO {} (payload, version, view_id) VALUES ( ?, ?, ? )",
-            view_name
-        );
-        let update_sql = format!(
-            "UPDATE {} SET payload= ? , version= ? WHERE view_id= ?",
-            view_name
-        );
-        let select_sql = format!("SELECT version,payload FROM {} WHERE view_id= ?", view_name);
+        let insert_sql =
+            format!("INSERT INTO {view_name} (payload, version, view_id) VALUES ( ?, ?, ? )");
+        let update_sql = format!("UPDATE {view_name} SET payload= ? , version= ? WHERE view_id= ?");
+        let select_sql = format!("SELECT version,payload FROM {view_name} WHERE view_id= ?");
         Self {
             insert_sql,
             update_sql,

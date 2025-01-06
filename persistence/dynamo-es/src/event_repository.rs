@@ -172,7 +172,7 @@ impl DynamoEventRepository {
             .expression_attribute_names("#sequence", "AggregateIdSequence")
             .expression_attribute_values(
                 ":agg_type_id",
-                AttributeValue::S(format!("{}:{}", aggregate_type, aggregate_id)),
+                AttributeValue::S(format!("{aggregate_type}:{aggregate_id}")),
             )
             .expression_attribute_values(":sequence", AttributeValue::N(last_sequence.to_string()))
             .send()
@@ -246,7 +246,7 @@ impl DynamoEventRepository {
             .expression_attribute_names("#agg_type_id", "AggregateTypeAndId")
             .expression_attribute_values(
                 ":agg_type_id",
-                AttributeValue::S(format!("{}:{}", aggregate_type, aggregate_id)),
+                AttributeValue::S(format!("{aggregate_type}:{aggregate_id}")),
             )
     }
 }
@@ -505,7 +505,7 @@ mod test {
             .unwrap_err();
         match result {
             DynamoAggregateError::OptimisticLock => {}
-            _ => panic!("invalid error result found during insert: {}", result),
+            _ => panic!("invalid error result found during insert: {result}"),
         };
 
         let events = event_repo.get_events::<TestAggregate>(&id).await.unwrap();
@@ -521,12 +521,9 @@ mod test {
     }
 
     async fn verify_replay_stream(id: &str, event_repo: DynamoEventRepository) {
-        let mut stream = event_repo
-            .stream_events::<TestAggregate>(&id)
-            .await
-            .unwrap();
+        let mut stream = event_repo.stream_events::<TestAggregate>(id).await.unwrap();
         let mut found_in_stream = 0;
-        while let Some(_) = stream.next::<TestAggregate>(&None).await {
+        while (stream.next::<TestAggregate>(&[]).await).is_some() {
             found_in_stream += 1;
         }
         assert_eq!(found_in_stream, 2);
@@ -536,7 +533,7 @@ mod test {
             .await
             .unwrap();
         let mut found_in_stream = 0;
-        while let Some(_) = stream.next::<TestAggregate>(&None).await {
+        while (stream.next::<TestAggregate>(&[]).await).is_some() {
             found_in_stream += 1;
         }
         assert!(found_in_stream >= 2);
@@ -561,7 +558,7 @@ mod test {
             .unwrap(),
             id.clone(),
             1,
-            &vec![],
+            &[],
         )
         .await
         .unwrap();
@@ -592,7 +589,7 @@ mod test {
             .unwrap(),
             id.clone(),
             2,
-            &vec![],
+            &[],
         )
         .await
         .unwrap();
@@ -624,13 +621,13 @@ mod test {
                 .unwrap(),
                 id.clone(),
                 2,
-                &vec![],
+                &[],
             )
             .await
             .unwrap_err();
         match result {
             DynamoAggregateError::OptimisticLock => {}
-            _ => panic!("invalid error result found during insert: {}", result),
+            _ => panic!("invalid error result found during insert: {result}"),
         };
 
         let snapshot = repo.get_snapshot::<TestAggregate>(&id).await.unwrap();

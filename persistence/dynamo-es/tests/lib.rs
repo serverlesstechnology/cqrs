@@ -121,9 +121,9 @@ async fn upcasted_event() {
         .item("EventType", AttributeValue::S("NameAdded".to_string()))
         .item(
             "Payload",
-            AttributeValue::B(Blob::new("{\"NameAdded\": {}}".as_bytes())),
+            AttributeValue::B(Blob::new(b"{\"NameAdded\": {}}")),
         )
-        .item("Metadata", AttributeValue::B(Blob::new("{}".as_bytes())))
+        .item("Metadata", AttributeValue::B(Blob::new(b"{}")))
         .send()
         .await
         .unwrap();
@@ -146,7 +146,7 @@ async fn upcasted_event() {
     let id = "previous_event_in_need_of_upcast".to_string();
     let result = match event_store.load_aggregate(id.as_str()).await {
         Ok(result) => result,
-        Err(err) => panic!("Unexpected error during upcast: {}", err),
+        Err(err) => panic!("Unexpected error during upcast: {err}"),
     };
     assert_eq!(1, result.current_sequence);
     assert_eq!(None, result.current_snapshot);

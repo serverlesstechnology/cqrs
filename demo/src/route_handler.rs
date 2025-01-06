@@ -12,16 +12,13 @@ pub async fn query_handler(
     Path(account_id): Path<String>,
     State(state): State<ApplicationState>,
 ) -> Response {
-    let view = match state.account_query.load(&account_id).await {
-        Ok(view) => view,
+    match state.account_query.load(&account_id).await {
+        Ok(Some(account_view)) => (StatusCode::OK, Json(account_view)).into_response(),
+        Ok(None) => StatusCode::NOT_FOUND.into_response(),
         Err(err) => {
-            println!("Error: {:#?}\n", err);
-            return (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()).into_response();
+            println!("Error: {err:#?}\n");
+            (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()).into_response()
         }
-    };
-    match view {
-        None => StatusCode::NOT_FOUND.into_response(),
-        Some(account_view) => (StatusCode::OK, Json(account_view)).into_response(),
     }
 }
 
@@ -38,7 +35,7 @@ pub async fn command_handler(
     {
         Ok(_) => StatusCode::NO_CONTENT.into_response(),
         Err(err) => {
-            println!("Error: {:#?}\n", err);
+            println!("Error: {err:#?}\n");
             (StatusCode::BAD_REQUEST, err.to_string()).into_response()
         }
     }

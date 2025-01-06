@@ -15,10 +15,10 @@ pub enum MysqlAggregateError {
 impl Display for MysqlAggregateError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            MysqlAggregateError::OptimisticLock => write!(f, "optimistic lock error"),
-            MysqlAggregateError::ConnectionError(error) => write!(f, "{}", error),
-            MysqlAggregateError::DeserializationError(error) => write!(f, "{}", error),
-            MysqlAggregateError::UnknownError(error) => write!(f, "{}", error),
+            Self::OptimisticLock => write!(f, "optimistic lock error"),
+            Self::ConnectionError(error) => write!(f, "{error}"),
+            Self::DeserializationError(error) => write!(f, "{error}"),
+            Self::UnknownError(error) => write!(f, "{error}"),
         }
     }
 }
@@ -32,13 +32,13 @@ impl From<sqlx::Error> for MysqlAggregateError {
             Error::Database(database_error) => {
                 if let Some(code) = database_error.code() {
                     if code.as_ref() == "23000" {
-                        return MysqlAggregateError::OptimisticLock;
+                        return Self::OptimisticLock;
                     }
                 }
-                MysqlAggregateError::UnknownError(Box::new(err))
+                Self::UnknownError(Box::new(err))
             }
-            Error::Io(_) | Error::Tls(_) => MysqlAggregateError::ConnectionError(Box::new(err)),
-            _ => MysqlAggregateError::UnknownError(Box::new(err)),
+            Error::Io(_) | Error::Tls(_) => Self::ConnectionError(Box::new(err)),
+            _ => Self::UnknownError(Box::new(err)),
         }
     }
 }
@@ -46,14 +46,10 @@ impl From<sqlx::Error> for MysqlAggregateError {
 impl<T: std::error::Error> From<MysqlAggregateError> for AggregateError<T> {
     fn from(err: MysqlAggregateError) -> Self {
         match err {
-            MysqlAggregateError::OptimisticLock => AggregateError::AggregateConflict,
-            MysqlAggregateError::DeserializationError(error) => {
-                AggregateError::DeserializationError(error)
-            }
-            MysqlAggregateError::ConnectionError(error) => {
-                AggregateError::DatabaseConnectionError(error)
-            }
-            MysqlAggregateError::UnknownError(error) => AggregateError::UnexpectedError(error),
+            MysqlAggregateError::OptimisticLock => Self::AggregateConflict,
+            MysqlAggregateError::DeserializationError(error) => Self::DeserializationError(error),
+            MysqlAggregateError::ConnectionError(error) => Self::DatabaseConnectionError(error),
+            MysqlAggregateError::UnknownError(error) => Self::UnexpectedError(error),
         }
     }
 }
@@ -62,10 +58,10 @@ impl From<serde_json::Error> for MysqlAggregateError {
     fn from(err: serde_json::Error) -> Self {
         match err.classify() {
             serde_json::error::Category::Data | serde_json::error::Category::Syntax => {
-                MysqlAggregateError::DeserializationError(Box::new(err))
+                Self::DeserializationError(Box::new(err))
             }
             serde_json::error::Category::Io | serde_json::error::Category::Eof => {
-                MysqlAggregateError::UnknownError(Box::new(err))
+                Self::UnknownError(Box::new(err))
             }
         }
     }
@@ -74,12 +70,10 @@ impl From<serde_json::Error> for MysqlAggregateError {
 impl From<MysqlAggregateError> for PersistenceError {
     fn from(err: MysqlAggregateError) -> Self {
         match err {
-            MysqlAggregateError::OptimisticLock => PersistenceError::OptimisticLockError,
-            MysqlAggregateError::ConnectionError(error) => PersistenceError::ConnectionError(error),
-            MysqlAggregateError::DeserializationError(error) => {
-                PersistenceError::DeserializationError(error)
-            }
-            MysqlAggregateError::UnknownError(error) => PersistenceError::UnknownError(error),
+            MysqlAggregateError::OptimisticLock => Self::OptimisticLockError,
+            MysqlAggregateError::ConnectionError(error) => Self::ConnectionError(error),
+            MysqlAggregateError::DeserializationError(error) => Self::DeserializationError(error),
+            MysqlAggregateError::UnknownError(error) => Self::UnknownError(error),
         }
     }
 }

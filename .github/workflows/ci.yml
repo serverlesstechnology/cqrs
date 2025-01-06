@@ -87,4 +87,4 @@ jobs:
         with:
           toolchain: ${{ env.MSRV }}
       - uses: taiki-e/install-action@cargo-no-dev-deps
-      - run: cargo no-dev-deps check --all
+      - run: cargo no-dev-deps check

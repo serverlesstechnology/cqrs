@@ -166,7 +166,7 @@ impl MysqlEventRepository {
             .fetch(&self.pool);
         let mut result: Vec<SerializedEvent> = Default::default();
         while let Some(row) = rows.try_next().await.map_err(MysqlAggregateError::from)? {
-            result.push(MysqlEventRepository::deser_event(row)?);
+            result.push(Self::deser_event(row)?);
         }
         Ok(result)
     }
@@ -201,7 +201,6 @@ impl MysqlEventRepository {
     ///     store.with_streaming_channel_size(1000)
     /// }
     /// ```
-
     pub fn with_streaming_channel_size(self, stream_channel_size: usize) -> Self {
         Self {
             pool: self.pool,
@@ -413,7 +412,7 @@ mod test {
             .unwrap_err();
         match result {
             MysqlAggregateError::OptimisticLock => {}
-            _ => panic!("invalid error result found during insert: {}", result),
+            _ => panic!("invalid error result found during insert: {result}"),
         };
 
         let events = event_repo.get_events::<TestAggregate>(&id).await.unwrap();
@@ -423,12 +422,9 @@ mod test {
     }
 
     async fn verify_replay_stream(id: &str, event_repo: MysqlEventRepository) {
-        let mut stream = event_repo
-            .stream_events::<TestAggregate>(&id)
-            .await
-            .unwrap();
+        let mut stream = event_repo.stream_events::<TestAggregate>(id).await.unwrap();
         let mut found_in_stream = 0;
-        while let Some(_) = stream.next::<TestAggregate>(&None).await {
+        while (stream.next::<TestAggregate>(&None).await).is_some() {
             found_in_stream += 1;
         }
         assert_eq!(found_in_stream, 2);
@@ -438,7 +434,7 @@ mod test {
             .await
             .unwrap();
         let mut found_in_stream = 0;
-        while let Some(_) = stream.next::<TestAggregate>(&None).await {
+        while (stream.next::<TestAggregate>(&None).await).is_some() {
             found_in_stream += 1;
         }
         assert!(found_in_stream >= 2);
@@ -463,7 +459,7 @@ mod test {
             .unwrap(),
             id.clone(),
             1,
-            &vec![],
+            &[],
         )
         .await
         .unwrap();
@@ -494,7 +490,7 @@ mod test {
             .unwrap(),
             id.clone(),
             2,
-            &vec![],
+            &[],
         )
         .await
         .unwrap();
@@ -526,13 +522,13 @@ mod test {
                 .unwrap(),
                 id.clone(),
                 2,
-                &vec![],
+                &[],
             )
             .await
             .unwrap_err();
         match result {
             MysqlAggregateError::OptimisticLock => {}
-            _ => panic!("invalid error result found during insert: {}", result),
+            _ => panic!("invalid error result found during insert: {result}"),
         };
 
         let snapshot = repo.get_snapshot::<TestAggregate>(&id).await.unwrap();
