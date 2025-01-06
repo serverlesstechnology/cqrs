@@ -1,0 +1,25 @@
+[package]
+name = "dynamo-es"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+keywords.workspace = true
+description = "A DynamoDB implementation of an event repository for cqrs-es."
+repository.workspace = true
+documentation = "https://docs.rs/dynamo-es"
+readme = "README.md"
+
+[dependencies]
+cqrs-es = { version = "0.4.12", path = "../.." }
+
+async-trait = "0.1"
+aws-sdk-dynamodb = "1.14"
+futures = "0.3"
+serde = { workspace = true, features = ["derive"]}
+serde_json = "1.0"
+tokio = { workspace = true, features = ["rt"] }
+
+[dev-dependencies]
+aws-config = "1.1.5"
+uuid.workspace = true

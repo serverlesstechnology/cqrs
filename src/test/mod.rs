@@ -1,4 +1,5 @@
 //! This module provides a test framework for building a resilient test base around aggregates.
+//!
 //! A `TestFramework` should be used to build a comprehensive set of aggregate tests to verify
 //! your application logic.
 //!

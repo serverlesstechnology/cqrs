@@ -33,7 +33,7 @@ pub struct ViewContext {
 }
 
 impl ViewContext {
-    /// Convenience function to create a new QueryContext.
+    /// Convenience function to create a new [`QueryContext`].
     pub fn new(view_instance_id: String, version: i64) -> Self {
         Self {
             view_instance_id,

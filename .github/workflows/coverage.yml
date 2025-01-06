@@ -9,6 +9,9 @@ jobs:
   coverage:
     name: coverage
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        crate: [cqrs, postgres, mysql]
     steps:
       - name: checkout source
         uses: actions/checkout@v4
@@ -22,9 +25,19 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Run llvm-cov
-        run: cargo llvm-cov --doctests --workspace --lcov --output-path lcov.info
+        run: |
+          if [ "${{ matrix.crate }}" == "cqrs" ]; then
+            cargo llvm-cov --doctests --lcov --output-path lcov.info
+          else
+            cd persistence/${{ matrix.crate }}-es
+            docker compose up -d
+            cargo llvm-cov --doctests --lcov --output-path ../../lcov.info
+            docker compose down
+          fi
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
+          flags: ${{ matrix.crate }}

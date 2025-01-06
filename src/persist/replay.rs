@@ -24,7 +24,7 @@ where
 {
     repository: R,
     query: Q,
-    event_upcasters: Option<Vec<Box<dyn EventUpcaster>>>,
+    event_upcasters: Vec<Box<dyn EventUpcaster>>,
     error_handler: Option<Box<QueryErrorHandler>>,
     phantom_data: PhantomData<A>,
 }
@@ -41,7 +41,7 @@ where
         Self {
             repository,
             query,
-            event_upcasters: None,
+            event_upcasters: vec![],
             error_handler: None,
             phantom_data: PhantomData,
         }
@@ -57,7 +57,7 @@ where
             repository: self.repository,
             query: self.query,
             error_handler: self.error_handler,
-            event_upcasters: Some(event_upcasters),
+            event_upcasters,
             phantom_data: self.phantom_data,
         }
     }
@@ -116,7 +116,7 @@ mod test {
 
     use async_trait::async_trait;
     use serde_json::Value::Object;
-    use serde_json::{json, Value};
+    use serde_json::{json, Map, Value};
 
     use crate::doc::{MyAggregate, MyEvents};
     use crate::persist::event_store::shared_test::MockRepo;
@@ -200,7 +200,7 @@ mod test {
             event_type: "SomethingWasDone".to_string(),
             event_version: "0.0.1".to_string(),
             payload: json!({"LegacyName": ()}),
-            metadata: Object(Default::default()),
+            metadata: Object(Map::default()),
         }];
 
         fn upcasting_fn(_payload: Value) -> Value {

@@ -26,7 +26,7 @@ pub struct SerializedEvent {
 }
 
 impl SerializedEvent {
-    /// Create a new SerializedEvent with the given values.
+    /// Create a new [`SerializedEvent`] with the given values.
     pub fn new(
         aggregate_id: String,
         sequence: usize,
@@ -46,6 +46,16 @@ impl SerializedEvent {
             metadata,
         }
     }
+
+    pub(crate) fn upcast(self, upcasters: &[Box<dyn EventUpcaster>]) -> Self {
+        upcasters.iter().fold(self, |event, upcaster| {
+            if upcaster.can_upcast(&event.event_type, &event.event_version) {
+                upcaster.upcast(event)
+            } else {
+                event
+            }
+        })
+    }
 }
 
 pub(crate) fn serialize_events<A: Aggregate>(
@@ -60,27 +70,13 @@ pub(crate) fn serialize_events<A: Aggregate>(
 
 pub(crate) fn deserialize_events<A: Aggregate>(
     events: Vec<SerializedEvent>,
-    upcasters: &Option<Vec<Box<dyn EventUpcaster>>>,
+    upcasters: &[Box<dyn EventUpcaster>],
 ) -> Result<Vec<EventEnvelope<A>>, PersistenceError> {
-    let mut result = Vec::default();
-    for event in events {
-        let upcasted_event = match upcasters {
-            None => event,
-            Some(upcasters) => {
-                let mut upcasted_event = event;
-                for upcaster in upcasters {
-                    if upcaster
-                        .can_upcast(&upcasted_event.event_type, &upcasted_event.event_version)
-                    {
-                        upcasted_event = upcaster.upcast(upcasted_event);
-                    }
-                }
-                upcasted_event
-            }
-        };
-        result.push(EventEnvelope::<A>::try_from(upcasted_event)?);
+    let mut results = Vec::default();
+    for event in events.into_iter().map(|event| event.upcast(upcasters)) {
+        results.push(EventEnvelope::<A>::try_from(event)?);
     }
-    Ok(result)
+    Ok(results)
 }
 
 impl<A: Aggregate> TryFrom<&EventEnvelope<A>> for SerializedEvent {
