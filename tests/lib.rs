@@ -30,14 +30,11 @@ pub struct TestService;
 
 #[async_trait]
 impl Aggregate for TestAggregate {
+    const TYPE: &'static str = "TestAggregate";
     type Command = TestCommand;
     type Event = TestEvent;
     type Error = TestError;
     type Services = TestService;
-
-    fn aggregate_type() -> String {
-        "TestAggregate".to_string()
-    }
 
     async fn handle(
         &self,

@@ -27,13 +27,11 @@ use crate::DomainEvent;
 ///
 /// #[async_trait]
 /// impl Aggregate for Customer {
+///     const TYPE: &'static str = "customer";
 ///     type Command = CustomerCommand;
 ///     type Event = CustomerEvent;
 ///     type Error = CustomerError;
 ///     type Services = CustomerService;
-///
-///
-///     fn aggregate_type() -> String { "customer".to_string() }
 ///
 ///     async fn handle(&self, command: Self::Command, service: &Self::Services) -> Result<Vec<Self::Event>, Self::Error> {
 ///         match command {
@@ -65,6 +63,9 @@ use crate::DomainEvent;
 /// ```
 #[async_trait]
 pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
+    /// The aggregate type is used as the unique identifier for this aggregate and its events.
+    /// This is used for persisting the events and snapshots to a database.
+    const TYPE: &'static str;
     /// Specifies the inbound command used to make changes in the state of the Aggregate.
     type Command;
     /// Specifies the published events representing some change in state of the Aggregate.
@@ -74,9 +75,7 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     type Error: std::error::Error;
     /// The external services required for the logic within the Aggregate
     type Services: Send + Sync;
-    /// The aggregate type is used as the unique identifier for this aggregate and its events.
-    /// This is used for persisting the events and snapshots to a database.
-    fn aggregate_type() -> String;
+
     /// This method consumes and processes commands.
     /// The result should be either a vector of events if the command is successful,
     /// or an error if the command is rejected.
@@ -96,11 +95,11 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # }
     /// # #[async_trait]
     /// # impl Aggregate for Customer {
+    /// #     const TYPE: &'static str = "customer";
     /// #     type Command = CustomerCommand;
     /// #     type Event = CustomerEvent;
     /// #     type Error = CustomerError;
     /// #     type Services = CustomerService;
-    /// #     fn aggregate_type() -> String { "customer".to_string() }
     /// async fn handle(&self, command: Self::Command, service: &Self::Services) -> Result<Vec<Self::Event>, Self::Error> {
     ///     match command {
     ///         CustomerCommand::AddCustomerName{name: changed_name} => {
@@ -149,11 +148,11 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # }
     /// # #[async_trait]
     /// # impl Aggregate for Customer {
+    /// #     const TYPE: &'static str = "customer";
     /// #     type Command = CustomerCommand;
     /// #     type Event = CustomerEvent;
     /// #     type Error = CustomerError;
     /// #     type Services = CustomerService;
-    /// #     fn aggregate_type() -> String { "customer".to_string() }
     /// # async fn handle(&self, command: Self::Command, service: &Self::Services) -> Result<Vec<Self::Event>, Self::Error> {
     /// # Ok(vec![])
     /// # }

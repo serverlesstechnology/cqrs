@@ -1,5 +1,3 @@
-use std::fmt::{Debug, Display, Formatter};
-
 use aws_sdk_dynamodb::error::{BuildError, SdkError};
 use aws_sdk_dynamodb::operation::query::QueryError;
 use aws_sdk_dynamodb::operation::scan::ScanError;
@@ -8,30 +6,23 @@ use cqrs_es::persist::PersistenceError;
 use cqrs_es::AggregateError;
 use serde::de::StdError;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum DynamoAggregateError {
+    #[error("optimistic lock error")]
     OptimisticLock,
+    #[error(transparent)]
     ConnectionError(Box<dyn std::error::Error + Send + Sync + 'static>),
+    #[error(transparent)]
     DeserializationError(Box<dyn std::error::Error + Send + Sync + 'static>),
+    #[error(
+        "Too many operations: {0}, DynamoDb supports only up to 25 operations per transactions"
+    )]
     TransactionListTooLong(usize),
+    #[error("missing attribute: {0}")]
     MissingAttribute(String),
+    #[error(transparent)]
     UnknownError(Box<dyn std::error::Error + Send + Sync + 'static>),
 }
-
-impl Display for DynamoAggregateError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::OptimisticLock => write!(f, "optimistic lock error"),
-            Self::MissingAttribute(attribute) => write!(f, "missing attribute: {attribute}"),
-            Self::ConnectionError(msg) => write!(f, "{msg}"),
-            Self::DeserializationError(msg) => write!(f, "{msg}"),
-            Self::UnknownError(msg) => write!(f, "{msg}"),
-            Self::TransactionListTooLong(length) => write!(f, "Too many operations: {length}, DynamoDb supports only up to 25 operations per transactions"),
-        }
-    }
-}
-
-impl std::error::Error for DynamoAggregateError {}
 
 impl<T: std::error::Error> From<DynamoAggregateError> for AggregateError<T> {
     fn from(error: DynamoAggregateError) -> Self {
