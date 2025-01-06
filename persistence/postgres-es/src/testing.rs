@@ -114,7 +114,7 @@ pub(crate) mod tests {
             event_type: event.event_type(),
             event_version: event.event_version(),
             payload,
-            metadata: Default::default(),
+            metadata: Value::default(),
         }
     }
 

@@ -46,19 +46,16 @@ impl PersistedEventRepository for MysqlEventRepository {
         &self,
         aggregate_id: &str,
     ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
-        let row: MySqlRow = match sqlx::query(self.query_factory.select_snapshot())
+        let Some(row) = sqlx::query(self.query_factory.select_snapshot())
             .bind(A::TYPE)
             .bind(aggregate_id)
             .fetch_optional(&self.pool)
             .await
             .map_err(MysqlAggregateError::from)?
-        {
-            Some(row) => row,
-            None => {
-                return Ok(None);
-            }
+        else {
+            return Ok(None);
         };
-        Ok(Some(self.deser_snapshot(row)?))
+        Ok(Some(self.deser_snapshot(&row)))
     }
 
     async fn persist<A: Aggregate>(
@@ -311,19 +308,19 @@ impl MysqlEventRepository {
         ))
     }
 
-    fn deser_snapshot(&self, row: MySqlRow) -> Result<SerializedSnapshot, MysqlAggregateError> {
+    fn deser_snapshot(&self, row: &MySqlRow) -> SerializedSnapshot {
         let aggregate_id = row.get("aggregate_id");
         let s: i64 = row.get("last_sequence");
         let current_sequence = s as usize;
         let s: i64 = row.get("current_snapshot");
         let current_snapshot = s as usize;
         let aggregate: Value = row.get("payload");
-        Ok(SerializedSnapshot {
+        SerializedSnapshot {
             aggregate_id,
             aggregate,
             current_sequence,
             current_snapshot,
-        })
+        }
     }
 
     pub(crate) async fn persist_events<A: Aggregate>(

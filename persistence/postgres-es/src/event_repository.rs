@@ -44,19 +44,16 @@ impl PersistedEventRepository for PostgresEventRepository {
         &self,
         aggregate_id: &str,
     ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
-        let row: PgRow = match sqlx::query(self.query_factory.select_snapshot())
+        let Some(row) = sqlx::query(self.query_factory.select_snapshot())
             .bind(A::TYPE)
             .bind(aggregate_id)
             .fetch_optional(&self.pool)
             .await
             .map_err(PostgresAggregateError::from)?
-        {
-            Some(row) => row,
-            None => {
-                return Ok(None);
-            }
+        else {
+            return Ok(None);
         };
-        Ok(Some(self.deser_snapshot(row)?))
+        Ok(Some(Self::deser_snapshot(&row)))
     }
 
     async fn persist<A: Aggregate>(
@@ -99,7 +96,7 @@ impl PersistedEventRepository for PostgresEventRepository {
         Ok(stream_events(
             self.query_factory.all_events().to_string(),
             A::TYPE.to_string(),
-            "".to_string(),
+            String::new(),
             self.pool.clone(),
             self.stream_channel_size,
         ))
@@ -120,9 +117,8 @@ fn stream_events(
             .bind(&aggregate_id);
         let mut rows = query.fetch(&pool);
         while let Some(row) = rows.try_next().await.unwrap() {
-            let event_result: Result<SerializedEvent, PersistenceError> =
-                PostgresEventRepository::deser_event(row).map_err(Into::into);
-            if feed.push(event_result).await.is_err() {
+            let event = PostgresEventRepository::deser_event(&row);
+            if feed.push(Ok(event)).await.is_err() {
                 // TODO: in the unlikely event of a broken channel this error should be reported.
                 return;
             };
@@ -141,13 +137,13 @@ impl PostgresEventRepository {
             .bind(A::TYPE)
             .bind(aggregate_id)
             .fetch(&self.pool);
-        let mut result: Vec<SerializedEvent> = Default::default();
+        let mut result = Vec::default();
         while let Some(row) = rows
             .try_next()
             .await
             .map_err(PostgresAggregateError::from)?
         {
-            result.push(Self::deser_event(row)?);
+            result.push(Self::deser_event(&row));
         }
         Ok(result)
     }
@@ -277,7 +273,7 @@ impl PostgresEventRepository {
         }
     }
 
-    fn deser_event(row: PgRow) -> Result<SerializedEvent, PostgresAggregateError> {
+    fn deser_event(row: &PgRow) -> SerializedEvent {
         let aggregate_type: String = row.get("aggregate_type");
         let aggregate_id: String = row.get("aggregate_id");
         let sequence = {
@@ -288,7 +284,7 @@ impl PostgresEventRepository {
         let event_version: String = row.get("event_version");
         let payload: Value = row.get("payload");
         let metadata: Value = row.get("metadata");
-        Ok(SerializedEvent::new(
+        SerializedEvent::new(
             aggregate_id,
             sequence,
             aggregate_type,
@@ -296,22 +292,22 @@ impl PostgresEventRepository {
             event_version,
             payload,
             metadata,
-        ))
+        )
     }
 
-    fn deser_snapshot(&self, row: PgRow) -> Result<SerializedSnapshot, PostgresAggregateError> {
+    fn deser_snapshot(row: &PgRow) -> SerializedSnapshot {
         let aggregate_id = row.get("aggregate_id");
         let s: i64 = row.get("last_sequence");
         let current_sequence = s as usize;
         let s: i64 = row.get("current_snapshot");
         let current_snapshot = s as usize;
         let aggregate: Value = row.get("payload");
-        Ok(SerializedSnapshot {
+        SerializedSnapshot {
             aggregate_id,
             aggregate,
             current_sequence,
             current_snapshot,
-        })
+        }
     }
 
     pub(crate) async fn persist_events<A: Aggregate>(
