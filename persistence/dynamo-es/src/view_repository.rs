@@ -17,7 +17,7 @@ pub struct DynamoViewRepository<V, A> {
 
 impl<V, A> DynamoViewRepository<V, A>
 where
-    V: View<A>,
+    V: View<Event = A::Event>,
     A: Aggregate,
 {
     /// Creates a new `DynamoViewRepository` that will store serialized views in a DynamoDb table named
@@ -47,7 +47,7 @@ where
 #[async_trait]
 impl<V, A> ViewRepository<V, A> for DynamoViewRepository<V, A>
 where
-    V: View<A>,
+    V: View<Event = A::Event>,
     A: Aggregate,
 {
     async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError> {
