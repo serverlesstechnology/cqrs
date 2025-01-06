@@ -24,7 +24,7 @@ sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-rustls", "jso
 chrono = { version = "^0.4.20", default-features = false, features = ["clock"] }
 tokio = { workspace = true, features = ["full"] }
 tower = "0.4"
-tower-http = "0.4"
+tower-http = "0.6"
 
 lambda_http = "0.8"
 thiserror = "2.0.9"
