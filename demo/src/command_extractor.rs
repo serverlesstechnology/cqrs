@@ -37,7 +37,7 @@ where
 
         // Parse and deserialize the request body as the command payload.
         let body = Bytes::from_request(req, state).await?;
-        let command: BankAccountCommand = serde_json::from_slice(body.as_ref())?;
+        let command: BankAccountCommand = serde_json::from_slice(&body)?;
         Ok(Self(metadata, command))
     }
 }

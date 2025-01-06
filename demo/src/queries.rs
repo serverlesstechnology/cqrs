@@ -46,9 +46,9 @@ pub struct LedgerEntry {
     amount: f64,
 }
 impl LedgerEntry {
-    fn new(description: &str, amount: f64) -> Self {
+    fn new(description: String, amount: f64) -> Self {
         Self {
-            description: description.to_string(),
+            description,
             amount,
         }
     }
@@ -65,13 +65,14 @@ impl View<BankAccount> for BankAccountView {
             }
 
             BankAccountEvent::CustomerDepositedMoney { amount, balance } => {
-                self.ledger.push(LedgerEntry::new("deposit", *amount));
+                self.ledger
+                    .push(LedgerEntry::new("deposit".to_string(), *amount));
                 self.balance = *balance;
             }
 
             BankAccountEvent::CustomerWithdrewCash { amount, balance } => {
                 self.ledger
-                    .push(LedgerEntry::new("atm withdrawal", *amount));
+                    .push(LedgerEntry::new("atm withdrawal".to_string(), *amount));
                 self.balance = *balance;
             }
 
@@ -80,7 +81,8 @@ impl View<BankAccount> for BankAccountView {
                 amount,
                 balance,
             } => {
-                self.ledger.push(LedgerEntry::new(check_number, *amount));
+                self.ledger
+                    .push(LedgerEntry::new(check_number.to_string(), *amount));
                 self.written_checks.push(check_number.clone());
                 self.balance = *balance;
             }
