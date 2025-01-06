@@ -46,7 +46,7 @@ where
             update_sql,
             select_sql,
             pool,
-            _phantom: Default::default(),
+            _phantom: PhantomData,
         }
     }
 }
