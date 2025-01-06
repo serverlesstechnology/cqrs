@@ -19,7 +19,7 @@ pub struct PostgresViewRepository<V, A> {
 
 impl<V, A> PostgresViewRepository<V, A>
 where
-    V: View<A>,
+    V: View<Event = A::Event>,
     A: Aggregate,
 {
     /// Creates a new `PostgresViewRepository` that will store serialized views in a Postgres table named
@@ -56,7 +56,7 @@ where
 #[async_trait]
 impl<V, A> ViewRepository<V, A> for PostgresViewRepository<V, A>
 where
-    V: View<A>,
+    V: View<Event = A::Event>,
     A: Aggregate,
 {
     async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError> {

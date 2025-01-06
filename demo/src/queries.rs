@@ -57,9 +57,10 @@ impl LedgerEntry {
 // This updates the view with events as they are committed.
 // The logic should be minimal here, e.g., don't calculate the account balance,
 // design the events to carry the balance information instead.
-impl View<BankAccount> for BankAccountView {
-    fn update(&mut self, event: &EventEnvelope<BankAccount>) {
-        match &event.payload {
+impl View for BankAccountView {
+    type Event = BankAccountEvent;
+    fn apply(&mut self, event: &Self::Event) {
+        match event {
             BankAccountEvent::AccountOpened { account_id } => {
                 self.account_id = Some(account_id.clone());
             }
