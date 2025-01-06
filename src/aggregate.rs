@@ -1,4 +1,5 @@
-use async_trait::async_trait;
+use std::future::Future;
+
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -18,52 +19,57 @@ use crate::DomainEvent;
 /// # use cqrs_es::doc::{CustomerEvent, CustomerError, CustomerCommand, CustomerService};
 /// # use cqrs_es::{Aggregate, AggregateError};
 /// # use serde::{Serialize,Deserialize};
-/// # use async_trait::async_trait;
-/// #[derive(Default,Serialize,Deserialize)]
+/// # use std::future::Future;
+/// #[derive(Default, Serialize, Deserialize)]
 /// struct Customer {
 ///     name: Option<String>,
 ///     email: Option<String>,
 /// }
 ///
-/// #[async_trait]
 /// impl Aggregate for Customer {
 ///     type Command = CustomerCommand;
 ///     type Event = CustomerEvent;
 ///     type Error = CustomerError;
 ///     type Services = CustomerService;
 ///
+///     fn aggregate_type() -> String {
+///         "customer".to_string()
+///     }
 ///
-///     fn aggregate_type() -> String { "customer".to_string() }
-///
-///     async fn handle(&self, command: Self::Command, service: &Self::Services) -> Result<Vec<Self::Event>, Self::Error> {
-///         match command {
-///             CustomerCommand::AddCustomerName{name: changed_name} => {
+///     fn handle(
+///         &self,
+///         command: Self::Command,
+///         service: &Self::Services,
+///     ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
+///         let result = match command {
+///             CustomerCommand::AddCustomerName { name: changed_name } => {
 ///                 if self.name.is_some() {
-///                     return Err("a name has already been added".into());
+///                     Err("a name has already been added".into())
+///                 } else {
+///                     Ok(vec![CustomerEvent::NameAdded { name: changed_name }])
 ///                 }
-///                 Ok(vec![CustomerEvent::NameAdded{name:changed_name}])
 ///             }
 ///
 ///             CustomerCommand::UpdateEmail { new_email } => {
 ///                 Ok(vec![CustomerEvent::EmailUpdated { new_email }])
 ///             }
-///         }
+///         };
+///         std::future::ready(result)
 ///     }
 ///
 ///     fn apply(&mut self, event: Self::Event) {
 ///         match event {
-///             CustomerEvent::NameAdded{name: changed_name} => {
+///             CustomerEvent::NameAdded { name: changed_name } => {
 ///                 self.name = Some(changed_name);
 ///             }
 ///
-///             CustomerEvent::EmailUpdated{new_email} => {
+///             CustomerEvent::EmailUpdated { new_email } => {
 ///                 self.email = Some(new_email);
 ///             }
 ///         }
 ///     }
 /// }
 /// ```
-#[async_trait]
 pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// Specifies the inbound command used to make changes in the state of the Aggregate.
     type Command;
@@ -71,7 +77,7 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     type Event: DomainEvent;
     /// The error returned when a command fails due to business logic.
     /// This is used to provide feedback to the user as to the nature of why the command was refused.
-    type Error: std::error::Error;
+    type Error: std::error::Error + Send;
     /// The external services required for the logic within the Aggregate
     type Services: Send + Sync;
     /// The aggregate type is used as the unique identifier for this aggregate and its events.
@@ -85,44 +91,49 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     ///
     /// ```rust
     /// # use std::sync::Arc;
+    /// # use std::future::Future;
     /// use cqrs_es::{Aggregate, AggregateError};
     /// # use serde::{Serialize, Deserialize, de::DeserializeOwned};
     /// # use cqrs_es::doc::{CustomerCommand, CustomerError, CustomerEvent, CustomerService};
-    /// # use async_trait::async_trait;
-    /// #[derive(Default,Serialize,Deserialize)]
+    /// #[derive(Default, Serialize, Deserialize)]
     /// # struct Customer {
     /// #     name: Option<String>,
     /// #     email: Option<String>,
     /// # }
-    /// # #[async_trait]
     /// # impl Aggregate for Customer {
     /// #     type Command = CustomerCommand;
     /// #     type Event = CustomerEvent;
     /// #     type Error = CustomerError;
     /// #     type Services = CustomerService;
     /// #     fn aggregate_type() -> String { "customer".to_string() }
-    /// async fn handle(&self, command: Self::Command, service: &Self::Services) -> Result<Vec<Self::Event>, Self::Error> {
-    ///     match command {
-    ///         CustomerCommand::AddCustomerName{name: changed_name} => {
+    /// fn handle(
+    ///     &self,
+    ///     command: Self::Command,
+    ///     service: &Self::Services,
+    /// ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
+    ///     let result = match command {
+    ///         CustomerCommand::AddCustomerName { name: changed_name } => {
     ///             if self.name.is_some() {
-    ///                 return Err("a name has already been added".into());
+    ///                 Err("a name has already been added".into())
+    ///             } else {
+    ///                 Ok(vec![CustomerEvent::NameAdded { name: changed_name }])
     ///             }
-    ///             Ok(vec![CustomerEvent::NameAdded{ name: changed_name}])
     ///         }
     ///
     ///         CustomerCommand::UpdateEmail { new_email } => {
     ///             Ok(vec![CustomerEvent::EmailUpdated { new_email }])
     ///         }
-    ///     }
+    ///     };
+    ///     std::future::ready(result)
     /// }
     /// # fn apply(&mut self, event: Self::Event) {}
     /// # }
     /// ```
-    async fn handle(
+    fn handle(
         &self,
         command: Self::Command,
         service: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error>;
+    ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send;
     /// This is used to update the aggregate's state once an event has been committed.
     /// Any events returned from the `handle` method will be applied using this method
     /// in order to populate the state of the aggregate instance.
@@ -137,26 +148,25 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// _No business logic should be placed here_, this is only used for updating the aggregate state.
     ///
     /// ```rust
+    /// # use std::future::Future;
     /// # use std::sync::Arc;
     /// # use serde::{Serialize, Deserialize, de::DeserializeOwned};
     /// # use cqrs_es::doc::{CustomerCommand, CustomerError, CustomerEvent, CustomerService};
     /// use cqrs_es::{Aggregate, AggregateError};
-    /// use async_trait::async_trait;
     /// #[derive(Default,Serialize,Deserialize)]
     /// # struct Customer {
     /// #     name: Option<String>,
     /// #     email: Option<String>,
     /// # }
-    /// # #[async_trait]
     /// # impl Aggregate for Customer {
     /// #     type Command = CustomerCommand;
     /// #     type Event = CustomerEvent;
     /// #     type Error = CustomerError;
     /// #     type Services = CustomerService;
     /// #     fn aggregate_type() -> String { "customer".to_string() }
-    /// # async fn handle(&self, command: Self::Command, service: &Self::Services) -> Result<Vec<Self::Event>, Self::Error> {
-    /// # Ok(vec![])
-    /// # }
+    /// #     fn handle(&self, command: Self::Command, service: &Self::Services) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
+    /// #         std::future::ready(Ok(vec![]))
+    /// #     }
     /// fn apply(&mut self, event: Self::Event) {
     ///     match event {
     ///         CustomerEvent::NameAdded{name} => {

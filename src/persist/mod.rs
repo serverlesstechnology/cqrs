@@ -6,7 +6,6 @@
 //! - [dynamo-es](https://crates.io/crates/dynamo-es)
 //!
 //!
-//!
 pub use context::EventStoreAggregateContext;
 pub use error::PersistenceError;
 pub use event_repository::PersistedEventRepository;

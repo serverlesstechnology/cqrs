@@ -2,8 +2,8 @@
 pub(crate) mod tests {
     use std::collections::HashMap;
     use std::fmt::{Display, Formatter};
+    use std::future::Future;
 
-    use async_trait::async_trait;
     use aws_sdk_dynamodb::config::{Credentials, Region};
     use aws_sdk_dynamodb::Client;
     use cqrs_es::persist::{
@@ -23,7 +23,6 @@ pub(crate) mod tests {
         pub(crate) tests: Vec<String>,
     }
 
-    #[async_trait]
     impl Aggregate for TestAggregate {
         type Command = TestCommand;
         type Event = TestEvent;
@@ -34,12 +33,12 @@ pub(crate) mod tests {
             "TestAggregate".to_string()
         }
 
-        async fn handle(
+        fn handle(
             &self,
             _command: Self::Command,
             _services: &Self::Services,
-        ) -> Result<Vec<Self::Event>, Self::Error> {
-            Ok(vec![])
+        ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
+            std::future::ready(Ok(vec![]))
         }
 
         fn apply(&mut self, _e: Self::Event) {}

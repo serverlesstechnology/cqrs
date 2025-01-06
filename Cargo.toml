@@ -32,7 +32,7 @@ documentation = "https://docs.rs/cqrs-es"
 repository.workspace = true
 readme = "README.md"
 exclude = ["docs"]
-rust-version = "1.70.0"
+rust-version = "1.79.0"
 
 [dependencies]
 async-trait = "0.1"

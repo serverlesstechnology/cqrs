@@ -63,7 +63,7 @@ impl<A: Aggregate> AggregateResultValidator<A> {
     ///     .when(MyCommands::BadCommand);
     ///
     /// let expected = MyUserError("the expected error message".to_string());
-    /// assert_eq!(expected,validator.inspect_result().unwrap_err());
+    /// assert_eq!(expected, validator.inspect_result().unwrap_err());
     /// ```
     pub fn inspect_result(self) -> Result<Vec<A::Event>, A::Error> {
         self.result

@@ -1,3 +1,5 @@
+use std::future::Future;
+
 use async_trait::async_trait;
 use cqrs_es::persist::{
     PersistedEventRepository, PersistenceError, ReplayStream, SerializedEvent, SerializedSnapshot,
@@ -25,86 +27,93 @@ pub struct PostgresEventRepository {
 
 #[async_trait]
 impl PersistedEventRepository for PostgresEventRepository {
-    async fn get_events<A: Aggregate>(
+    fn get_events<A: Aggregate>(
         &self,
         aggregate_id: &str,
-    ) -> Result<Vec<SerializedEvent>, PersistenceError> {
+    ) -> impl Future<Output = Result<Vec<SerializedEvent>, PersistenceError>> + Send {
         self.select_events::<A>(aggregate_id, self.query_factory.select_events())
-            .await
     }
 
-    async fn get_last_events<A: Aggregate>(
+    fn get_last_events<A: Aggregate>(
         &self,
         aggregate_id: &str,
         last_sequence: usize,
-    ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-        let query = self.query_factory.get_last_events(last_sequence);
-        self.select_events::<A>(aggregate_id, &query).await
+    ) -> impl Future<Output = Result<Vec<SerializedEvent>, PersistenceError>> + Send {
+        async move {
+            let query = self.query_factory.get_last_events(last_sequence);
+            self.select_events::<A>(aggregate_id, &query).await
+        }
     }
 
-    async fn get_snapshot<A: Aggregate>(
+    fn get_snapshot<A: Aggregate>(
         &self,
         aggregate_id: &str,
-    ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
-        let row: PgRow = match sqlx::query(self.query_factory.select_snapshot())
-            .bind(A::aggregate_type())
-            .bind(aggregate_id)
-            .fetch_optional(&self.pool)
-            .await
-            .map_err(PostgresAggregateError::from)?
-        {
-            Some(row) => row,
-            None => {
-                return Ok(None);
-            }
-        };
-        Ok(Some(self.deser_snapshot(row)?))
+    ) -> impl Future<Output = Result<Option<SerializedSnapshot>, PersistenceError>> + Send {
+        async move {
+            let row: PgRow = match sqlx::query(self.query_factory.select_snapshot())
+                .bind(A::aggregate_type())
+                .bind(aggregate_id)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(PostgresAggregateError::from)?
+            {
+                Some(row) => row,
+                None => {
+                    return Ok(None);
+                }
+            };
+            Ok(Some(self.deser_snapshot(row)?))
+        }
     }
 
-    async fn persist<A: Aggregate>(
+    fn persist<A: Aggregate>(
         &self,
         events: &[SerializedEvent],
         snapshot_update: Option<(String, Value, usize)>,
-    ) -> Result<(), PersistenceError> {
-        match snapshot_update {
-            None => {
-                self.insert_events::<A>(events).await?;
-            }
-            Some((aggregate_id, aggregate, current_snapshot)) => {
-                if current_snapshot == 1 {
-                    self.insert::<A>(aggregate, aggregate_id, current_snapshot, events)
-                        .await?;
-                } else {
-                    self.update::<A>(aggregate, aggregate_id, current_snapshot, events)
-                        .await?;
+    ) -> impl Future<Output = Result<(), PersistenceError>> + Send {
+        async move {
+            match snapshot_update {
+                None => {
+                    self.insert_events::<A>(events).await?;
                 }
-            }
-        };
-        Ok(())
+                Some((aggregate_id, aggregate, current_snapshot)) => {
+                    if current_snapshot == 1 {
+                        self.insert::<A>(aggregate, aggregate_id, current_snapshot, events)
+                            .await?;
+                    } else {
+                        self.update::<A>(aggregate, aggregate_id, current_snapshot, events)
+                            .await?;
+                    }
+                }
+            };
+            Ok(())
+        }
     }
 
-    async fn stream_events<A: Aggregate>(
+    fn stream_events<A: Aggregate>(
         &self,
         aggregate_id: &str,
-    ) -> Result<ReplayStream, PersistenceError> {
-        Ok(stream_events(
+    ) -> impl Future<Output = Result<ReplayStream, PersistenceError>> + Send {
+        std::future::ready(Ok(stream_events(
             self.query_factory.select_events().to_string(),
             A::aggregate_type(),
             aggregate_id.to_string(),
             self.pool.clone(),
             self.stream_channel_size,
-        ))
+        )))
     }
 
     // TODO: aggregate id is unused here, `stream_events` function needs to be broken up
-    async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
-        Ok(stream_events(
+    fn stream_all_events<A: Aggregate>(
+        &self,
+    ) -> impl Future<Output = Result<ReplayStream, PersistenceError>> + Send {
+        std::future::ready(Ok(stream_events(
             self.query_factory.all_events().to_string(),
             A::aggregate_type(),
             "".to_string(),
             self.pool.clone(),
             self.stream_channel_size,
-        ))
+        )))
     }
 }
 

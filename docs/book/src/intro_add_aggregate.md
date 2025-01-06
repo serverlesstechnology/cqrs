@@ -19,7 +19,6 @@ In order to operate within the `cqrs-es` framework, we will need the traits, `De
 (all usually derived) and we will implement `cqrs_es::Aggregate`, minus any of the business logic. 
 
 ```rust
-#[async_trait]
 impl Aggregate for BankAccount {
     type Command = BankAccountCommand;
     type Event = BankAccountEvent;
@@ -33,7 +32,7 @@ impl Aggregate for BankAccount {
 
     // The aggregate logic goes here. Note that this will be the _bulk_ of a CQRS system
     // so expect to use helper functions elsewhere to keep the code clean.
-    async fn handle(&self, command: Self::Command, services: Self::Services) -> Result<Vec<Self::Event>, Self::Error> {
+    fn handle(&self, command: Self::Command, services: Self::Services) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
         todo!()
     }
 

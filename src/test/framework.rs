@@ -24,8 +24,7 @@ where
     /// # use cqrs_es::doc::{MyAggregate, MyService};
     /// use cqrs_es::test::TestFramework;
     ///
-    /// let executor = TestFramework::<MyAggregate>::with(MyService)
-    ///     .given_no_previous_events();
+    /// let executor = TestFramework::<MyAggregate>::with(MyService).given_no_previous_events();
     /// ```
     #[must_use]
     pub fn given_no_previous_events(self) -> AggregateTestExecutor<A> {
@@ -37,8 +36,8 @@ where
     /// # use cqrs_es::doc::{MyAggregate, MyEvents, MyService};
     /// use cqrs_es::test::TestFramework;
     ///
-    /// let executor = TestFramework::<MyAggregate>::with(MyService)
-    ///     .given(vec![MyEvents::SomethingWasDone]);
+    /// let executor =
+    ///     TestFramework::<MyAggregate>::with(MyService).given(vec![MyEvents::SomethingWasDone]);
     /// ```
     #[must_use]
     pub fn given(self, events: Vec<A::Event>) -> AggregateTestExecutor<A> {

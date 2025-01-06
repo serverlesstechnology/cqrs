@@ -1,12 +1,12 @@
 #[cfg(test)]
 pub(crate) mod tests {
     use crate::PostgresViewRepository;
-    use async_trait::async_trait;
     use cqrs_es::persist::{GenericQuery, SerializedEvent, SerializedSnapshot};
     use cqrs_es::{Aggregate, DomainEvent, EventEnvelope, View};
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
     use std::fmt::{Display, Formatter};
+    use std::future::Future;
 
     #[derive(Debug, Serialize, Deserialize, PartialEq, Default)]
     pub(crate) struct TestAggregate {
@@ -15,7 +15,6 @@ pub(crate) mod tests {
         pub(crate) tests: Vec<String>,
     }
 
-    #[async_trait]
     impl Aggregate for TestAggregate {
         type Command = TestCommand;
         type Event = TestEvent;
@@ -26,12 +25,12 @@ pub(crate) mod tests {
             "TestAggregate".to_string()
         }
 
-        async fn handle(
+        fn handle(
             &self,
             _command: Self::Command,
             _services: &Self::Services,
-        ) -> Result<Vec<Self::Event>, Self::Error> {
-            Ok(vec![])
+        ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
+            std::future::ready(Ok(vec![]))
         }
 
         fn apply(&mut self, _e: Self::Event) {}

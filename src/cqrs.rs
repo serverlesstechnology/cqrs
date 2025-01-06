@@ -18,7 +18,6 @@ use crate::{AggregateContext, AggregateError};
 /// 1. Persisting any generated events or roll back in the event of an error.
 ///
 /// To manage these tasks we use a `CqrsFramework`.
-///
 pub struct CqrsFramework<A, ES>
 where
     A: Aggregate,
@@ -43,8 +42,8 @@ where
     ///
     /// ```rust
     /// # use cqrs_es::doc::{MyAggregate, MyService};
-    /// use cqrs_es::CqrsFramework;
     /// use cqrs_es::mem_store::MemStore;
+    /// use cqrs_es::CqrsFramework;
     ///
     /// let store = MemStore::<MyAggregate>::default();
     /// let queries = vec![];
@@ -58,7 +57,6 @@ where
     /// - [PostgreSQL](https://www.postgresql.org/) - [postgres-es](https://crates.io/crates/postgres-es)
     /// - [MySQL](https://www.mysql.com/) - [mysql-es](https://crates.io/crates/mysql-es)
     /// - [DynamoDb](https://aws.amazon.com/dynamodb/) - [dynamo-es](https://crates.io/crates/dynamo-es)
-    ///
     pub fn new(store: ES, queries: Vec<Box<dyn Query<A>>>, service: A::Services) -> Self
     where
         A: Aggregate,
@@ -73,15 +71,15 @@ where
     /// Appends an additional query to the framework.
     /// ```rust
     /// # use cqrs_es::doc::{MyAggregate, MyQuery, MyService};
-    /// use cqrs_es::CqrsFramework;
     /// use cqrs_es::mem_store::MemStore;
+    /// use cqrs_es::CqrsFramework;
     ///
     /// let store = MemStore::<MyAggregate>::default();
     /// let queries = vec![];
     /// let service = MyService::default();
     ///
-    /// let cqrs = CqrsFramework::new(store, queries, service)
-    ///     .append_query(Box::new(MyQuery::default()));
+    /// let cqrs =
+    ///     CqrsFramework::new(store, queries, service).append_query(Box::new(MyQuery::default()));
     /// ```
     pub fn append_query(self, query: Box<dyn Query<A>>) -> Self
     where
@@ -113,9 +111,9 @@ where
     /// # use cqrs_es::mem_store::MemStore;
     /// # use std::collections::HashMap;
     /// # use chrono;
-    /// type MyFramework = CqrsFramework<MyAggregate,MemStore<MyAggregate>>;
+    /// type MyFramework = CqrsFramework<MyAggregate, MemStore<MyAggregate>>;
     ///
-    /// async fn do_something(cqrs: MyFramework) -> Result<(),AggregateError<MyUserError>> {
+    /// async fn do_something(cqrs: MyFramework) -> Result<(), AggregateError<MyUserError>> {
     ///     let command = MyCommands::DoSomething;
     ///
     ///     cqrs.execute("agg-id-F39A0C", command).await
@@ -154,13 +152,14 @@ where
     /// # use cqrs_es::mem_store::MemStore;
     /// # use std::collections::HashMap;
     /// # use chrono;
-    /// type MyFramework = CqrsFramework<MyAggregate,MemStore<MyAggregate>>;
+    /// type MyFramework = CqrsFramework<MyAggregate, MemStore<MyAggregate>>;
     ///
-    /// async fn do_something(cqrs: MyFramework) -> Result<(),AggregateError<MyUserError>>  {
+    /// async fn do_something(cqrs: MyFramework) -> Result<(), AggregateError<MyUserError>> {
     ///     let command = MyCommands::DoSomething;
     ///     let metadata = HashMap::from([("time".to_string(), chrono::Utc::now().to_rfc3339())]);
     ///
-    ///     cqrs.execute_with_metadata("agg-id-F39A0C", command, metadata).await
+    ///     cqrs.execute_with_metadata("agg-id-F39A0C", command, metadata)
+    ///         .await
     /// }
     /// ```
     pub async fn execute_with_metadata(

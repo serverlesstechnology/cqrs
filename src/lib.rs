@@ -29,8 +29,8 @@ pub mod doc;
 ///
 /// ```
 /// # use cqrs_es::doc::{MyAggregate, MyService};
-/// use cqrs_es::CqrsFramework;
 /// use cqrs_es::mem_store::MemStore;
+/// use cqrs_es::CqrsFramework;
 ///
 /// let store = MemStore::<MyAggregate>::default();
 /// let service = MyService::default();

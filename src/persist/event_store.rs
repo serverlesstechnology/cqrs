@@ -1,7 +1,7 @@
 use std::collections::HashMap;
+use std::future::Future;
 use std::marker::PhantomData;
 
-use async_trait::async_trait;
 use serde_json::Value;
 
 use crate::persist::serialized_event::{deserialize_events, serialize_events};
@@ -99,7 +99,7 @@ where
     /// # use cqrs_es::persist::PersistedEventStore;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
     /// let repo = MyEventRepository::new(my_db_connection);
-    /// let store = PersistedEventStore::<MyEventRepository,MyAggregate>::new_event_store(repo);
+    /// let store = PersistedEventStore::<MyEventRepository, MyAggregate>::new_event_store(repo);
     /// let service = MyService;
     /// let cqrs = CqrsFramework::new(store, vec![], service);
     /// # }
@@ -125,7 +125,7 @@ where
     /// # use cqrs_es::persist::PersistedEventStore;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
     /// let repo = MyEventRepository::new(my_db_connection);
-    /// let store = PersistedEventStore::<MyEventRepository,MyAggregate>::new_aggregate_store(repo);
+    /// let store = PersistedEventStore::<MyEventRepository, MyAggregate>::new_aggregate_store(repo);
     /// let cqrs = CqrsFramework::new(store, vec![], MyService);
     /// # }
     /// ```
@@ -148,7 +148,8 @@ where
     /// # use cqrs_es::persist::PersistedEventStore;
     /// # fn config(my_db_connection: MyDatabaseConnection) {
     /// let repo = MyEventRepository::new(my_db_connection);
-    /// let store = PersistedEventStore::<MyEventRepository,MyAggregate>::new_snapshot_store(repo, 100);
+    /// let store =
+    ///     PersistedEventStore::<MyEventRepository, MyAggregate>::new_snapshot_store(repo, 100);
     /// let cqrs = CqrsFramework::new(store, vec![], MyService);
     /// # }
     /// ```
@@ -176,7 +177,6 @@ where
     }
 }
 
-#[async_trait]
 impl<R, A> EventStore<A> for PersistedEventStore<R, A>
 where
     R: PersistedEventRepository,
@@ -184,79 +184,90 @@ where
 {
     type AC = EventStoreAggregateContext<A>;
 
-    async fn load_events(
+    fn load_events(
         &self,
         aggregate_id: &str,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
-        let serialized_events = self.repo.get_events::<A>(aggregate_id).await?;
-        Ok(deserialize_events(
-            serialized_events,
-            &self.event_upcasters,
-        )?)
+    ) -> impl Future<Output = Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>>> + Send {
+        async move {
+            let serialized_events = self.repo.get_events::<A>(aggregate_id).await?;
+            Ok(deserialize_events(
+                serialized_events,
+                &self.event_upcasters,
+            )?)
+        }
     }
 
-    async fn load_aggregate(
+    fn load_aggregate(
         &self,
         aggregate_id: &str,
-    ) -> Result<EventStoreAggregateContext<A>, AggregateError<A::Error>> {
-        let mut context: EventStoreAggregateContext<A> =
-            if let SourceOfTruth::EventStore = self.storage {
-                EventStoreAggregateContext::context_for(aggregate_id, true)
-            } else {
-                let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
-                match snapshot {
-                    Some(snapshot) => snapshot.try_into()?,
-                    None => EventStoreAggregateContext::context_for(aggregate_id, false),
+    ) -> impl Future<Output = Result<EventStoreAggregateContext<A>, AggregateError<A::Error>>> + Send
+    {
+        async move {
+            let mut context: EventStoreAggregateContext<A> =
+                if let SourceOfTruth::EventStore = self.storage {
+                    EventStoreAggregateContext::context_for(aggregate_id, true)
+                } else {
+                    let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
+                    match snapshot {
+                        Some(snapshot) => snapshot.try_into()?,
+                        None => EventStoreAggregateContext::context_for(aggregate_id, false),
+                    }
+                };
+            let events_to_apply = match self.storage {
+                SourceOfTruth::EventStore => self.load_events(aggregate_id).await?,
+                SourceOfTruth::Snapshot(_) => {
+                    let serialized_events = self
+                        .repo
+                        .get_last_events::<A>(aggregate_id, context.current_sequence)
+                        .await?;
+                    deserialize_events(serialized_events, &self.event_upcasters)?
+                }
+                SourceOfTruth::AggregateStore => {
+                    vec![]
                 }
             };
-        let events_to_apply = match self.storage {
-            SourceOfTruth::EventStore => self.load_events(aggregate_id).await?,
-            SourceOfTruth::Snapshot(_) => {
-                let serialized_events = self
-                    .repo
-                    .get_last_events::<A>(aggregate_id, context.current_sequence)
-                    .await?;
-                deserialize_events(serialized_events, &self.event_upcasters)?
+            for envelope in events_to_apply {
+                context.current_sequence = envelope.sequence;
+                let event = envelope.payload;
+                context.aggregate.apply(event);
             }
-            SourceOfTruth::AggregateStore => {
-                vec![]
-            }
-        };
-        for envelope in events_to_apply {
-            context.current_sequence = envelope.sequence;
-            let event = envelope.payload;
-            context.aggregate.apply(event);
+            Ok(context)
         }
-        Ok(context)
     }
 
-    async fn commit(
+    fn commit(
         &self,
         events: Vec<A::Event>,
         context: EventStoreAggregateContext<A>,
         metadata: HashMap<String, String>,
-    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>> {
+    ) -> impl Future<Output = Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>>> + Send {
         let aggregate_id = context.aggregate_id.clone();
         let last_sequence = context.current_sequence;
-
         let commit_snapshot_to_event = self
             .storage
             .commit_snapshot_with_addl_events(context.current_sequence, events.len());
-        let snapshot_update: Option<(Value, usize)> = if commit_snapshot_to_event == 0 {
-            None
-        } else {
-            match self.storage {
-                SourceOfTruth::EventStore => None,
-                _ => Self::update_snapshot_with_events(&events, context, commit_snapshot_to_event)?,
-            }
-        };
-        let wrapped_events = Self::wrap_events(&aggregate_id, last_sequence, events, metadata);
-        let serialized_events: Vec<SerializedEvent> = serialize_events(&wrapped_events)?;
-        let snapshot_update = snapshot_update.map(|s| (aggregate_id, s.0, s.1));
-        self.repo
-            .persist::<A>(&serialized_events, snapshot_update)
-            .await?;
-        Ok(wrapped_events)
+
+        async move {
+            let snapshot_update: Option<(Value, usize)> = if commit_snapshot_to_event == 0 {
+                None
+            } else {
+                match self.storage {
+                    SourceOfTruth::EventStore => None,
+                    _ => Self::update_snapshot_with_events(
+                        &events,
+                        context,
+                        commit_snapshot_to_event,
+                    )?,
+                }
+            };
+            let wrapped_events = Self::wrap_events(&aggregate_id, last_sequence, events, metadata);
+            let serialized_events: Vec<SerializedEvent> = serialize_events(&wrapped_events)?;
+            let snapshot_update = snapshot_update.map(|s| (aggregate_id, s.0, s.1));
+            self.repo
+                .persist::<A>(&serialized_events, snapshot_update)
+                .await?;
+            Ok(wrapped_events)
+        }
     }
 }
 
@@ -309,9 +320,9 @@ where
 #[cfg(test)]
 pub(crate) mod shared_test {
     use std::collections::HashMap;
+    use std::future::Future;
     use std::sync::Mutex;
 
-    use async_trait::async_trait;
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
 
@@ -363,7 +374,6 @@ pub(crate) mod shared_test {
         pub(crate) something_happened: usize,
     }
 
-    #[async_trait]
     impl Aggregate for TestAggregate {
         type Command = TestCommands;
         type Event = TestEvents;
@@ -373,15 +383,16 @@ pub(crate) mod shared_test {
         fn aggregate_type() -> String {
             "TestAggregate".to_string()
         }
-        async fn handle(
+        fn handle(
             &self,
             command: Self::Command,
             _service: &Self::Services,
-        ) -> Result<Vec<Self::Event>, Self::Error> {
-            match command {
+        ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
+            let result = match command {
                 TestCommands::DoSomething => Ok(vec![TestEvents::SomethingWasDone]),
                 TestCommands::BadCommand => Err("the expected error message".into()),
-            }
+            };
+            std::future::ready(result)
         }
         fn apply(&mut self, event: Self::Event) {
             match event {
@@ -448,51 +459,55 @@ pub(crate) mod shared_test {
         }
     }
 
-    #[async_trait]
     impl PersistedEventRepository for MockRepo {
-        async fn get_events<A: Aggregate>(
+        fn get_events<A: Aggregate>(
             &self,
             _aggregate_id: &str,
-        ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-            self.events_result.lock().unwrap().take().unwrap()
+        ) -> impl Future<Output = Result<Vec<SerializedEvent>, PersistenceError>> + Send {
+            std::future::ready(self.events_result.lock().unwrap().take().unwrap())
         }
-        async fn get_last_events<A: Aggregate>(
+        fn get_last_events<A: Aggregate>(
             &self,
             _aggregate_id: &str,
             _number_events: usize,
-        ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-            self.last_events_result.lock().unwrap().take().unwrap()
+        ) -> impl Future<Output = Result<Vec<SerializedEvent>, PersistenceError>> + Send {
+            std::future::ready(self.last_events_result.lock().unwrap().take().unwrap())
         }
-        async fn get_snapshot<A: Aggregate>(
+        fn get_snapshot<A: Aggregate>(
             &self,
             _aggregate_id: &str,
-        ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
-            self.snapshot_result.lock().unwrap().take().unwrap()
+        ) -> impl Future<Output = Result<Option<SerializedSnapshot>, PersistenceError>> + Send
+        {
+            std::future::ready(self.snapshot_result.lock().unwrap().take().unwrap())
         }
-        async fn persist<A: Aggregate>(
+        fn persist<A: Aggregate>(
             &self,
             events: &[SerializedEvent],
             snapshot_update: Option<(String, Value, usize)>,
-        ) -> Result<(), PersistenceError> {
+        ) -> impl Future<Output = Result<(), PersistenceError>> + Send {
             let test = self.persist_check.lock().unwrap().take().unwrap();
             test(events, snapshot_update);
-            Ok(())
+            std::future::ready(Ok(()))
         }
 
-        async fn stream_events<A: Aggregate>(
+        fn stream_events<A: Aggregate>(
             &self,
             _aggregate_id: &str,
-        ) -> Result<ReplayStream, PersistenceError> {
-            self.stream_all_events::<A>().await
+        ) -> impl Future<Output = Result<ReplayStream, PersistenceError>> + Send {
+            self.stream_all_events::<A>()
         }
 
-        async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
-            let events = self.events_result.lock().unwrap().take().unwrap()?;
-            let (mut feed, stream) = ReplayStream::new(events.len());
-            for event in events {
-                feed.push(Ok(event)).await?;
+        fn stream_all_events<A: Aggregate>(
+            &self,
+        ) -> impl Future<Output = Result<ReplayStream, PersistenceError>> + Send {
+            async move {
+                let events = self.events_result.lock().unwrap().take().unwrap()?;
+                let (mut feed, stream) = ReplayStream::new(events.len());
+                for event in events {
+                    feed.push(Ok(event)).await?;
+                }
+                Ok(stream)
             }
-            Ok(stream)
         }
     }
 

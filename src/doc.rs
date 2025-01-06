@@ -1,3 +1,5 @@
+use std::future::Future;
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -39,15 +41,16 @@ impl Aggregate for MyAggregate {
         "MyAggregate".to_string()
     }
 
-    async fn handle(
+    fn handle(
         &self,
         command: Self::Command,
         _service: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error> {
-        match command {
+    ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
+        let result = match command {
             MyCommands::DoSomething => Ok(vec![MyEvents::SomethingWasDone]),
             MyCommands::BadCommand => Err("the expected error message".into()),
-        }
+        };
+        std::future::ready(result)
     }
 
     fn apply(&mut self, _event: Self::Event) {}
@@ -92,22 +95,24 @@ impl Aggregate for Customer {
         "Customer".to_string()
     }
 
-    async fn handle(
+    fn handle(
         &self,
         command: Self::Command,
         _service: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error> {
-        match command {
+    ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
+        let result = match command {
             CustomerCommand::AddCustomerName { name: changed_name } => {
                 if self.name.as_str() != "" {
-                    return Err("a name has already been added for this customer".into());
+                    Err("a name has already been added for this customer".into())
+                } else {
+                    Ok(vec![CustomerEvent::NameAdded { name: changed_name }])
                 }
-                Ok(vec![CustomerEvent::NameAdded { name: changed_name }])
             }
             CustomerCommand::UpdateEmail { new_email } => {
                 Ok(vec![CustomerEvent::EmailUpdated { new_email }])
             }
-        }
+        };
+        std::future::ready(result)
     }
 
     fn apply(&mut self, event: Self::Event) {
@@ -161,47 +166,49 @@ pub enum CustomerCommand {
 }
 
 pub struct MyRepository;
-#[async_trait]
+
 impl PersistedEventRepository for MyRepository {
-    async fn get_events<A: Aggregate>(
+    fn get_events<A: Aggregate>(
         &self,
         _aggregate_id: &str,
-    ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-        todo!()
+    ) -> impl Future<Output = Result<Vec<SerializedEvent>, PersistenceError>> + Send {
+        async { todo!() }
     }
 
-    async fn get_last_events<A: Aggregate>(
+    fn get_last_events<A: Aggregate>(
         &self,
         _aggregate_id: &str,
         _number_events: usize,
-    ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-        todo!()
+    ) -> impl Future<Output = Result<Vec<SerializedEvent>, PersistenceError>> + Send {
+        async { todo!() }
     }
 
-    async fn get_snapshot<A: Aggregate>(
+    fn get_snapshot<A: Aggregate>(
         &self,
         _aggregate_id: &str,
-    ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
-        todo!()
+    ) -> impl Future<Output = Result<Option<SerializedSnapshot>, PersistenceError>> + Send {
+        async { todo!() }
     }
 
-    async fn persist<A: Aggregate>(
+    fn persist<A: Aggregate>(
         &self,
         _events: &[SerializedEvent],
         _snapshot_update: Option<(String, Value, usize)>,
-    ) -> Result<(), PersistenceError> {
-        todo!()
+    ) -> impl Future<Output = Result<(), PersistenceError>> + Send {
+        async { todo!() }
     }
 
-    async fn stream_events<A: Aggregate>(
+    fn stream_events<A: Aggregate>(
         &self,
         _aggregate_id: &str,
-    ) -> Result<ReplayStream, PersistenceError> {
-        todo!()
+    ) -> impl Future<Output = Result<ReplayStream, PersistenceError>> + Send {
+        async { todo!() }
     }
 
-    async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
-        todo!()
+    fn stream_all_events<A: Aggregate>(
+        &self,
+    ) -> impl Future<Output = Result<ReplayStream, PersistenceError>> + Send {
+        async { todo!() }
     }
 }
 
