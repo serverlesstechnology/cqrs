@@ -1,6 +1,5 @@
 use cqrs_es::DomainEvent;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Debug, Display, Formatter};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum BankAccountEvent {
@@ -37,7 +36,8 @@ impl DomainEvent for BankAccountEvent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
 pub struct BankAccountError(String);
 
 impl From<&str> for BankAccountError {
@@ -45,11 +45,3 @@ impl From<&str> for BankAccountError {
         Self(msg.to_string())
     }
 }
-
-impl Display for BankAccountError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl std::error::Error for BankAccountError {}

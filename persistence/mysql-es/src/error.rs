@@ -1,29 +1,18 @@
-use std::fmt::{Debug, Display, Formatter};
-
 use cqrs_es::persist::PersistenceError;
 use cqrs_es::AggregateError;
 use sqlx::Error;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum MysqlAggregateError {
+    #[error("optimistic lock error")]
     OptimisticLock,
+    #[error(transparent)]
     ConnectionError(Box<dyn std::error::Error + Send + Sync + 'static>),
+    #[error(transparent)]
     DeserializationError(Box<dyn std::error::Error + Send + Sync + 'static>),
+    #[error(transparent)]
     UnknownError(Box<dyn std::error::Error + Send + Sync + 'static>),
 }
-
-impl Display for MysqlAggregateError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::OptimisticLock => write!(f, "optimistic lock error"),
-            Self::ConnectionError(error) => write!(f, "{error}"),
-            Self::DeserializationError(error) => write!(f, "{error}"),
-            Self::UnknownError(error) => write!(f, "{error}"),
-        }
-    }
-}
-
-impl std::error::Error for MysqlAggregateError {}
 
 impl From<sqlx::Error> for MysqlAggregateError {
     fn from(err: sqlx::Error) -> Self {
