@@ -88,3 +88,18 @@ jobs:
           toolchain: ${{ env.MSRV }}
       - uses: taiki-e/install-action@cargo-no-dev-deps
       - run: cargo no-dev-deps check
+
+  # Automatically merge if it's a Dependabot PR that passes the build
+  dependabot:
+    needs: [check, test, test-persistence, fmt, cargo-deny, msrv]
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Enable auto-merge for Dependabot PRs
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
