@@ -17,11 +17,8 @@ async fn main() {
         )
         .with_state(state);
 
-    // Create the socket address
     let addr = SocketAddr::from(([0, 0, 0, 0], 3030));
 
-    // Start the Axum server
-    println!("Server starting on {}", addr);
     axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), router)
         .await
         .unwrap();
