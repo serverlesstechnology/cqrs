@@ -22,12 +22,7 @@ async fn main() {
 
     // Start the Axum server
     println!("Server starting on {}", addr);
-    axum::serve(
-        tokio::net::TcpListener::bind(addr)
-            .await
-            .unwrap(),
-        router,
-    )
-    .await
-    .unwrap();
+    axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), router)
+        .await
+        .unwrap();
 }

@@ -1,5 +1,5 @@
 use crate::domain::commands::BankAccountCommand;
-use axum::body::Bytes;
+use axum::body::{Body, Bytes};
 use axum::extract::FromRequest;
 use axum::http::{Request, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -17,7 +17,7 @@ where
 {
     type Rejection = CommandExtractionError;
 
-    async fn from_request(req: Request<axum::body::Body>, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: Request<Body>, state: &S) -> Result<Self, Self::Rejection> {
         // Here we are including the current date/time, the uri that was called and the user-agent
         // in a HashMap that we will submit as metadata with the command.
         let mut metadata = HashMap::default();
