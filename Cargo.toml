@@ -18,7 +18,7 @@ repository = "https://github.com/serverlesstechnology/cqrs"
 [workspace.dependencies]
 serde = "^1.0.0"
 tokio = "^1.43.0"
-uuid = { version = "1.7", features = ["v4"] }
+uuid = { version = "1.12", features = ["v4"] }
 
 [package]
 name = "cqrs-es"
