@@ -27,7 +27,7 @@ tower = "0.5"
 tower-http = "0.4"
 
 lambda_http = "0.8"
-thiserror = "2.0.9"
+thiserror = "2.0.11"
 
 [[bin]]
 name = "cqrs-demo"
