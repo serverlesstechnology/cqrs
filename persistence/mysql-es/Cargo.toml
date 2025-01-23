@@ -19,7 +19,7 @@ serde = { workspace = true, features = ["derive"]}
 serde_json = "1.0"
 sqlx = { version = "0.8", features = [ "mysql", "json"] }
 tokio = { workspace = true, features = ["rt"] }
-thiserror = "2.0.9"
+thiserror = "2.0.11"
 
 [dev-dependencies]
 uuid.workspace = true
