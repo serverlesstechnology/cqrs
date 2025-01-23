@@ -23,7 +23,7 @@ serde_json = "1.0"
 sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-rustls", "json"] }
 chrono = { version = "^0.4.20", default-features = false, features = ["clock"] }
 tokio = { workspace = true, features = ["full"] }
-tower = "0.4"
+tower = "0.5"
 tower-http = "0.4"
 
 lambda_http = "0.8"
