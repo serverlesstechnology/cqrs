@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use cqrs_es::doc::{Customer, CustomerEvent};
 use cqrs_es::persist::{PersistedEventStore, SemanticVersionEventUpcaster};
 use cqrs_es::EventStore;
@@ -7,9 +9,7 @@ use sqlx::{MySql, Pool};
 
 const TEST_CONNECTION_STRING: &str = "mysql://test_user:test_pass@127.0.0.1:3306/test";
 
-async fn new_test_event_store(
-    pool: Pool<MySql>,
-) -> PersistedEventStore<MysqlEventRepository, Customer> {
+fn new_test_event_store(pool: Pool<MySql>) -> PersistedEventStore<MysqlEventRepository, Customer> {
     let repo = MysqlEventRepository::new(pool);
     PersistedEventStore::<MysqlEventRepository, Customer>::new_event_store(repo)
 }
@@ -51,7 +51,7 @@ async fn simple_es_commit_and_load_test(
                 },
             ],
             context,
-            Default::default(),
+            HashMap::default(),
         )
         .await
         .unwrap();
@@ -65,7 +65,7 @@ async fn simple_es_commit_and_load_test(
                 new_email: "email B".to_string(),
             }],
             context,
-            Default::default(),
+            HashMap::default(),
         )
         .await
         .unwrap();
@@ -86,9 +86,7 @@ async fn upcasted_event() {
             _ => panic!("not the expected object"),
         }),
     );
-    let event_store = new_test_event_store(pool)
-        .await
-        .with_upcasters(vec![Box::new(upcaster)]);
+    let event_store = new_test_event_store(pool).with_upcasters(vec![Box::new(upcaster)]);
 
     let id = "previous_event_in_need_of_upcast".to_string();
     let result = event_store.load_aggregate(id.as_str()).await.unwrap();
