@@ -2,37 +2,35 @@ use std::marker::PhantomData;
 
 use async_trait::async_trait;
 use cqrs_es::persist::{PersistenceError, ViewContext, ViewRepository};
-use cqrs_es::{Aggregate, View};
+use cqrs_es::View;
 use sqlx::mysql::MySqlRow;
 use sqlx::{MySql, Pool, Row};
 
 use crate::error::MysqlAggregateError;
 
 /// A mysql backed query repository for use in backing a `GenericQuery`.
-pub struct MysqlViewRepository<V, A> {
+pub struct MysqlViewRepository<V> {
     insert_sql: String,
     update_sql: String,
     select_sql: String,
     pool: Pool<MySql>,
-    _phantom: PhantomData<(V, A)>,
+    _phantom: PhantomData<V>,
 }
 
-impl<V, A> MysqlViewRepository<V, A>
+impl<V> MysqlViewRepository<V>
 where
-    V: View<A>,
-    A: Aggregate,
+    V: View,
 {
     /// Creates a new `MysqlViewRepository` that will store serialized views in a MySql table named
     /// identically to the `view_name` value provided. This table should be created by the user
     /// before using this query repository (see `/db/init.sql` sql initialization file).
     ///
     /// ```
-    /// # use cqrs_es::doc::MyAggregate;
     /// # use cqrs_es::persist::doc::MyView;
     /// use sqlx::{MySql, Pool};
     /// use mysql_es::MysqlViewRepository;
     ///
-    /// fn configure_view_repo(pool: Pool<MySql>) -> MysqlViewRepository<MyView,MyAggregate> {
+    /// fn configure_view_repo(pool: Pool<MySql>) -> MysqlViewRepository<MyView> {
     ///     MysqlViewRepository::new("my_view_table", pool)
     /// }
     /// ```
@@ -46,16 +44,15 @@ where
             update_sql,
             select_sql,
             pool,
-            _phantom: Default::default(),
+            _phantom: PhantomData,
         }
     }
 }
 
 #[async_trait]
-impl<V, A> ViewRepository<V, A> for MysqlViewRepository<V, A>
+impl<V> ViewRepository<V> for MysqlViewRepository<V>
 where
-    V: View<A>,
-    A: Aggregate,
+    V: View,
 {
     async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError> {
         let row: Option<MySqlRow> = sqlx::query(&self.select_sql)
@@ -112,16 +109,14 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::testing::tests::{
-        Created, TestAggregate, TestEvent, TestView, TEST_CONNECTION_STRING,
-    };
+    use crate::testing::tests::{Created, TestEvent, TestView, TEST_CONNECTION_STRING};
     use crate::{default_mysql_pool, MysqlViewRepository};
     use cqrs_es::persist::{ViewContext, ViewRepository};
 
     #[tokio::test]
     async fn test_valid_view_repository() {
         let pool = default_mysql_pool(TEST_CONNECTION_STRING).await;
-        let repo = MysqlViewRepository::<TestView, TestAggregate>::new("test_view", pool.clone());
+        let repo = MysqlViewRepository::<TestView>::new("test_view", pool.clone());
         let test_view_id = uuid::Uuid::new_v4().to_string();
 
         let view = TestView {

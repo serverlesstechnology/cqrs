@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use cqrs_es::doc::{Customer, CustomerEvent};
 use cqrs_es::persist::{PersistedEventStore, SemanticVersionEventUpcaster};
 use cqrs_es::EventStore;
@@ -65,7 +67,7 @@ async fn simple_es_commit_and_load_test(
                 new_email: "email B".to_string(),
             }],
             context,
-            Default::default(),
+            HashMap::default(),
         )
         .await
         .unwrap();
