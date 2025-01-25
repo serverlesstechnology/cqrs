@@ -26,12 +26,11 @@ where
     /// before using this query repository (see `/db/init.sql` sql initialization file).
     ///
     /// ```
-    /// # use cqrs_es::doc::MyAggregate;
     /// # use cqrs_es::persist::doc::MyView;
     /// use sqlx::{MySql, Pool};
     /// use mysql_es::MysqlViewRepository;
     ///
-    /// fn configure_view_repo(pool: Pool<MySql>) -> MysqlViewRepository<MyView,MyAggregate> {
+    /// fn configure_view_repo(pool: Pool<MySql>) -> MysqlViewRepository<MyView> {
     ///     MysqlViewRepository::new("my_view_table", pool)
     /// }
     /// ```

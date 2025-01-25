@@ -25,12 +25,11 @@ where
     /// line example).
     ///
     /// ```
-    /// # use cqrs_es::doc::MyAggregate;
     /// # use cqrs_es::persist::doc::MyView;
     /// use aws_sdk_dynamodb::Client;
     /// use dynamo_es::DynamoViewRepository;
     ///
-    /// fn configure_view_repo(client: Client) -> DynamoViewRepository<MyView,MyAggregate> {
+    /// fn configure_view_repo(client: Client) -> DynamoViewRepository<MyView> {
     ///     DynamoViewRepository::new("my_view_table", client)
     /// }
     /// ```

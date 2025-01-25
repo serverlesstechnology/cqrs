@@ -26,12 +26,11 @@ where
     /// before using this query repository (see `/db/init.sql` sql initialization file).
     ///
     /// ```
-    /// # use cqrs_es::doc::MyAggregate;
     /// # use cqrs_es::persist::doc::MyView;
     /// use sqlx::{Pool, Postgres};
     /// use postgres_es::PostgresViewRepository;
     ///
-    /// fn configure_view_repo(pool: Pool<Postgres>) -> PostgresViewRepository<MyView,MyAggregate> {
+    /// fn configure_view_repo(pool: Pool<Postgres>) -> PostgresViewRepository<MyView> {
     ///     PostgresViewRepository::new("my_view_table", pool)
     /// }
     /// ```
