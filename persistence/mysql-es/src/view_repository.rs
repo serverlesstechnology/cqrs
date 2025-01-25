@@ -19,7 +19,7 @@ pub struct MysqlViewRepository<V, A> {
 
 impl<V, A> MysqlViewRepository<V, A>
 where
-    V: View<A>,
+    V: View<Event = A::Event>,
     A: Aggregate,
 {
     /// Creates a new `MysqlViewRepository` that will store serialized views in a MySql table named
@@ -54,7 +54,7 @@ where
 #[async_trait]
 impl<V, A> ViewRepository<V, A> for MysqlViewRepository<V, A>
 where
-    V: View<A>,
+    V: View<Event = A::Event>,
     A: Aggregate,
 {
     async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError> {
