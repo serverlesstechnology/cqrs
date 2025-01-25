@@ -11,8 +11,7 @@ documentation = "https://docs.rs/dynamo-es"
 readme = "README.md"
 
 [dependencies]
-cqrs-es = { version = "0.4.12", path = "../.." }
-
+cqrs-es.workspace = true
 async-trait = "0.1"
 aws-sdk-dynamodb = "1.62"
 serde = { workspace = true, features = ["derive"]}
