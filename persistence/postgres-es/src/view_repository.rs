@@ -39,8 +39,9 @@ where
     pub fn new(view_name: &str, pool: Pool<Postgres>) -> Self {
         let insert_sql =
             format!("INSERT INTO {view_name} (payload, version, view_id) VALUES ( $1, $2, $3 )");
-        let update_sql =
-            format!("UPDATE {view_name} SET payload= $1 , version= $2 WHERE view_id= $3");
+        let update_sql = format!(
+            "UPDATE {view_name} SET payload= $1 , version= $2 WHERE view_id= $3 AND version= $4"
+        );
         let select_sql = format!("SELECT version,payload FROM {view_name} WHERE view_id= $1");
         Self {
             insert_sql,
@@ -100,13 +101,18 @@ where
         };
         let version = context.version + 1;
         let payload = serde_json::to_value(&view).map_err(PostgresAggregateError::from)?;
-        sqlx::query(sql.as_str())
+        let rows_affected = sqlx::query(sql.as_str())
             .bind(payload)
             .bind(version)
             .bind(context.view_instance_id)
+            .bind(context.version)
             .execute(&self.pool)
             .await
-            .map_err(PostgresAggregateError::from)?;
+            .map_err(PostgresAggregateError::from)?
+            .rows_affected();
+        if rows_affected < 1 {
+            return Err(PersistenceError::OptimisticLockError);
+        }
         Ok(())
     }
 }
