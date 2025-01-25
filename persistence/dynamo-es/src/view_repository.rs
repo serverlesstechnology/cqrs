@@ -4,21 +4,20 @@ use async_trait::async_trait;
 use aws_sdk_dynamodb::primitives::Blob;
 use aws_sdk_dynamodb::types::{AttributeValue, Put, TransactWriteItem};
 use cqrs_es::persist::{PersistenceError, ViewContext, ViewRepository};
-use cqrs_es::{Aggregate, View};
+use cqrs_es::View;
 
 use crate::helpers::{att_as_number, att_as_value, commit_transactions, load_dynamo_view};
 
 /// A DynamoDb backed view repository for use in backing a `GenericQuery`.
-pub struct DynamoViewRepository<V, A> {
-    _phantom: PhantomData<(V, A)>,
+pub struct DynamoViewRepository<V> {
+    _phantom: PhantomData<V>,
     view_name: String,
     client: aws_sdk_dynamodb::client::Client,
 }
 
-impl<V, A> DynamoViewRepository<V, A>
+impl<V> DynamoViewRepository<V>
 where
-    V: View<Event = A::Event>,
-    A: Aggregate,
+    V: View,
 {
     /// Creates a new `DynamoViewRepository` that will store serialized views in a DynamoDb table named
     /// identically to the `view_name` value provided. This table should be created by the user
@@ -45,10 +44,9 @@ where
 }
 
 #[async_trait]
-impl<V, A> ViewRepository<V, A> for DynamoViewRepository<V, A>
+impl<V> ViewRepository<V> for DynamoViewRepository<V>
 where
-    V: View<Event = A::Event>,
-    A: Aggregate,
+    V: View,
 {
     async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError> {
         let query_result = load_dynamo_view(&self.client, &self.view_name, view_id).await?;
@@ -115,17 +113,13 @@ where
 mod test {
     use cqrs_es::persist::{ViewContext, ViewRepository};
 
-    use crate::testing::tests::{
-        test_dynamodb_client, Created, TestAggregate, TestEvent, TestView,
-    };
+    use crate::testing::tests::{test_dynamodb_client, Created, TestEvent, TestView};
     use crate::DynamoViewRepository;
 
     #[tokio::test]
     async fn test_valid_view_repository() {
-        let repo = DynamoViewRepository::<TestView, TestAggregate>::new(
-            "TestViewTable",
-            test_dynamodb_client().await,
-        );
+        let repo =
+            DynamoViewRepository::<TestView>::new("TestViewTable", test_dynamodb_client().await);
         let test_view_id = uuid::Uuid::new_v4().to_string();
 
         let view = TestView {

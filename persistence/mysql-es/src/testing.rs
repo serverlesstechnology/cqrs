@@ -87,7 +87,7 @@ pub(crate) mod tests {
     pub enum TestCommand {}
 
     pub(crate) type TestQueryRepository =
-        GenericQuery<MysqlViewRepository<TestView, TestAggregate>, TestView, TestAggregate>;
+        GenericQuery<MysqlViewRepository<TestView>, TestView, TestAggregate>;
 
     #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
     pub(crate) struct TestView {

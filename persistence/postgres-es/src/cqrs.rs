@@ -72,7 +72,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::testing::tests::{
-        TestAggregate, TestQueryRepository, TestServices, TestView, TEST_CONNECTION_STRING,
+        TestQueryRepository, TestServices, TestView, TEST_CONNECTION_STRING,
     };
     use crate::{default_postgress_pool, postgres_cqrs, PostgresViewRepository};
     use std::sync::Arc;
@@ -80,8 +80,7 @@ mod test {
     #[tokio::test]
     async fn test_valid_cqrs_framework() {
         let pool = default_postgress_pool(TEST_CONNECTION_STRING).await;
-        let repo =
-            PostgresViewRepository::<TestView, TestAggregate>::new("test_view", pool.clone());
+        let repo = PostgresViewRepository::<TestView>::new("test_view", pool.clone());
         let query = TestQueryRepository::new(Arc::new(repo));
         let _ps = postgres_cqrs(pool, vec![Box::new(query)], TestServices);
     }

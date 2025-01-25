@@ -7,7 +7,7 @@ use std::sync::Arc;
 #[derive(Clone)]
 pub struct ApplicationState {
     pub cqrs: Arc<PostgresCqrs<BankAccount>>,
-    pub account_query: Arc<PostgresViewRepository<BankAccountView, BankAccount>>,
+    pub account_query: Arc<PostgresViewRepository<BankAccountView>>,
 }
 
 pub async fn new_application_state() -> ApplicationState {

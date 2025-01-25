@@ -12,7 +12,7 @@ pub fn cqrs_framework(
     pool: Pool<Postgres>,
 ) -> (
     Arc<PostgresCqrs<BankAccount>>,
-    Arc<PostgresViewRepository<BankAccountView, BankAccount>>,
+    Arc<PostgresViewRepository<BankAccountView>>,
 ) {
     // A very simple query that writes each event to stdout.
     let simple_query = SimpleLoggingQuery {};

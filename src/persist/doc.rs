@@ -1,4 +1,4 @@
-use crate::doc::{MyAggregate, MyEvents};
+use crate::doc::MyEvents;
 use crate::persist::event_stream::ReplayStream;
 use crate::persist::{
     PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot, ViewContext,
@@ -29,7 +29,7 @@ impl MyViewRepository {
 }
 
 #[async_trait]
-impl ViewRepository<MyView, MyAggregate> for MyViewRepository {
+impl ViewRepository<MyView> for MyViewRepository {
     async fn load(&self, _view_id: &str) -> Result<Option<MyView>, PersistenceError> {
         todo!()
     }

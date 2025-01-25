@@ -2,25 +2,24 @@ use std::marker::PhantomData;
 
 use async_trait::async_trait;
 use cqrs_es::persist::{PersistenceError, ViewContext, ViewRepository};
-use cqrs_es::{Aggregate, View};
+use cqrs_es::View;
 use sqlx::postgres::PgRow;
 use sqlx::{Pool, Postgres, Row};
 
 use crate::error::PostgresAggregateError;
 
 /// A postgres backed query repository for use in backing a `GenericQuery`.
-pub struct PostgresViewRepository<V, A> {
+pub struct PostgresViewRepository<V> {
     insert_sql: String,
     update_sql: String,
     select_sql: String,
     pool: Pool<Postgres>,
-    _phantom: PhantomData<(V, A)>,
+    _phantom: PhantomData<V>,
 }
 
-impl<V, A> PostgresViewRepository<V, A>
+impl<V> PostgresViewRepository<V>
 where
-    V: View<Event = A::Event>,
-    A: Aggregate,
+    V: View,
 {
     /// Creates a new `PostgresViewRepository` that will store serialized views in a Postgres table named
     /// identically to the `view_name` value provided. This table should be created by the user
@@ -54,10 +53,9 @@ where
 }
 
 #[async_trait]
-impl<V, A> ViewRepository<V, A> for PostgresViewRepository<V, A>
+impl<V> ViewRepository<V> for PostgresViewRepository<V>
 where
-    V: View<Event = A::Event>,
-    A: Aggregate,
+    V: View,
 {
     async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError> {
         let row: Option<PgRow> = sqlx::query(&self.select_sql)
@@ -119,17 +117,14 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::testing::tests::{
-        Created, TestAggregate, TestEvent, TestView, TEST_CONNECTION_STRING,
-    };
+    use crate::testing::tests::{Created, TestEvent, TestView, TEST_CONNECTION_STRING};
     use crate::{default_postgress_pool, PostgresViewRepository};
     use cqrs_es::persist::{ViewContext, ViewRepository};
 
     #[tokio::test]
     async fn test_valid_view_repository() {
         let pool = default_postgress_pool(TEST_CONNECTION_STRING).await;
-        let repo =
-            PostgresViewRepository::<TestView, TestAggregate>::new("test_view", pool.clone());
+        let repo = PostgresViewRepository::<TestView>::new("test_view", pool.clone());
         let test_view_id = uuid::Uuid::new_v4().to_string();
 
         let view = TestView {

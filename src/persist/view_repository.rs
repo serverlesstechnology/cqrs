@@ -1,13 +1,12 @@
 use crate::persist::PersistenceError;
-use crate::{Aggregate, View};
+use crate::View;
 use async_trait::async_trait;
 
 /// Handles the database access needed for a GenericQuery.
 #[async_trait]
-pub trait ViewRepository<V, A>: Send + Sync
+pub trait ViewRepository<V>: Send + Sync
 where
-    V: View<Event = A::Event>,
-    A: Aggregate,
+    V: View,
 {
     /// Returns the current view instance.
     async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError>;

@@ -94,7 +94,7 @@ pub(crate) mod tests {
     pub enum TestCommand {}
 
     pub(crate) type TestQueryRepository =
-        GenericQuery<DynamoViewRepository<TestView, TestAggregate>, TestView, TestAggregate>;
+        GenericQuery<DynamoViewRepository<TestView>, TestView, TestAggregate>;
 
     #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
     pub(crate) struct TestView {

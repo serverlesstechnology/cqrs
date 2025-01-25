@@ -10,7 +10,7 @@ use crate::{Aggregate, EventEnvelope, Query, View};
 /// and to return materialized views.
 pub struct GenericQuery<R, V, A>
 where
-    R: ViewRepository<V, A>,
+    R: ViewRepository<V>,
     V: View<Event = A::Event>,
     A: Aggregate,
 {
@@ -21,7 +21,7 @@ where
 
 impl<R, V, A> GenericQuery<R, V, A>
 where
-    R: ViewRepository<V, A>,
+    R: ViewRepository<V>,
     V: View<Event = A::Event>,
     A: Aggregate,
 {
@@ -118,7 +118,7 @@ where
 #[async_trait]
 impl<R, V, A> Query<A> for GenericQuery<R, V, A>
 where
-    R: ViewRepository<V, A>,
+    R: ViewRepository<V>,
     V: View<Event = A::Event>,
     A: Aggregate,
 {
