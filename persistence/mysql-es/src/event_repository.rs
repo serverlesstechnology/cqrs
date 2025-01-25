@@ -49,7 +49,7 @@ impl PersistedEventRepository for MysqlEventRepository {
         aggregate_id: &str,
     ) -> Result<Option<SerializedSnapshot>, PersistenceError> {
         let row: MySqlRow = match sqlx::query(self.query_factory.select_snapshot())
-            .bind(A::aggregate_type())
+            .bind(A::TYPE)
             .bind(aggregate_id)
             .fetch_optional(&self.pool)
             .await
@@ -91,7 +91,7 @@ impl PersistedEventRepository for MysqlEventRepository {
     ) -> Result<ReplayStream, PersistenceError> {
         Ok(stream_events(
             self.query_factory.select_events().to_string(),
-            A::aggregate_type(),
+            A::TYPE.to_string(),
             aggregate_id.to_string(),
             self.pool.clone(),
             self.stream_channel_size,
@@ -101,7 +101,7 @@ impl PersistedEventRepository for MysqlEventRepository {
     async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
         Ok(stream_all_events(
             self.query_factory.all_events().to_string(),
-            A::aggregate_type(),
+            A::TYPE.to_string(),
             self.pool.clone(),
             self.stream_channel_size,
         ))
@@ -161,7 +161,7 @@ impl MysqlEventRepository {
         query: &str,
     ) -> Result<Vec<SerializedEvent>, PersistenceError> {
         let mut rows = sqlx::query(query)
-            .bind(A::aggregate_type())
+            .bind(A::TYPE)
             .bind(aggregate_id)
             .fetch(&self.pool);
         let mut result: Vec<SerializedEvent> = Default::default();
@@ -253,7 +253,7 @@ impl MysqlEventRepository {
         let mut tx: Transaction<'_, MySql> = sqlx::Acquire::begin(&self.pool).await?;
         let current_sequence = self.persist_events::<A>(&mut tx, events).await?;
         sqlx::query(self.query_factory.insert_snapshot())
-            .bind(A::aggregate_type())
+            .bind(A::TYPE)
             .bind(aggregate_id.as_str())
             .bind(current_sequence as u32)
             .bind(current_snapshot as u32)
@@ -279,7 +279,7 @@ impl MysqlEventRepository {
             .bind(current_sequence as u32)
             .bind(&aggregate_payload)
             .bind(current_snapshot as u32)
-            .bind(A::aggregate_type())
+            .bind(A::TYPE)
             .bind(aggregate_id.as_str())
             .bind((current_snapshot - 1) as u32)
             .execute(&mut *tx)
@@ -341,7 +341,7 @@ impl MysqlEventRepository {
             let payload = serde_json::to_value(&event.payload)?;
             let metadata = serde_json::to_value(&event.metadata)?;
             sqlx::query(self.query_factory.insert_event())
-                .bind(A::aggregate_type())
+                .bind(A::TYPE)
                 .bind(event.aggregate_id.as_str())
                 .bind(event.sequence as u32)
                 .bind(event_type)
@@ -424,7 +424,7 @@ mod test {
     async fn verify_replay_stream(id: &str, event_repo: MysqlEventRepository) {
         let mut stream = event_repo.stream_events::<TestAggregate>(id).await.unwrap();
         let mut found_in_stream = 0;
-        while (stream.next::<TestAggregate>(&None).await).is_some() {
+        while (stream.next::<TestAggregate>(&[]).await).is_some() {
             found_in_stream += 1;
         }
         assert_eq!(found_in_stream, 2);
@@ -434,7 +434,7 @@ mod test {
             .await
             .unwrap();
         let mut found_in_stream = 0;
-        while (stream.next::<TestAggregate>(&None).await).is_some() {
+        while (stream.next::<TestAggregate>(&[]).await).is_some() {
             found_in_stream += 1;
         }
         assert!(found_in_stream >= 2);

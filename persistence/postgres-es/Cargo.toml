@@ -11,8 +11,7 @@ documentation = "https://docs.rs/postgres-es"
 readme = "README.md"
 
 [dependencies]
-cqrs-es = { version = "0.4.12", path = "../.." }
-
+cqrs-es.workspace = true
 async-trait = "0.1"
 futures = "0.3"
 serde = { workspace = true, features = ["derive"] }

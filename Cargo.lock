@@ -705,13 +705,13 @@ dependencies = [
  "async-trait",
  "axum",
  "chrono",
- "cqrs-es 0.4.12",
+ "cqrs-es",
  "lambda_http",
  "postgres-es",
  "serde",
  "serde_json",
  "sqlx",
- "thiserror 2.0.11",
+ "thiserror",
  "tokio",
 ]
 
@@ -723,22 +723,9 @@ dependencies = [
  "chrono",
  "serde",
  "serde_json",
- "thiserror 2.0.11",
+ "thiserror",
  "tokio",
  "uuid",
-]
-
-[[package]]
-name = "cqrs-es"
-version = "0.4.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5da025e9082adb74e8bb2b7e93feed51c711aa6c384cc18ad03b463ed776db64"
-dependencies = [
- "async-trait",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "tokio",
 ]
 
 [[package]]
@@ -836,10 +823,10 @@ version = "0.4.12"
 dependencies = [
  "async-trait",
  "aws-sdk-dynamodb",
- "cqrs-es 0.4.12",
+ "cqrs-es",
  "serde",
  "serde_json",
- "thiserror 2.0.11",
+ "thiserror",
  "tokio",
  "uuid",
 ]
@@ -1815,12 +1802,12 @@ name = "mysql-es"
 version = "0.4.12"
 dependencies = [
  "async-trait",
- "cqrs-es 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cqrs-es",
  "futures",
  "serde",
  "serde_json",
  "sqlx",
- "thiserror 2.0.11",
+ "thiserror",
  "tokio",
  "uuid",
 ]
@@ -2110,12 +2097,12 @@ name = "postgres-es"
 version = "0.4.12"
 dependencies = [
  "async-trait",
- "cqrs-es 0.4.12",
+ "cqrs-es",
  "futures",
  "serde",
  "serde_json",
  "sqlx",
- "thiserror 2.0.11",
+ "thiserror",
  "tokio",
  "uuid",
 ]
@@ -2690,7 +2677,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "smallvec",
- "thiserror 2.0.11",
+ "thiserror",
  "tokio",
  "tokio-stream",
  "tracing",
@@ -2775,7 +2762,7 @@ dependencies = [
  "smallvec",
  "sqlx-core",
  "stringprep",
- "thiserror 2.0.11",
+ "thiserror",
  "tracing",
  "whoami",
 ]
@@ -2812,7 +2799,7 @@ dependencies = [
  "smallvec",
  "sqlx-core",
  "stringprep",
- "thiserror 2.0.11",
+ "thiserror",
  "tracing",
  "whoami",
 ]
@@ -2907,31 +2894,11 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.69"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
-dependencies = [
- "thiserror-impl 1.0.69",
-]
-
-[[package]]
-name = "thiserror"
 version = "2.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d452f284b73e6d76dd36758a0c8684b1d5be31f92b89d07fd5822175732206fc"
 dependencies = [
- "thiserror-impl 2.0.11",
-]
-
-[[package]]
-name = "thiserror-impl"
-version = "1.0.69"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
+ "thiserror-impl",
 ]
 
 [[package]]
