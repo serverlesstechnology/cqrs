@@ -19,7 +19,7 @@ repository = "https://github.com/serverlesstechnology/cqrs"
 cqrs-es = { version = "0.4.12", path = "." }
 serde = "^1.0.0"
 tokio = "^1.43.0"
-uuid = { version = "1.12", features = ["v4"] }
+uuid = { version = "1.13", features = ["v4"] }
 
 [package]
 name = "cqrs-es"
