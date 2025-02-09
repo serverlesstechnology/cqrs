@@ -10,7 +10,7 @@ pub(crate) mod tests {
         GenericQuery, PersistedEventRepository, PersistedEventStore, SerializedEvent,
         SerializedSnapshot,
     };
-    use cqrs_es::{Aggregate, DomainEvent, EventEnvelope, EventStore, View};
+    use cqrs_es::{Aggregate, DomainEvent, EventStore, View};
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
 
@@ -94,16 +94,17 @@ pub(crate) mod tests {
     pub enum TestCommand {}
 
     pub(crate) type TestQueryRepository =
-        GenericQuery<DynamoViewRepository<TestView, TestAggregate>, TestView, TestAggregate>;
+        GenericQuery<DynamoViewRepository<TestView>, TestView, TestAggregate>;
 
     #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
     pub(crate) struct TestView {
         pub(crate) events: Vec<TestEvent>,
     }
 
-    impl View<TestAggregate> for TestView {
-        fn update(&mut self, event: &EventEnvelope<TestAggregate>) {
-            self.events.push(event.payload.clone());
+    impl View for TestView {
+        type Event = TestEvent;
+        fn apply(&mut self, event: &TestEvent) {
+            self.events.push(event.clone());
         }
     }
 

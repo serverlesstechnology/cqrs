@@ -24,7 +24,7 @@ impl View<BankAccount> for BankAccountView {
 The view repositories use the same database connection as the event repositories, for `postgres-es` this is a database
 connection pool. 
 ```rust
-type MyViewRepository = PostgresViewRepository<MyView,MyAggregate>;
+type MyViewRepository = PostgresViewRepository<MyView>;
 
 fn configure_view_repository(db_pool: Pool<Postgres>) -> MyViewRepository {
     PostgresViewRepository::new("my_view_name", db_pool)

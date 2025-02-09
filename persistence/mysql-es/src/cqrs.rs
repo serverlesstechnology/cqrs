@@ -71,7 +71,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::testing::tests::{
-        TestAggregate, TestQueryRepository, TestServices, TestView, TEST_CONNECTION_STRING,
+        TestQueryRepository, TestServices, TestView, TEST_CONNECTION_STRING,
     };
     use crate::{default_mysql_pool, mysql_cqrs, MysqlViewRepository};
     use std::sync::Arc;
@@ -79,7 +79,7 @@ mod test {
     #[tokio::test]
     async fn test_valid_cqrs_framework() {
         let pool = default_mysql_pool(TEST_CONNECTION_STRING).await;
-        let repo = MysqlViewRepository::<TestView, TestAggregate>::new("test_view", pool.clone());
+        let repo = MysqlViewRepository::<TestView>::new("test_view", pool.clone());
         let query = TestQueryRepository::new(Arc::new(repo));
         let _ps = mysql_cqrs(pool, vec![Box::new(query)], TestServices);
     }

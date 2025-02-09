@@ -1,10 +1,10 @@
-use crate::doc::MyAggregate;
+use crate::doc::MyEvents;
 use crate::persist::event_stream::ReplayStream;
 use crate::persist::{
     PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot, ViewContext,
     ViewRepository,
 };
-use crate::{Aggregate, EventEnvelope, View};
+use crate::{Aggregate, View};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -12,8 +12,9 @@ use serde_json::Value;
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct MyView;
 
-impl View<MyAggregate> for MyView {
-    fn update(&mut self, _event: &EventEnvelope<MyAggregate>) {
+impl View for MyView {
+    type Event = MyEvents;
+    fn apply(&mut self, _event: &Self::Event) {
         todo!()
     }
 }
@@ -28,7 +29,7 @@ impl MyViewRepository {
 }
 
 #[async_trait]
-impl ViewRepository<MyView, MyAggregate> for MyViewRepository {
+impl ViewRepository<MyView> for MyViewRepository {
     async fn load(&self, _view_id: &str) -> Result<Option<MyView>, PersistenceError> {
         todo!()
     }
