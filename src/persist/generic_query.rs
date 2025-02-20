@@ -10,8 +10,8 @@ use crate::{Aggregate, EventEnvelope, Query, View};
 /// and to return materialized views.
 pub struct GenericQuery<R, V, A>
 where
-    R: ViewRepository<V, A>,
-    V: View<A>,
+    R: ViewRepository<V>,
+    V: View<Event = A::Event>,
     A: Aggregate,
 {
     view_repository: Arc<R>,
@@ -21,8 +21,8 @@ where
 
 impl<R, V, A> GenericQuery<R, V, A>
 where
-    R: ViewRepository<V, A>,
-    V: View<A>,
+    R: ViewRepository<V>,
+    V: View<Event = A::Event>,
     A: Aggregate,
 {
     /// Creates a new `GenericQuery` using the provided `ViewRepository`.
@@ -102,7 +102,7 @@ where
     ) -> Result<(), PersistenceError> {
         let (mut view, view_context) = self.load_mut(view_id.to_string()).await?;
         for event in events {
-            view.update(event);
+            view.apply(&event.payload);
         }
         self.view_repository.update_view(view, view_context).await?;
         Ok(())
@@ -118,8 +118,8 @@ where
 #[async_trait]
 impl<R, V, A> Query<A> for GenericQuery<R, V, A>
 where
-    R: ViewRepository<V, A>,
-    V: View<A>,
+    R: ViewRepository<V>,
+    V: View<Event = A::Event>,
     A: Aggregate,
 {
     async fn dispatch(&self, view_id: &str, events: &[EventEnvelope<A>]) {
