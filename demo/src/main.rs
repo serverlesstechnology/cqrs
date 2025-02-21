@@ -2,6 +2,7 @@ use axum::routing::get;
 use axum::Router;
 use cqrs_demo::route_handler::{command_handler, query_handler};
 use cqrs_demo::state::new_application_state;
+use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() {
@@ -15,9 +16,10 @@ async fn main() {
             get(query_handler).post(command_handler),
         )
         .with_state(state);
-    // Start the Axum server.
-    axum::Server::bind(&"0.0.0.0:3030".parse().unwrap())
-        .serve(router.into_make_service())
+
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3030));
+
+    axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), router)
         .await
         .unwrap();
 }

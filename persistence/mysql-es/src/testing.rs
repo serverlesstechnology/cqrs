@@ -18,14 +18,11 @@ pub(crate) mod tests {
 
     #[async_trait]
     impl Aggregate for TestAggregate {
+        const TYPE: &'static str = "TestAggregate";
         type Command = TestCommand;
         type Event = TestEvent;
         type Error = TestError;
         type Services = TestServices;
-
-        fn aggregate_type() -> String {
-            "TestAggregate".to_string()
-        }
 
         async fn handle(
             &self,
@@ -115,7 +112,7 @@ pub(crate) mod tests {
         SerializedEvent {
             aggregate_id: id.to_string(),
             sequence,
-            aggregate_type: TestAggregate::aggregate_type(),
+            aggregate_type: TestAggregate::TYPE.to_string(),
             event_type: event.event_type(),
             event_version: event.event_version(),
             payload,
