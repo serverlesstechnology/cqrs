@@ -149,7 +149,7 @@ impl DynamoEventRepository {
         let query_output = self
             .query_table(aggregate_type, aggregate_id, &self.event_table)
             .await?;
-        let mut result: Vec<SerializedEvent> = Default::default();
+        let mut result = Vec::default();
         if let Some(entries) = query_output.items {
             for entry in entries {
                 result.push(serialized_event(entry)?);
@@ -177,7 +177,7 @@ impl DynamoEventRepository {
             .expression_attribute_values(":sequence", AttributeValue::N(last_sequence.to_string()))
             .send()
             .await?;
-        let mut result: Vec<SerializedEvent> = Default::default();
+        let mut result = Vec::default();
         if let Some(entries) = query_output.items {
             for entry in entries {
                 result.push(serialized_event(entry)?);
@@ -227,11 +227,14 @@ impl DynamoEventRepository {
         aggregate_id: &str,
         table: &str,
     ) -> Result<QueryOutput, DynamoAggregateError> {
-        let query = self.create_query(table, aggregate_type, aggregate_id).await;
-        Ok(query.send().await?)
+        let output = self
+            .create_query(table, aggregate_type, aggregate_id)
+            .send()
+            .await?;
+        Ok(output)
     }
 
-    async fn create_query(
+    fn create_query(
         &self,
         table: &str,
         aggregate_type: &str,
@@ -341,7 +344,6 @@ impl PersistedEventRepository for DynamoEventRepository {
     ) -> Result<ReplayStream, PersistenceError> {
         let query = self
             .create_query(&self.event_table, A::TYPE, aggregate_id)
-            .await
             .limit(self.stream_channel_size as i32);
         Ok(stream_events(query, self.stream_channel_size))
     }
@@ -377,9 +379,8 @@ fn stream_events(base_query: QueryFluentBuilder, channel_size: usize) -> ReplayS
                     last_evaluated_key = query_output.last_evaluated_key;
                     if let Some(entries) = query_output.items {
                         for entry in entries {
-                            let event = match serialized_event(entry) {
-                                Ok(event) => event,
-                                Err(_) => return,
+                            let Ok(event) = serialized_event(entry) else {
+                                return;
                             };
                             if feed.push(Ok(event)).await.is_err() {
                                 //         TODO: in the unlikely event of a broken channel this error should be reported.
@@ -420,9 +421,8 @@ fn stream_all_events(base_query: ScanFluentBuilder, channel_size: usize) -> Repl
                     last_evaluated_key = query_output.last_evaluated_key;
                     if let Some(entries) = query_output.items {
                         for entry in entries {
-                            let event = match serialized_event(entry) {
-                                Ok(event) => event,
-                                Err(_) => return,
+                            let Ok(event) = serialized_event(entry) else {
+                                return;
                             };
                             if feed.push(Ok(event)).await.is_err() {
                                 //         TODO: in the unlikely event of a broken channel this error should be reported.
