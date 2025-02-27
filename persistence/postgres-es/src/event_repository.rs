@@ -395,10 +395,10 @@ mod test {
             ])
             .await
             .unwrap_err();
-        match result {
-            PostgresAggregateError::OptimisticLock => {}
-            _ => panic!("invalid error result found during insert: {result}"),
-        };
+        assert!(
+            matches!(result, PostgresAggregateError::OptimisticLock),
+            "invalid error result found during insert: {result}"
+        );
 
         let events = event_repo.get_events::<TestAggregate>(&id).await.unwrap();
         assert_eq!(2, events.len());
@@ -513,10 +513,10 @@ mod test {
             )
             .await
             .unwrap_err();
-        match result {
-            PostgresAggregateError::OptimisticLock => {}
-            _ => panic!("invalid error result found during insert: {result}"),
-        };
+        assert!(
+            matches!(result, PostgresAggregateError::OptimisticLock),
+            "invalid error result found during insert: {result}"
+        );
 
         let snapshot = event_repo.get_snapshot::<TestAggregate>(&id).await.unwrap();
         assert_eq!(

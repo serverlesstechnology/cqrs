@@ -408,7 +408,7 @@ mod test {
         match result {
             MysqlAggregateError::OptimisticLock => {}
             _ => panic!("invalid error result found during insert: {result}"),
-        };
+        }
 
         let events = event_repo.get_events::<TestAggregate>(&id).await.unwrap();
         assert_eq!(2, events.len());

@@ -70,7 +70,7 @@ impl Aggregate for BankAccount {
                     .is_err()
                 {
                     return Err("check invalid".into());
-                };
+                }
                 Ok(vec![BankAccountEvent::CustomerWroteCheck {
                     check_number,
                     amount,

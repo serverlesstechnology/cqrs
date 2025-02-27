@@ -383,13 +383,13 @@ fn stream_events(base_query: QueryFluentBuilder, channel_size: usize) -> ReplayS
                             if feed.push(Ok(event)).await.is_err() {
                                 //         TODO: in the unlikely event of a broken channel this error should be reported.
                                 return;
-                            };
+                            }
                         }
-                    };
+                    }
                 }
                 Err(err) => {
                     let err: DynamoAggregateError = err.into();
-                    if feed.push(Err(err.into())).await.is_err() {};
+                    if feed.push(Err(err.into())).await.is_err() {}
                 }
             }
             if last_evaluated_key.is_none() {
@@ -425,9 +425,9 @@ fn stream_all_events(base_query: ScanFluentBuilder, channel_size: usize) -> Repl
                             if feed.push(Ok(event)).await.is_err() {
                                 //         TODO: in the unlikely event of a broken channel this error should be reported.
                                 return;
-                            };
+                            }
                         }
-                    };
+                    }
                 }
                 Err(err) => {
                     let err: DynamoAggregateError = err.into();
@@ -501,7 +501,7 @@ mod test {
         match result {
             DynamoAggregateError::OptimisticLock => {}
             _ => panic!("invalid error result found during insert: {result}"),
-        };
+        }
 
         let events = event_repo.get_events::<TestAggregate>(&id).await.unwrap();
         assert_eq!(2, events.len());
@@ -623,7 +623,7 @@ mod test {
         match result {
             DynamoAggregateError::OptimisticLock => {}
             _ => panic!("invalid error result found during insert: {result}"),
-        };
+        }
 
         let snapshot = repo.get_snapshot::<TestAggregate>(&id).await.unwrap();
         assert_eq!(
