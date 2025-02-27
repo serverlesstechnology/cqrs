@@ -307,7 +307,6 @@ where
 #[cfg(test)]
 pub(crate) mod shared_test {
     use std::collections::HashMap;
-    use std::future::Future;
     use std::sync::Mutex;
 
     use serde::{Deserialize, Serialize};
@@ -368,15 +367,15 @@ pub(crate) mod shared_test {
         type Error = TestError;
         type Services = TestService;
 
-        fn handle(
+        async fn handle(
             &self,
             command: Self::Command,
             _service: &Self::Services,
-        ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
-            std::future::ready(match command {
+        ) -> Result<Vec<Self::Event>, Self::Error> {
+            match command {
                 TestCommands::DoSomething => Ok(vec![TestEvents::SomethingWasDone]),
                 TestCommands::BadCommand => Err("the expected error message".into()),
-            })
+            }
         }
         fn apply(&mut self, event: Self::Event) {
             match event {

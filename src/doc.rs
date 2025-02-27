@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -86,12 +84,12 @@ impl Aggregate for Customer {
     type Error = CustomerError;
     type Services = CustomerService;
 
-    fn handle(
+    async fn handle(
         &self,
         command: Self::Command,
         _service: &Self::Services,
-    ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
-        std::future::ready(match command {
+    ) -> Result<Vec<Self::Event>, Self::Error> {
+        match command {
             CustomerCommand::AddCustomerName { .. } if self.name.as_str() != "" => {
                 Err("a name has already been added for this customer".into())
             }
@@ -101,7 +99,7 @@ impl Aggregate for Customer {
             CustomerCommand::UpdateEmail { new_email } => {
                 Ok(vec![CustomerEvent::EmailUpdated { new_email }])
             }
-        })
+        }
     }
 
     fn apply(&mut self, event: Self::Event) {
