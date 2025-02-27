@@ -19,14 +19,12 @@ use crate::DomainEvent;
 /// # use cqrs_es::doc::{CustomerEvent, CustomerError, CustomerCommand, CustomerService};
 /// # use cqrs_es::{Aggregate, AggregateError};
 /// # use serde::{Serialize,Deserialize};
-/// # use async_trait::async_trait;
 /// #[derive(Default,Serialize,Deserialize)]
 /// struct Customer {
 ///     name: Option<String>,
 ///     email: Option<String>,
 /// }
 ///
-/// #[async_trait]
 /// impl Aggregate for Customer {
 ///     const TYPE: &'static str = "customer";
 ///     type Command = CustomerCommand;
@@ -87,13 +85,11 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// use cqrs_es::{Aggregate, AggregateError};
     /// # use serde::{Serialize, Deserialize, de::DeserializeOwned};
     /// # use cqrs_es::doc::{CustomerCommand, CustomerError, CustomerEvent, CustomerService};
-    /// # use async_trait::async_trait;
     /// #[derive(Default,Serialize,Deserialize)]
     /// # struct Customer {
     /// #     name: Option<String>,
     /// #     email: Option<String>,
     /// # }
-    /// # #[async_trait]
     /// # impl Aggregate for Customer {
     /// #     const TYPE: &'static str = "customer";
     /// #     type Command = CustomerCommand;
@@ -140,13 +136,11 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # use serde::{Serialize, Deserialize, de::DeserializeOwned};
     /// # use cqrs_es::doc::{CustomerCommand, CustomerError, CustomerEvent, CustomerService};
     /// use cqrs_es::{Aggregate, AggregateError};
-    /// use async_trait::async_trait;
     /// #[derive(Default,Serialize,Deserialize)]
     /// # struct Customer {
     /// #     name: Option<String>,
     /// #     email: Option<String>,
     /// # }
-    /// # #[async_trait]
     /// # impl Aggregate for Customer {
     /// #     const TYPE: &'static str = "customer";
     /// #     type Command = CustomerCommand;

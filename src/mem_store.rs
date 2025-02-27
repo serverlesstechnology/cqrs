@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
-use async_trait::async_trait;
-
 use crate::event::EventEnvelope;
 use crate::{Aggregate, AggregateContext, AggregateError, EventStore};
 
@@ -79,7 +77,6 @@ impl<A: Aggregate> MemStore<A> {
     }
 }
 
-#[async_trait]
 impl<A: Aggregate> EventStore<A> for MemStore<A> {
     type AC = MemStoreAggregateContext<A>;
 

@@ -79,7 +79,6 @@ impl Query<MyAggregate> for MyQuery {
     async fn dispatch(&self, _aggregate_id: &str, _events: &[EventEnvelope<MyAggregate>]) {}
 }
 
-#[async_trait]
 impl Aggregate for Customer {
     const TYPE: &'static str = "Customer";
     type Command = CustomerCommand;
