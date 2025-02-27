@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use cqrs_es::Aggregate;
 use serde::{Deserialize, Serialize};
 
@@ -12,7 +11,6 @@ pub struct BankAccount {
     balance: f64,
 }
 
-#[async_trait]
 impl Aggregate for BankAccount {
     // This identifier should be unique to the system.
     const TYPE: &'static str = "account";

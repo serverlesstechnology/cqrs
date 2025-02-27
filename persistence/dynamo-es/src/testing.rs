@@ -3,7 +3,6 @@ pub(crate) mod tests {
     use std::collections::HashMap;
     use std::fmt::{Display, Formatter};
 
-    use async_trait::async_trait;
     use aws_sdk_dynamodb::config::{Credentials, Region};
     use aws_sdk_dynamodb::Client;
     use cqrs_es::persist::{
@@ -23,7 +22,6 @@ pub(crate) mod tests {
         pub(crate) tests: Vec<String>,
     }
 
-    #[async_trait]
     impl Aggregate for TestAggregate {
         const TYPE: &'static str = "TestAggregate";
         type Command = TestCommand;

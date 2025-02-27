@@ -1,3 +1,5 @@
+use std::future::Future;
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -28,7 +30,6 @@ pub enum MyCommands {
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct MyAggregate;
 
-#[async_trait]
 impl Aggregate for MyAggregate {
     const TYPE: &'static str = "MyAggregate";
     type Command = MyCommands;
@@ -86,22 +87,22 @@ impl Aggregate for Customer {
     type Error = CustomerError;
     type Services = CustomerService;
 
-    async fn handle(
+    fn handle(
         &self,
         command: Self::Command,
         _service: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error> {
-        match command {
+    ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send {
+        std::future::ready(match command {
+            CustomerCommand::AddCustomerName { .. } if self.name.as_str() != "" => {
+                Err("a name has already been added for this customer".into())
+            }
             CustomerCommand::AddCustomerName { name: changed_name } => {
-                if self.name.as_str() != "" {
-                    return Err("a name has already been added for this customer".into());
-                }
                 Ok(vec![CustomerEvent::NameAdded { name: changed_name }])
             }
             CustomerCommand::UpdateEmail { new_email } => {
                 Ok(vec![CustomerEvent::EmailUpdated { new_email }])
             }
-        }
+        })
     }
 
     fn apply(&mut self, event: Self::Event) {

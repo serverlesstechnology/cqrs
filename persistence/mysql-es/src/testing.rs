@@ -1,6 +1,5 @@
 #[cfg(test)]
 pub(crate) mod tests {
-    use async_trait::async_trait;
     use cqrs_es::persist::{GenericQuery, SerializedEvent, SerializedSnapshot};
     use cqrs_es::{Aggregate, DomainEvent, EventEnvelope, View};
     use serde::{Deserialize, Serialize};
@@ -16,7 +15,6 @@ pub(crate) mod tests {
         pub(crate) tests: Vec<String>,
     }
 
-    #[async_trait]
     impl Aggregate for TestAggregate {
         const TYPE: &'static str = "TestAggregate";
         type Command = TestCommand;
