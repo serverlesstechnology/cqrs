@@ -447,7 +447,6 @@ pub(crate) mod shared_test {
         }
     }
 
-    #[async_trait]
     impl PersistedEventRepository for MockRepo {
         async fn get_events<A: Aggregate>(
             &self,

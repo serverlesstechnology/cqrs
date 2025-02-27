@@ -156,7 +156,7 @@ pub enum CustomerCommand {
 }
 
 pub struct MyRepository;
-#[async_trait]
+
 impl PersistedEventRepository for MyRepository {
     async fn get_events<A: Aggregate>(
         &self,

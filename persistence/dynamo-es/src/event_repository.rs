@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use async_trait::async_trait;
 use aws_sdk_dynamodb::operation::query::builders::QueryFluentBuilder;
 use aws_sdk_dynamodb::operation::query::QueryOutput;
 use aws_sdk_dynamodb::operation::scan::builders::ScanFluentBuilder;
@@ -271,7 +270,6 @@ fn serialized_event(
     })
 }
 
-#[async_trait]
 impl PersistedEventRepository for DynamoEventRepository {
     async fn get_events<A: Aggregate>(
         &self,
