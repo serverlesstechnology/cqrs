@@ -2,7 +2,7 @@
 pub(crate) mod tests {
     use async_trait::async_trait;
     use cqrs_es::persist::{GenericQuery, SerializedEvent, SerializedSnapshot};
-    use cqrs_es::{Aggregate, DomainEvent, EventEnvelope, View};
+    use cqrs_es::{Aggregate, DomainEvent, View};
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
     use std::fmt::{Display, Formatter};
@@ -87,16 +87,17 @@ pub(crate) mod tests {
     pub enum TestCommand {}
 
     pub(crate) type TestQueryRepository =
-        GenericQuery<MysqlViewRepository<TestView, TestAggregate>, TestView, TestAggregate>;
+        GenericQuery<MysqlViewRepository<TestView>, TestView, TestAggregate>;
 
     #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
     pub(crate) struct TestView {
         pub(crate) events: Vec<TestEvent>,
     }
 
-    impl View<TestAggregate> for TestView {
-        fn update(&mut self, event: &EventEnvelope<TestAggregate>) {
-            self.events.push(event.payload.clone());
+    impl View for TestView {
+        type Event = TestEvent;
+        fn apply(&mut self, event: &Self::Event) {
+            self.events.push(event.clone());
         }
     }
 

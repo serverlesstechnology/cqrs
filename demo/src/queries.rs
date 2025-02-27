@@ -24,11 +24,8 @@ impl Query<BankAccount> for SimpleLoggingQuery {
 // Our second query, this one will be handled with Postgres `GenericQuery`
 // which will serialize and persist our view after it is updated. It also
 // provides a `load` method to deserialize the view on request.
-pub type AccountQuery = GenericQuery<
-    PostgresViewRepository<BankAccountView, BankAccount>,
-    BankAccountView,
-    BankAccount,
->;
+pub type AccountQuery =
+    GenericQuery<PostgresViewRepository<BankAccountView>, BankAccountView, BankAccount>;
 
 // The view for a BankAccount query, for a standard http application this should
 // be designed to reflect the response dto that will be returned to a user.
@@ -57,9 +54,10 @@ impl LedgerEntry {
 // This updates the view with events as they are committed.
 // The logic should be minimal here, e.g., don't calculate the account balance,
 // design the events to carry the balance information instead.
-impl View<BankAccount> for BankAccountView {
-    fn update(&mut self, event: &EventEnvelope<BankAccount>) {
-        match &event.payload {
+impl View for BankAccountView {
+    type Event = BankAccountEvent;
+    fn apply(&mut self, event: &Self::Event) {
+        match event {
             BankAccountEvent::AccountOpened { account_id } => {
                 self.account_id = Some(account_id.clone());
             }
