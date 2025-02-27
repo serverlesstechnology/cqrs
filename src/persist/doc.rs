@@ -5,7 +5,6 @@ use crate::persist::{
     ViewRepository,
 };
 use crate::{Aggregate, EventEnvelope, View};
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -27,7 +26,6 @@ impl MyViewRepository {
     }
 }
 
-#[async_trait]
 impl ViewRepository<MyView, MyAggregate> for MyViewRepository {
     async fn load(&self, _view_id: &str) -> Result<Option<MyView>, PersistenceError> {
         todo!()

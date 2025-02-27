@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 
-use async_trait::async_trait;
 use cqrs_es::persist::{PersistenceError, ViewContext, ViewRepository};
 use cqrs_es::{Aggregate, View};
 use sqlx::mysql::MySqlRow;
@@ -51,7 +50,6 @@ where
     }
 }
 
-#[async_trait]
 impl<V, A> ViewRepository<V, A> for MysqlViewRepository<V, A>
 where
     V: View<A>,

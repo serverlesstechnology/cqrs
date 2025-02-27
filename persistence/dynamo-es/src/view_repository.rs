@@ -1,6 +1,6 @@
+use std::future::Future;
 use std::marker::PhantomData;
 
-use async_trait::async_trait;
 use aws_sdk_dynamodb::primitives::Blob;
 use aws_sdk_dynamodb::types::{AttributeValue, Put, TransactWriteItem};
 use cqrs_es::persist::{PersistenceError, ViewContext, ViewRepository};
@@ -44,7 +44,6 @@ where
     }
 }
 
-#[async_trait]
 impl<V, A> ViewRepository<V, A> for DynamoViewRepository<V, A>
 where
     V: View<A>,
@@ -89,13 +88,18 @@ where
         Ok(Some((view, context)))
     }
 
-    async fn update_view(&self, view: V, context: ViewContext) -> Result<(), PersistenceError> {
+    fn update_view(
+        &self,
+        view: V,
+        context: ViewContext,
+    ) -> impl Future<Output = Result<(), PersistenceError>> + Send {
         let view_id = AttributeValue::S(String::from(&context.view_instance_id));
         let expected_view_version = AttributeValue::N(context.version.to_string());
         let view_version = AttributeValue::N((context.version + 1).to_string());
         let payload_blob = serde_json::to_vec(&view).unwrap();
         let payload = AttributeValue::B(Blob::new(payload_blob));
-        let transaction = TransactWriteItem::builder()
+        async move {
+            let transaction = TransactWriteItem::builder()
             .put(Put::builder()
                 .table_name(&self.view_name)
                 .item("ViewId", view_id)
@@ -106,8 +110,9 @@ where
                 .build()
                 .map_err(|e|PersistenceError::UnknownError(Box::new(e)))?)
             .build();
-        commit_transactions(&self.client, vec![transaction]).await?;
-        Ok(())
+            commit_transactions(&self.client, vec![transaction]).await?;
+            Ok(())
+        }
     }
 }
 
