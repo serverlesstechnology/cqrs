@@ -76,7 +76,7 @@ impl PersistedEventRepository for MysqlEventRepository {
                         .await?;
                 }
             }
-        };
+        }
         Ok(())
     }
 
@@ -145,7 +145,7 @@ async fn process_rows(
         if feed.push(event_result).await.is_err() {
             // TODO: in the unlikely event of a broken channel this error should be reported.
             break;
-        };
+        }
     }
 }
 
@@ -521,10 +521,10 @@ mod test {
             )
             .await
             .unwrap_err();
-        match result {
-            MysqlAggregateError::OptimisticLock => {}
-            _ => panic!("invalid error result found during insert: {result}"),
-        };
+        assert!(
+            matches!(result, MysqlAggregateError::OptimisticLock),
+            "invalid error result found during insert: {result}"
+        );
 
         let snapshot = repo.get_snapshot::<TestAggregate>(&id).await.unwrap();
         assert_eq!(

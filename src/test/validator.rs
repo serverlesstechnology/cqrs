@@ -49,7 +49,7 @@ impl<A: Aggregate> AggregateResultValidator<A> {
                 panic!("expected error, received events: '{events:?}'");
             }
             Err(err) => assert_eq!(err.to_string(), error_message.to_string()),
-        };
+        }
     }
 
     /// Returns the internal error payload for validation by the user.

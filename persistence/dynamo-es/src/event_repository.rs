@@ -431,7 +431,7 @@ fn stream_all_events(base_query: ScanFluentBuilder, channel_size: usize) -> Repl
                 }
                 Err(err) => {
                     let err: DynamoAggregateError = err.into();
-                    if feed.push(Err(err.into())).await.is_err() {};
+                    if feed.push(Err(err.into())).await.is_err() {}
                 }
             }
             if last_evaluated_key.is_none() {

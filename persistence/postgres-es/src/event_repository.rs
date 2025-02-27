@@ -74,7 +74,7 @@ impl PersistedEventRepository for PostgresEventRepository {
                         .await?;
                 }
             }
-        };
+        }
         Ok(())
     }
 
@@ -121,7 +121,7 @@ fn stream_events(
             if feed.push(Ok(event)).await.is_err() {
                 // TODO: in the unlikely event of a broken channel this error should be reported.
                 return;
-            };
+            }
         }
     });
     stream

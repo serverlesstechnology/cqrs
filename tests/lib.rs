@@ -340,7 +340,7 @@ async fn framework_test() {
             assert_eq!("test already performed", payload.0.as_str());
         }
         _ => panic!("not the expected error"),
-    };
+    }
 
     assert_eq!(2, delivered_events.read().unwrap().len());
     let stored_event_count = event_store

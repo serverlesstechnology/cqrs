@@ -49,7 +49,7 @@ impl Aggregate for BankAccount {
                     .is_err()
                 {
                     return Err("atm rule violation".into());
-                };
+                }
                 Ok(vec![BankAccountEvent::CustomerWithdrewCash {
                     amount,
                     balance,
