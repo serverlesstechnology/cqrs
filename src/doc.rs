@@ -28,7 +28,6 @@ pub enum MyCommands {
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct MyAggregate;
 
-#[async_trait]
 impl Aggregate for MyAggregate {
     const TYPE: &'static str = "MyAggregate";
     type Command = MyCommands;
@@ -78,7 +77,6 @@ impl Query<MyAggregate> for MyQuery {
     async fn dispatch(&self, _aggregate_id: &str, _events: &[EventEnvelope<MyAggregate>]) {}
 }
 
-#[async_trait]
 impl Aggregate for Customer {
     const TYPE: &'static str = "Customer";
     type Command = CustomerCommand;
@@ -92,10 +90,10 @@ impl Aggregate for Customer {
         _service: &Self::Services,
     ) -> Result<Vec<Self::Event>, Self::Error> {
         match command {
+            CustomerCommand::AddCustomerName { .. } if self.name.as_str() != "" => {
+                Err("a name has already been added for this customer".into())
+            }
             CustomerCommand::AddCustomerName { name: changed_name } => {
-                if self.name.as_str() != "" {
-                    return Err("a name has already been added for this customer".into());
-                }
                 Ok(vec![CustomerEvent::NameAdded { name: changed_name }])
             }
             CustomerCommand::UpdateEmail { new_email } => {
@@ -155,7 +153,7 @@ pub enum CustomerCommand {
 }
 
 pub struct MyRepository;
-#[async_trait]
+
 impl PersistedEventRepository for MyRepository {
     async fn get_events<A: Aggregate>(
         &self,

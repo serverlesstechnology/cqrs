@@ -28,7 +28,6 @@ impl From<&str> for TestError {
 #[derive(Clone, Debug)]
 pub struct TestService;
 
-#[async_trait]
 impl Aggregate for TestAggregate {
     const TYPE: &'static str = "TestAggregate";
     type Command = TestCommand;

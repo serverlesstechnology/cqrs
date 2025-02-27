@@ -1,27 +1,34 @@
+use std::future::Future;
+
 use crate::persist::PersistenceError;
 use crate::{Aggregate, View};
-use async_trait::async_trait;
 
 /// Handles the database access needed for a GenericQuery.
-#[async_trait]
 pub trait ViewRepository<V, A>: Send + Sync
 where
     V: View<A>,
     A: Aggregate,
 {
     /// Returns the current view instance.
-    async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError>;
+    fn load(
+        &self,
+        view_id: &str,
+    ) -> impl Future<Output = Result<Option<V>, PersistenceError>> + Send;
 
     /// Returns the current view instance and context, used by the `GenericQuery` to update
     /// views with committed events.
-    async fn load_with_context(
+    fn load_with_context(
         &self,
         view_id: &str,
-    ) -> Result<Option<(V, ViewContext)>, PersistenceError>;
+    ) -> impl Future<Output = Result<Option<(V, ViewContext)>, PersistenceError>> + Send;
 
     /// Updates the view instance and context, used by the `GenericQuery` to update
     /// views with committed events.
-    async fn update_view(&self, view: V, context: ViewContext) -> Result<(), PersistenceError>;
+    fn update_view(
+        &self,
+        view: V,
+        context: ViewContext,
+    ) -> impl Future<Output = Result<(), PersistenceError>> + Send;
 }
 
 /// A data structure maintaining context when updating views.

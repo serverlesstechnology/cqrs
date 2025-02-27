@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use async_trait::async_trait;
 use serde_json::Value;
 
 use crate::persist::serialized_event::{deserialize_events, serialize_events};
@@ -176,7 +175,6 @@ where
     }
 }
 
-#[async_trait]
 impl<R, A> EventStore<A> for PersistedEventStore<R, A>
 where
     R: PersistedEventRepository,
@@ -311,7 +309,6 @@ pub(crate) mod shared_test {
     use std::collections::HashMap;
     use std::sync::Mutex;
 
-    use async_trait::async_trait;
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
 
@@ -363,7 +360,6 @@ pub(crate) mod shared_test {
         pub(crate) something_happened: usize,
     }
 
-    #[async_trait]
     impl Aggregate for TestAggregate {
         const TYPE: &'static str = "TestAggregate";
         type Command = TestCommands;
@@ -446,7 +442,6 @@ pub(crate) mod shared_test {
         }
     }
 
-    #[async_trait]
     impl PersistedEventRepository for MockRepo {
         async fn get_events<A: Aggregate>(
             &self,

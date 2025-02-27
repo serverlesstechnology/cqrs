@@ -19,7 +19,6 @@ In order to operate within the `cqrs-es` framework, we will need the traits, `De
 (all usually derived) and we will implement `cqrs_es::Aggregate`, minus any of the business logic. 
 
 ```rust
-#[async_trait]
 impl Aggregate for BankAccount {
     type Command = BankAccountCommand;
     type Event = BankAccountEvent;

@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use cqrs_es::persist::{
     PersistedEventRepository, PersistenceError, ReplayFeed, ReplayStream, SerializedEvent,
     SerializedSnapshot,
@@ -25,7 +24,6 @@ pub struct MysqlEventRepository {
     stream_channel_size: usize,
 }
 
-#[async_trait]
 impl PersistedEventRepository for MysqlEventRepository {
     async fn get_events<A: Aggregate>(
         &self,

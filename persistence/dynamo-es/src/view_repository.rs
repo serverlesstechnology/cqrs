@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 
-use async_trait::async_trait;
 use aws_sdk_dynamodb::primitives::Blob;
 use aws_sdk_dynamodb::types::{AttributeValue, Put, TransactWriteItem};
 use cqrs_es::persist::{PersistenceError, ViewContext, ViewRepository};
@@ -44,7 +43,6 @@ where
     }
 }
 
-#[async_trait]
 impl<V, A> ViewRepository<V, A> for DynamoViewRepository<V, A>
 where
     V: View<A>,

@@ -1,4 +1,5 @@
-use async_trait::async_trait;
+use std::future::Future;
+
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -18,14 +19,12 @@ use crate::DomainEvent;
 /// # use cqrs_es::doc::{CustomerEvent, CustomerError, CustomerCommand, CustomerService};
 /// # use cqrs_es::{Aggregate, AggregateError};
 /// # use serde::{Serialize,Deserialize};
-/// # use async_trait::async_trait;
 /// #[derive(Default,Serialize,Deserialize)]
 /// struct Customer {
 ///     name: Option<String>,
 ///     email: Option<String>,
 /// }
 ///
-/// #[async_trait]
 /// impl Aggregate for Customer {
 ///     const TYPE: &'static str = "customer";
 ///     type Command = CustomerCommand;
@@ -61,7 +60,6 @@ use crate::DomainEvent;
 ///     }
 /// }
 /// ```
-#[async_trait]
 pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// The aggregate type is used as the unique identifier for this aggregate and its events.
     /// This is used for persisting the events and snapshots to a database.
@@ -87,13 +85,11 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// use cqrs_es::{Aggregate, AggregateError};
     /// # use serde::{Serialize, Deserialize, de::DeserializeOwned};
     /// # use cqrs_es::doc::{CustomerCommand, CustomerError, CustomerEvent, CustomerService};
-    /// # use async_trait::async_trait;
     /// #[derive(Default,Serialize,Deserialize)]
     /// # struct Customer {
     /// #     name: Option<String>,
     /// #     email: Option<String>,
     /// # }
-    /// # #[async_trait]
     /// # impl Aggregate for Customer {
     /// #     const TYPE: &'static str = "customer";
     /// #     type Command = CustomerCommand;
@@ -117,11 +113,11 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # fn apply(&mut self, event: Self::Event) {}
     /// # }
     /// ```
-    async fn handle(
+    fn handle(
         &self,
         command: Self::Command,
         service: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error>;
+    ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send;
     /// This is used to update the aggregate's state once an event has been committed.
     /// Any events returned from the `handle` method will be applied using this method
     /// in order to populate the state of the aggregate instance.
@@ -130,7 +126,7 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// applied to an aggregate:
     /// - event sourced - All events are applied every time the aggregate is loaded.
     /// - aggregate sourced - Events are applied immediately after they are returned from `handle`
-    /// (and before they are committed) and the resulting aggregate instance is serialized and persisted.
+    ///   (and before they are committed) and the resulting aggregate instance is serialized and persisted.
     /// - snapshots - Uses a combination of the above patterns.
     ///
     /// _No business logic should be placed here_, this is only used for updating the aggregate state.
@@ -140,13 +136,11 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # use serde::{Serialize, Deserialize, de::DeserializeOwned};
     /// # use cqrs_es::doc::{CustomerCommand, CustomerError, CustomerEvent, CustomerService};
     /// use cqrs_es::{Aggregate, AggregateError};
-    /// use async_trait::async_trait;
     /// #[derive(Default,Serialize,Deserialize)]
     /// # struct Customer {
     /// #     name: Option<String>,
     /// #     email: Option<String>,
     /// # }
-    /// # #[async_trait]
     /// # impl Aggregate for Customer {
     /// #     const TYPE: &'static str = "customer";
     /// #     type Command = CustomerCommand;

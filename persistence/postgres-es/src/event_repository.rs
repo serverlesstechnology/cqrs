@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use cqrs_es::persist::{
     PersistedEventRepository, PersistenceError, ReplayStream, SerializedEvent, SerializedSnapshot,
 };
@@ -23,7 +22,6 @@ pub struct PostgresEventRepository {
     stream_channel_size: usize,
 }
 
-#[async_trait]
 impl PersistedEventRepository for PostgresEventRepository {
     async fn get_events<A: Aggregate>(
         &self,
