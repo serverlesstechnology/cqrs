@@ -36,7 +36,7 @@ where
     /// ```
     pub fn new(view_name: &str, client: aws_sdk_dynamodb::client::Client) -> Self {
         Self {
-            _phantom: Default::default(),
+            _phantom: PhantomData,
             view_name: view_name.to_string(),
             client,
         }

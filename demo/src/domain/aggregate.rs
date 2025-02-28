@@ -49,7 +49,7 @@ impl Aggregate for BankAccount {
                     .is_err()
                 {
                     return Err("atm rule violation".into());
-                };
+                }
                 Ok(vec![BankAccountEvent::CustomerWithdrewCash {
                     amount,
                     balance,
@@ -70,7 +70,7 @@ impl Aggregate for BankAccount {
                     .is_err()
                 {
                     return Err("check invalid".into());
-                };
+                }
                 Ok(vec![BankAccountEvent::CustomerWroteCheck {
                     check_number,
                     amount,
@@ -85,13 +85,9 @@ impl Aggregate for BankAccount {
             BankAccountEvent::AccountOpened { account_id } => {
                 self.account_id = account_id;
             }
-            BankAccountEvent::CustomerDepositedMoney { amount: _, balance } => {
-                self.balance = balance;
-            }
-            BankAccountEvent::CustomerWithdrewCash { amount: _, balance } => {
-                self.balance = balance;
-            }
-            BankAccountEvent::CustomerWroteCheck {
+            BankAccountEvent::CustomerDepositedMoney { amount: _, balance }
+            | BankAccountEvent::CustomerWithdrewCash { amount: _, balance }
+            | BankAccountEvent::CustomerWroteCheck {
                 check_number: _,
                 amount: _,
                 balance,
@@ -216,7 +212,7 @@ mod aggregate_tests {
             .given_no_previous_events()
             .when(command)
             // Here we expect an error rather than any events
-            .then_expect_error_message("funds not available")
+            .then_expect_error_message("funds not available");
     }
 
     #[test]
@@ -275,7 +271,7 @@ mod aggregate_tests {
         AccountTestFramework::with(services)
             .given_no_previous_events()
             .when(command)
-            .then_expect_error_message("funds not available")
+            .then_expect_error_message("funds not available");
     }
 
     pub struct MockBankAccountServices {

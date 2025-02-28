@@ -9,6 +9,7 @@ use crate::persist::{
 };
 use crate::{Aggregate, AggregateError, EventEnvelope, EventStore};
 
+#[derive(PartialEq)]
 enum SourceOfTruth {
     EventStore,
     Snapshot(usize),
@@ -198,7 +199,7 @@ where
         aggregate_id: &str,
     ) -> Result<EventStoreAggregateContext<A>, AggregateError<A::Error>> {
         let mut context: EventStoreAggregateContext<A> =
-            if let SourceOfTruth::EventStore = self.storage {
+            if self.storage == SourceOfTruth::EventStore {
                 EventStoreAggregateContext::context_for(aggregate_id, true)
             } else {
                 let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
@@ -286,21 +287,16 @@ where
         resultant_events: Vec<A::Event>,
         base_metadata: HashMap<String, String>,
     ) -> Vec<EventEnvelope<A>> {
-        let mut sequence = last_sequence;
-        let mut wrapped_events: Vec<EventEnvelope<A>> = Vec::new();
-        for payload in resultant_events {
-            sequence += 1;
-            let aggregate_id: String = aggregate_id.to_string();
-            let sequence = sequence;
-            let metadata = base_metadata.clone();
-            wrapped_events.push(EventEnvelope {
-                aggregate_id,
+        resultant_events
+            .into_iter()
+            .zip(last_sequence + 1..)
+            .map(|(payload, sequence)| EventEnvelope {
+                aggregate_id: aggregate_id.to_string(),
                 sequence,
                 payload,
-                metadata,
-            });
-        }
-        wrapped_events
+                metadata: base_metadata.clone(),
+            })
+            .collect()
     }
 }
 

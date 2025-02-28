@@ -117,7 +117,7 @@ pub(crate) mod tests {
         aws_sdk_dynamodb::client::Client::from_conf(config)
     }
 
-    pub(crate) async fn new_test_event_store(
+    pub(crate) fn new_test_event_store(
         client: Client,
     ) -> PersistedEventStore<DynamoEventRepository, TestAggregate> {
         let repo = DynamoEventRepository::new(client);
@@ -144,7 +144,7 @@ pub(crate) mod tests {
             event_type: event.event_type(),
             event_version: event.event_version(),
             payload,
-            metadata: Default::default(),
+            metadata: Value::default(),
         }
     }
 
@@ -165,7 +165,7 @@ pub(crate) mod tests {
     #[tokio::test]
     async fn commit_and_load_events() {
         let client = test_dynamodb_client().await;
-        let event_store = new_test_event_store(client).await;
+        let event_store = new_test_event_store(client);
         let id = uuid::Uuid::new_v4().to_string();
         assert_eq!(0, event_store.load_events(id.as_str()).await.unwrap().len());
         let context = event_store.load_aggregate(id.as_str()).await.unwrap();

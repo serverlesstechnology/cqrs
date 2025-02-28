@@ -33,7 +33,7 @@ pub async fn command_handler(
         .execute_with_metadata(&account_id, command, metadata)
         .await
     {
-        Ok(_) => StatusCode::NO_CONTENT.into_response(),
+        Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(err) => {
             println!("Error: {err:#?}\n");
             (StatusCode::BAD_REQUEST, err.to_string()).into_response()

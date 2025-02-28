@@ -148,11 +148,9 @@ impl DynamoEventRepository {
         let query_output = self
             .query_table(aggregate_type, aggregate_id, &self.event_table)
             .await?;
-        let mut result: Vec<SerializedEvent> = Default::default();
-        if let Some(entries) = query_output.items {
-            for entry in entries {
-                result.push(serialized_event(entry)?);
-            }
+        let mut result = Vec::default();
+        for entry in query_output.items.into_iter().flatten() {
+            result.push(serialized_event(entry)?);
         }
         Ok(result)
     }
@@ -176,11 +174,9 @@ impl DynamoEventRepository {
             .expression_attribute_values(":sequence", AttributeValue::N(last_sequence.to_string()))
             .send()
             .await?;
-        let mut result: Vec<SerializedEvent> = Default::default();
-        if let Some(entries) = query_output.items {
-            for entry in entries {
-                result.push(serialized_event(entry)?);
-            }
+        let mut result = Vec::default();
+        for entry in query_output.items.into_iter().flatten() {
+            result.push(serialized_event(entry)?);
         }
         Ok(result)
     }
@@ -226,11 +222,14 @@ impl DynamoEventRepository {
         aggregate_id: &str,
         table: &str,
     ) -> Result<QueryOutput, DynamoAggregateError> {
-        let query = self.create_query(table, aggregate_type, aggregate_id).await;
-        Ok(query.send().await?)
+        let output = self
+            .create_query(table, aggregate_type, aggregate_id)
+            .send()
+            .await?;
+        Ok(output)
     }
 
-    async fn create_query(
+    fn create_query(
         &self,
         table: &str,
         aggregate_type: &str,
@@ -275,8 +274,7 @@ impl PersistedEventRepository for DynamoEventRepository {
         &self,
         aggregate_id: &str,
     ) -> Result<Vec<SerializedEvent>, PersistenceError> {
-        let request = self.query_events(A::TYPE, aggregate_id).await?;
-        Ok(request)
+        Ok(self.query_events(A::TYPE, aggregate_id).await?)
     }
 
     async fn get_last_events<A: Aggregate>(
@@ -296,9 +294,8 @@ impl PersistedEventRepository for DynamoEventRepository {
         let query_output = self
             .query_table(A::TYPE, aggregate_id, &self.snapshot_table)
             .await?;
-        let query_items_vec = match query_output.items {
-            None => return Ok(None),
-            Some(items) => items,
+        let Some(query_items_vec) = query_output.items else {
+            return Ok(None);
         };
         if query_items_vec.is_empty() {
             return Ok(None);
@@ -339,7 +336,6 @@ impl PersistedEventRepository for DynamoEventRepository {
     ) -> Result<ReplayStream, PersistenceError> {
         let query = self
             .create_query(&self.event_table, A::TYPE, aggregate_id)
-            .await
             .limit(self.stream_channel_size as i32);
         Ok(stream_events(query, self.stream_channel_size))
     }
@@ -362,33 +358,28 @@ fn stream_events(base_query: QueryFluentBuilder, channel_size: usize) -> ReplayS
         loop {
             let query = match &last_evaluated_key {
                 None => base_query.clone(),
-                Some(last) => {
-                    let mut query = base_query.clone();
-                    for (key, value) in last {
-                        query = query.exclusive_start_key(key.to_string(), value.to_owned());
-                    }
-                    query
-                }
+                Some(last) => last.iter().fold(base_query.clone(), |query, (key, value)| {
+                    query.exclusive_start_key(key.to_string(), value.to_owned())
+                }),
             };
             match query.send().await {
                 Ok(query_output) => {
                     last_evaluated_key = query_output.last_evaluated_key;
                     if let Some(entries) = query_output.items {
                         for entry in entries {
-                            let event = match serialized_event(entry) {
-                                Ok(event) => event,
-                                Err(_) => return,
+                            let Ok(event) = serialized_event(entry) else {
+                                return;
                             };
                             if feed.push(Ok(event)).await.is_err() {
                                 //         TODO: in the unlikely event of a broken channel this error should be reported.
                                 return;
-                            };
+                            }
                         }
-                    };
+                    }
                 }
                 Err(err) => {
                     let err: DynamoAggregateError = err.into();
-                    if feed.push(Err(err.into())).await.is_err() {};
+                    if feed.push(Err(err.into())).await.is_err() {}
                 }
             }
             if last_evaluated_key.is_none() {
@@ -405,33 +396,28 @@ fn stream_all_events(base_query: ScanFluentBuilder, channel_size: usize) -> Repl
         loop {
             let query = match &last_evaluated_key {
                 None => base_query.clone(),
-                Some(last) => {
-                    let mut query = base_query.clone();
-                    for (key, value) in last {
-                        query = query.exclusive_start_key(key.to_string(), value.to_owned());
-                    }
-                    query
-                }
+                Some(last) => last.iter().fold(base_query.clone(), |query, (key, value)| {
+                    query.exclusive_start_key(key.to_string(), value.to_owned())
+                }),
             };
             match query.send().await {
                 Ok(query_output) => {
                     last_evaluated_key = query_output.last_evaluated_key;
                     if let Some(entries) = query_output.items {
                         for entry in entries {
-                            let event = match serialized_event(entry) {
-                                Ok(event) => event,
-                                Err(_) => return,
+                            let Ok(event) = serialized_event(entry) else {
+                                return;
                             };
                             if feed.push(Ok(event)).await.is_err() {
                                 //         TODO: in the unlikely event of a broken channel this error should be reported.
                                 return;
-                            };
+                            }
                         }
-                    };
+                    }
                 }
                 Err(err) => {
                     let err: DynamoAggregateError = err.into();
-                    if feed.push(Err(err.into())).await.is_err() {};
+                    if feed.push(Err(err.into())).await.is_err() {}
                 }
             }
             if last_evaluated_key.is_none() {
@@ -501,7 +487,7 @@ mod test {
         match result {
             DynamoAggregateError::OptimisticLock => {}
             _ => panic!("invalid error result found during insert: {result}"),
-        };
+        }
 
         let events = event_repo.get_events::<TestAggregate>(&id).await.unwrap();
         assert_eq!(2, events.len());
@@ -623,7 +609,7 @@ mod test {
         match result {
             DynamoAggregateError::OptimisticLock => {}
             _ => panic!("invalid error result found during insert: {result}"),
-        };
+        }
 
         let snapshot = repo.get_snapshot::<TestAggregate>(&id).await.unwrap();
         assert_eq!(

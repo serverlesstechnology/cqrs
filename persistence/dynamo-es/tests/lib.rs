@@ -1,5 +1,7 @@
 extern crate core;
 
+use std::collections::HashMap;
+
 use aws_sdk_dynamodb::config::{Credentials, Region};
 use aws_sdk_dynamodb::primitives::Blob;
 use aws_sdk_dynamodb::types::AttributeValue;
@@ -10,7 +12,7 @@ use cqrs_es::EventStore;
 use dynamo_es::DynamoEventRepository;
 use serde_json::Value;
 
-pub async fn test_dynamodb_client() -> Client {
+pub fn test_dynamodb_client() -> Client {
     let region = Region::new("us-west-2");
     let credentials = Credentials::new("TESTAWSID", "TESTAWSKEY", None, None, "");
     let config = aws_sdk_dynamodb::config::Config::builder()
@@ -22,7 +24,7 @@ pub async fn test_dynamodb_client() -> Client {
     aws_sdk_dynamodb::client::Client::from_conf(config)
 }
 
-pub(crate) async fn new_test_event_store(
+pub(crate) fn new_test_event_store(
     client: Client,
 ) -> PersistedEventStore<DynamoEventRepository, Customer> {
     let repo = DynamoEventRepository::new(client);
@@ -31,7 +33,7 @@ pub(crate) async fn new_test_event_store(
 
 #[tokio::test]
 async fn commit_and_load_events() {
-    let client = test_dynamodb_client().await;
+    let client = test_dynamodb_client();
     let repo = DynamoEventRepository::new(client);
     let event_store = PersistedEventStore::<DynamoEventRepository, Customer>::new_event_store(repo);
 
@@ -40,7 +42,7 @@ async fn commit_and_load_events() {
 
 #[tokio::test]
 async fn commit_and_load_events_snapshot_store() {
-    let client = test_dynamodb_client().await;
+    let client = test_dynamodb_client();
     let repo = DynamoEventRepository::new(client);
     let event_store =
         PersistedEventStore::<DynamoEventRepository, Customer>::new_aggregate_store(repo);
@@ -66,7 +68,7 @@ async fn simple_es_commit_and_load_test(
                 },
             ],
             context,
-            Default::default(),
+            HashMap::default(),
         )
         .await
         .unwrap();
@@ -80,7 +82,7 @@ async fn simple_es_commit_and_load_test(
                 new_email: "email B".to_string(),
             }],
             context,
-            Default::default(),
+            HashMap::default(),
         )
         .await
         .unwrap();
@@ -89,21 +91,21 @@ async fn simple_es_commit_and_load_test(
 
 #[tokio::test]
 async fn commit_no_events() {
-    let client = test_dynamodb_client().await;
+    let client = test_dynamodb_client();
     let repo = DynamoEventRepository::new(client);
     let event_store = PersistedEventStore::<DynamoEventRepository, Customer>::new_event_store(repo);
     let id = uuid::Uuid::new_v4().to_string();
     let context = event_store.load_aggregate(id.as_str()).await.unwrap();
 
     event_store
-        .commit(vec![], context, Default::default())
+        .commit(vec![], context, HashMap::default())
         .await
         .unwrap();
 }
 
 #[tokio::test]
 async fn upcasted_event() {
-    let client = test_dynamodb_client().await;
+    let client = test_dynamodb_client();
     client
         .put_item()
         .table_name("Events")
@@ -139,9 +141,7 @@ async fn upcasted_event() {
             _ => panic!("not the expected object"),
         }),
     );
-    let event_store = new_test_event_store(client)
-        .await
-        .with_upcasters(vec![Box::new(upcaster)]);
+    let event_store = new_test_event_store(client).with_upcasters(vec![Box::new(upcaster)]);
 
     let id = "previous_event_in_need_of_upcast".to_string();
     let result = match event_store.load_aggregate(id.as_str()).await {
