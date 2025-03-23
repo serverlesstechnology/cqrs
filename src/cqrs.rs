@@ -1,9 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::query::Query;
 use crate::store::EventStore;
 use crate::Aggregate;
 use crate::{AggregateContext, AggregateError};
+use tokio::sync::Mutex;
 
 /// This is the base framework for applying commands to produce events.
 ///
@@ -27,6 +28,7 @@ where
     store: ES,
     queries: Vec<Box<dyn Query<A>>>,
     service: A::Services,
+    mutexes: Mutex<HashMap<String, Arc<Mutex<u8>>>>,
 }
 
 impl<A, ES> CqrsFramework<A, ES>
@@ -68,6 +70,7 @@ where
             store,
             queries,
             service,
+            mutexes: Mutex::new(HashMap::new()),
         }
     }
     /// Appends an additional query to the framework.
@@ -94,6 +97,7 @@ where
             store: self.store,
             queries,
             service: self.service,
+            mutexes: self.mutexes,
         }
     }
     /// This applies a command to an aggregate. Executing a command
@@ -169,16 +173,28 @@ where
         command: A::Command,
         metadata: HashMap<String, String>,
     ) -> Result<(), AggregateError<A::Error>> {
-        let aggregate_context = self.store.load_aggregate(aggregate_id).await?;
-        let aggregate = aggregate_context.aggregate();
-        let resultant_events = aggregate
-            .handle(command, &self.service)
-            .await
-            .map_err(AggregateError::UserError)?;
-        let committed_events = self
-            .store
-            .commit(resultant_events, aggregate_context, metadata)
-            .await?;
+        let committed_events = async move {
+            let aggregate_mutex = async move {
+                let mut mutexes = self.mutexes.lock().await;
+                mutexes
+                    .entry(aggregate_id.to_string())
+                    .or_insert_with(|| Arc::new(Mutex::new(0)))
+                    .clone()
+            }
+            .await;
+
+            let _guard = aggregate_mutex.lock().await;
+            let aggregate_context = self.store.load_aggregate(aggregate_id).await?;
+            let aggregate = aggregate_context.aggregate();
+            let resultant_events = aggregate
+                .handle(command, &self.service)
+                .await
+                .map_err(AggregateError::UserError)?;
+            self.store
+                .commit(resultant_events, aggregate_context, metadata)
+                .await
+        }
+        .await?;
         if committed_events.is_empty() {
             return Ok(());
         }
