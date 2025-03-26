@@ -29,5 +29,6 @@ Other data stores supported supported elsewhere:
 
 [![Crates.io](https://img.shields.io/crates/v/cqrs-es)](https://crates.io/crates/cqrs-es)
 [![docs](https://img.shields.io/badge/API-docs-blue.svg)](https://docs.rs/cqrs-es)
+[![libs.tech recommends](https://libs.tech/project/253820385/badge.svg)](https://libs.tech/project/253820385/cqrs)
 ![CodeBuild](https://codebuild.us-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoia3ZYcXozMjVZaFhoTldlUmhHemlWVm9LUjVaTC9LN3dSTFZpMkVTTmRycElkcGhJT3g2TUdtajZyRWZMd01xNktvUkNwLzdZYW15bzJkZldQMjJWZ1dNPSIsIml2UGFyYW1ldGVyU3BlYyI6InFORDNyaFFEQUNFQkE1NlUiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=main)
 
