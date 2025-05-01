@@ -18,7 +18,7 @@ repository = "https://github.com/serverlesstechnology/cqrs"
 [workspace.dependencies]
 cqrs-es = { version = "0.4.12", path = "." }
 serde = "^1.0.219"
-tokio = "^1.44.1"
+tokio = "^1.44.2"
 uuid = { version = "1.16", features = ["v4"] }
 
 [package]
@@ -44,4 +44,4 @@ tokio = { workspace = true, features = ["macros", "sync", "rt"] }
 
 [dev-dependencies]
 uuid.workspace = true
-chrono = { version = "^0.4.24", default-features = false, features = ["clock"] }
+chrono = { version = "^0.4.41", default-features = false, features = ["clock"] }
