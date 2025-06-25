@@ -2,10 +2,10 @@
 
 Next we will need to create some domain events. Note that we qualify events with 'domain' to differentiate them from
 other events that might exist within our application. These are domain events because they make assertions about
-changes in the aggregate state. 
+changes in the aggregate state.
 
 In the `cqrs-es` framework the domain events are expected to be an enum with payloads similar to the commands,
-this will give us a single root event for each aggregate. 
+this will give us a single root event for each aggregate.
 
 The enum as well as the payloads should derive several traits.
 
@@ -45,8 +45,8 @@ Again, all of our events are named in the past tense,
 
 Our events now need to implement `cqrs_es::DomainEvent<BankAccount>` to provide an `event_name` and `event_version`
 for each event.
-This will be important later in any production system when events need to be changed 
-(see [event upcasters](event_upcasters.md)).
+This will be important later in any production system when events need to be changed
+(see [event upcasters](advanced_event_upcasters.md)).
 
 ```rust
 impl DomainEvent for BankAccountEvent {
@@ -59,9 +59,10 @@ impl DomainEvent for BankAccountEvent {
         };
         event_type.to_string()
     }
-    
+
     fn event_version(&self) -> String {
         "1.0".to_string()
     }
 }
 ```
+
