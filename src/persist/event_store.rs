@@ -5,7 +5,8 @@ use serde_json::Value;
 
 use crate::persist::serialized_event::{deserialize_events, serialize_events};
 use crate::persist::{
-    EventStoreAggregateContext, EventUpcaster, PersistedEventRepository, SerializedEvent,
+    EventStoreAggregateContext, EventUpcaster, PersistedEventRepository, PersistenceError,
+    SerializedEvent,
 };
 use crate::{Aggregate, AggregateError, EventEnvelope, EventStore};
 
@@ -204,7 +205,14 @@ where
             } else {
                 let snapshot = self.repo.get_snapshot::<A>(aggregate_id).await?;
                 match snapshot {
-                    Some(snapshot) => snapshot.try_into()?,
+                    Some(snapshot) => match snapshot.try_into() {
+                        Err(PersistenceError::DeserializationError(_)) => {
+                            // If aggregate structure changed, this will trigger replaying all the events
+                            // and rebuilding fresh aggregate state.
+                            EventStoreAggregateContext::context_for(aggregate_id, false)
+                        }
+                        r => r?,
+                    },
                     None => EventStoreAggregateContext::context_for(aggregate_id, false),
                 }
             };
@@ -221,6 +229,7 @@ where
                 vec![]
             }
         };
+
         for envelope in events_to_apply {
             context.current_sequence = envelope.sequence;
             let event = envelope.payload;
@@ -708,6 +717,37 @@ pub(crate) mod snapshotted_store_test {
             Err(AggregateError::AggregateConflict) => {}
             _ => panic!("expected technical error"),
         }
+    }
+
+    #[tokio::test]
+    async fn load_aggregate_after_deserialize_error() {
+        let repo = MockRepo::with_last_events(
+            Ok(vec![
+                test_serialized_event(1, TestEvents::SomethingWasDone),
+                test_serialized_event(2, TestEvents::SomethingWasDone),
+            ]),
+            Ok(Some(SerializedSnapshot {
+                aggregate_id: TEST_AGGREGATE_ID.to_string(),
+                aggregate: serde_json::to_value(json!({
+                    "incompatible": "structure", // should reapply events
+                }))
+                .unwrap(),
+                current_sequence: 2,
+                current_snapshot: 1,
+            })),
+        );
+
+        let store = PersistedEventStore::<MockRepo, TestAggregate>::new_snapshot_store(repo, 2);
+        let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
+        assert_eq!(None, snapshot_context.current_snapshot);
+        assert_eq!(2, snapshot_context.current_sequence);
+        assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
+        assert_eq!(
+            TestAggregate {
+                something_happened: 2
+            },
+            snapshot_context.aggregate
+        );
     }
 
     #[tokio::test]
