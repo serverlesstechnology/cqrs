@@ -218,15 +218,12 @@ where
             };
         let events_to_apply = match self.storage {
             SourceOfTruth::EventStore => self.load_events(aggregate_id).await?,
-            SourceOfTruth::Snapshot(_) => {
+            SourceOfTruth::Snapshot(_) | SourceOfTruth::AggregateStore => {
                 let serialized_events = self
                     .repo
                     .get_last_events::<A>(aggregate_id, context.current_sequence)
                     .await?;
                 deserialize_events(serialized_events, &self.event_upcasters)?
-            }
-            SourceOfTruth::AggregateStore => {
-                vec![]
             }
         };
 
@@ -996,8 +993,39 @@ pub(crate) mod aggregate_store_test {
     }
 
     #[tokio::test]
+    async fn load_aggregate_after_deserialize_error() {
+        let repo = MockRepo::with_last_events(
+            Ok(vec![
+                test_serialized_event(1, TestEvents::SomethingWasDone),
+                test_serialized_event(2, TestEvents::SomethingWasDone),
+            ]),
+            Ok(Some(SerializedSnapshot {
+                aggregate_id: TEST_AGGREGATE_ID.to_string(),
+                aggregate: serde_json::to_value(json!({
+                    "incompatible": "structure", // should reapply events
+                }))
+                .unwrap(),
+                current_sequence: 2,
+                current_snapshot: 1,
+            })),
+        );
+
+        let store = PersistedEventStore::<MockRepo, TestAggregate>::new_aggregate_store(repo);
+        let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
+        assert_eq!(None, snapshot_context.current_snapshot);
+        assert_eq!(2, snapshot_context.current_sequence);
+        assert_eq!(TEST_AGGREGATE_ID, snapshot_context.aggregate_id);
+        assert_eq!(
+            TestAggregate {
+                something_happened: 2
+            },
+            snapshot_context.aggregate
+        );
+    }
+
+    #[tokio::test]
     async fn load_aggregate_new() {
-        let repo = MockRepo::with_snapshot(Ok(None));
+        let repo = MockRepo::with_last_events(Ok(vec![]), Ok(None));
         let store = PersistedEventStore::<MockRepo, TestAggregate>::new_aggregate_store(repo);
         let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
         assert_eq!(None, snapshot_context.current_snapshot);
@@ -1008,15 +1036,18 @@ pub(crate) mod aggregate_store_test {
 
     #[tokio::test]
     async fn load_aggregate_existing() {
-        let repo = MockRepo::with_snapshot(Ok(Some(SerializedSnapshot {
-            aggregate_id: TEST_AGGREGATE_ID.to_string(),
-            aggregate: serde_json::to_value(TestAggregate {
-                something_happened: 3,
-            })
-            .unwrap(),
-            current_sequence: 3,
-            current_snapshot: 2,
-        })));
+        let repo = MockRepo::with_last_events(
+            Ok(vec![]),
+            Ok(Some(SerializedSnapshot {
+                aggregate_id: TEST_AGGREGATE_ID.to_string(),
+                aggregate: serde_json::to_value(TestAggregate {
+                    something_happened: 3,
+                })
+                .unwrap(),
+                current_sequence: 3,
+                current_snapshot: 2,
+            })),
+        );
         let store = PersistedEventStore::<MockRepo, TestAggregate>::new_aggregate_store(repo);
         let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
         assert_eq!(Some(2), snapshot_context.current_snapshot);
