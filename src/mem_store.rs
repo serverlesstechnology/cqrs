@@ -181,6 +181,19 @@ where
     pub current_sequence: usize,
 }
 
+impl<A> Default for MemStoreAggregateContext<A>
+where
+    A: Aggregate + Default,
+{
+    fn default() -> Self {
+        Self {
+            aggregate_id: String::from(""),
+            aggregate: A::default(),
+            current_sequence: 0,
+        }
+    }
+}
+
 impl<A> AggregateContext<A> for MemStoreAggregateContext<A>
 where
     A: Aggregate,

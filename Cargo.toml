@@ -45,3 +45,4 @@ tokio = { workspace = true, features = ["macros", "sync", "rt"] }
 [dev-dependencies]
 uuid.workspace = true
 chrono = { version = "^0.4.41", default-features = false, features = ["clock"] }
+tokio = { workspace = true, features = ["macros", "sync", "rt-multi-thread"] }

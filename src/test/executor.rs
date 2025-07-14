@@ -1,18 +1,27 @@
 use crate::aggregate::Aggregate;
+use crate::query::Query;
+use crate::store::AggregateContext;
+use crate::store::EventStore;
 use crate::test::AggregateResultValidator;
 
 /// Holds the initial event state of an aggregate and accepts a command.
-pub struct AggregateTestExecutor<A>
+pub struct AggregateTestExecutor<A, AC, S>
 where
     A: Aggregate,
+    AC: AggregateContext<A>,
+    S: EventStore<A, AC = AC>,
 {
     events: Vec<A::Event>,
     service: A::Services,
+    queries: Vec<Box<dyn Query<A>>>,
+    context_store: Option<(AC, S)>,
 }
 
-impl<A> AggregateTestExecutor<A>
+impl<A, AC, S> AggregateTestExecutor<A, AC, S>
 where
     A: Aggregate,
+    AC: AggregateContext<A>,
+    S: EventStore<A, AC = AC>,
 {
     /// Consumes a command and provides a validator object to test against.
     ///
@@ -28,7 +37,7 @@ where
     ///
     /// For `async` tests use `when_async` instead.
     pub fn when(self, command: A::Command) -> AggregateResultValidator<A> {
-        let result = when::<A>(self.events, command, self.service);
+        let result = when::<A, AC, S>(self.events, command, self.service, self.context_store);
         AggregateResultValidator::new(result)
     }
 
@@ -49,10 +58,14 @@ where
     /// ```
     pub async fn when_async(self, command: A::Command) -> AggregateResultValidator<A> {
         let mut aggregate = A::default();
-        for event in self.events {
+        let events = self.events;
+        let service = self.service;
+        let context_store = self.context_store;
+        persist_events(&events, context_store);
+        for event in events {
             aggregate.apply(event);
         }
-        let result = aggregate.handle(command, &self.service).await;
+        let result = aggregate.handle(command, &service).await;
         AggregateResultValidator::new(result)
     }
 
@@ -71,23 +84,67 @@ where
         let mut events = self.events;
         events.extend(new_events);
         let service = self.service;
-        Self { events, service }
+        let queries = self.queries;
+        let context_store = self.context_store;
+        Self {
+            events,
+            service,
+            queries,
+            context_store,
+        }
     }
 
-    pub(crate) fn new(events: Vec<A::Event>, service: A::Services) -> Self {
-        Self { events, service }
+    pub(crate) fn new(
+        events: Vec<A::Event>,
+        service: A::Services,
+        queries: Vec<Box<dyn Query<A>>>,
+        context_store: Option<(AC, S)>,
+    ) -> Self {
+        Self {
+            events,
+            service,
+            queries,
+            context_store,
+        }
     }
 }
 
 #[tokio::main(flavor = "current_thread")]
-async fn when<A: Aggregate>(
+async fn when<A, AC, S>(
     events: Vec<A::Event>,
     command: A::Command,
     service: A::Services,
-) -> Result<Vec<A::Event>, A::Error> {
+    context_store: Option<(AC, S)>,
+) -> Result<Vec<A::Event>, A::Error>
+where
+    A: Aggregate,
+    AC: AggregateContext<A>,
+    S: EventStore<A, AC = AC>,
+{
     let mut aggregate = A::default();
+    persist_events(&events, context_store);
     for event in events {
         aggregate.apply(event);
     }
     aggregate.handle(command, &service).await
+}
+
+fn persist_events<A, AC, S>(events: &Vec<A::Event>, context_store: Option<(AC, S)>)
+where
+    A: Aggregate,
+    AC: AggregateContext<A>,
+    S: EventStore<A, AC = AC>,
+{
+    use tokio::runtime::Runtime;
+
+    if let Some((ctx, store)) = context_store {
+        let rt = Runtime::new().expect("Failed to create Tokio runtime");
+        let events = events.clone();
+        rt.block_on(async {
+            store
+                .commit(events.clone(), ctx, std::collections::HashMap::default())
+                .await
+                .expect("Failed to persist events in AggregateTestExecutor");
+        })
+    }
 }
