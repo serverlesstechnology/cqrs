@@ -175,6 +175,21 @@ where
             _phantom: PhantomData,
         }
     }
+
+    async fn get_last_event_envelopes(
+        &self,
+        aggregate_id: &str,
+        context: &EventStoreAggregateContext<A>,
+    ) -> Result<Vec<EventEnvelope<A>>, AggregateError<<A as Aggregate>::Error>> {
+        let serialized_events = self
+            .repo
+            .get_last_events::<A>(aggregate_id, context.current_sequence)
+            .await?;
+        Ok(deserialize_events(
+            serialized_events,
+            &self.event_upcasters,
+        )?)
+    }
 }
 
 impl<R, A> EventStore<A> for PersistedEventStore<R, A>
@@ -199,6 +214,7 @@ where
         &self,
         aggregate_id: &str,
     ) -> Result<EventStoreAggregateContext<A>, AggregateError<A::Error>> {
+        let mut deserialize_error_occured = false;
         let mut context: EventStoreAggregateContext<A> =
             if self.storage == SourceOfTruth::EventStore {
                 EventStoreAggregateContext::context_for(aggregate_id, true)
@@ -207,6 +223,7 @@ where
                 match snapshot {
                     Some(snapshot) => match snapshot.try_into() {
                         Err(PersistenceError::DeserializationError(_)) => {
+                            deserialize_error_occured = true;
                             // If aggregate structure changed, this will trigger replaying all the events
                             // and rebuilding fresh aggregate state.
                             EventStoreAggregateContext::context_for(aggregate_id, false)
@@ -218,12 +235,17 @@ where
             };
         let events_to_apply = match self.storage {
             SourceOfTruth::EventStore => self.load_events(aggregate_id).await?,
-            SourceOfTruth::Snapshot(_) | SourceOfTruth::AggregateStore => {
-                let serialized_events = self
-                    .repo
-                    .get_last_events::<A>(aggregate_id, context.current_sequence)
-                    .await?;
-                deserialize_events(serialized_events, &self.event_upcasters)?
+            SourceOfTruth::Snapshot(_) => {
+                self.get_last_event_envelopes(aggregate_id, &context)
+                    .await?
+            }
+            SourceOfTruth::AggregateStore => {
+                if !deserialize_error_occured {
+                    vec![]
+                } else {
+                    self.get_last_event_envelopes(aggregate_id, &context)
+                        .await?
+                }
             }
         };
 
