@@ -54,7 +54,9 @@ impl<A: Aggregate> GenericTestFramework<A, MemStoreAggregateContext<A>, MemStore
     }
 
     /// Use a [MemStore] event store within the current test framework.
-    pub fn using_mem_store<SO, ACO>(self) -> Self {
+    pub fn using_mem_store(
+        self,
+    ) -> GenericTestFramework<A, MemStoreAggregateContext<A>, MemStore<A>> {
         self.using_context_and_store(MemStoreAggregateContext::default(), MemStore::default())
     }
 }
