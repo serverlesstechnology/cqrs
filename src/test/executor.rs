@@ -135,16 +135,15 @@ where
     AC: AggregateContext<A>,
     S: EventStore<A, AC = AC>,
 {
-    use tokio::runtime::Runtime;
-
     if let Some((ctx, store)) = context_store {
-        let rt = Runtime::new().expect("Failed to create Tokio runtime");
         let events = events.clone();
-        rt.block_on(async {
-            store
-                .commit(events.clone(), ctx, std::collections::HashMap::default())
-                .await
-                .expect("Failed to persist events in AggregateTestExecutor");
-        })
+        tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async {
+                store
+                    .commit(events.clone(), ctx, std::collections::HashMap::default())
+                    .await
+                    .expect("persist events in AggregateTestExecutor should be successful");
+            })
+        });
     }
 }
