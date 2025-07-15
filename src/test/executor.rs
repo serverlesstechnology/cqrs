@@ -137,13 +137,23 @@ where
 {
     if let Some((ctx, store)) = context_store {
         let events = events.clone();
-        tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(async {
-                store
-                    .commit(events.clone(), ctx, std::collections::HashMap::default())
-                    .await
-                    .expect("persist events in AggregateTestExecutor should be successful");
-            })
-        });
+        let fut = async {
+            store
+                .commit(events.clone(), ctx, std::collections::HashMap::default())
+                .await
+                .expect("persist events in AggregateTestExecutor should be successful");
+        };
+
+        if tokio::runtime::Handle::try_current().is_ok() {
+            tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current().block_on(fut);
+            });
+        } else {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("Failed to create runtime");
+            rt.block_on(fut);
+        }
     }
 }
