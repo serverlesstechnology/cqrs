@@ -40,7 +40,7 @@ async-trait = "0.1"
 serde = { workspace = true, features = ["derive"] }
 serde_json = "1.0"
 thiserror = "^2.0.12"
-tokio = { workspace = true, features = ["macros", "sync", "rt-multi-thread"] }
+tokio = { workspace = true, features = ["macros", "sync", "rt"] }
 
 [dev-dependencies]
 uuid.workspace = true
