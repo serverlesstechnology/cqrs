@@ -61,7 +61,7 @@ where
         let events = self.events;
         let service = self.service;
         let context_store = self.context_store;
-        persist_events(&events, context_store);
+        persist_events(&events, context_store).await;
         for event in events {
             aggregate.apply(event);
         }
@@ -122,14 +122,14 @@ where
     S: EventStore<A, AC = AC>,
 {
     let mut aggregate = A::default();
-    persist_events(&events, context_store);
+    persist_events(&events, context_store).await;
     for event in events {
         aggregate.apply(event);
     }
     aggregate.handle(command, &service).await
 }
 
-fn persist_events<A, AC, S>(events: &Vec<A::Event>, context_store: Option<(AC, S)>)
+async fn persist_events<A, AC, S>(events: &Vec<A::Event>, context_store: Option<(AC, S)>)
 where
     A: Aggregate,
     AC: AggregateContext<A>,
@@ -137,23 +137,9 @@ where
 {
     if let Some((ctx, store)) = context_store {
         let events = events.clone();
-        let fut = async {
-            store
-                .commit(events.clone(), ctx, std::collections::HashMap::default())
-                .await
-                .expect("persist events in AggregateTestExecutor should be successful");
-        };
-
-        if tokio::runtime::Handle::try_current().is_ok() {
-            tokio::task::block_in_place(|| {
-                tokio::runtime::Handle::current().block_on(fut);
-            });
-        } else {
-            let rt = tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .expect("Failed to create runtime");
-            rt.block_on(fut);
-        }
+        store
+            .commit(events.clone(), ctx, std::collections::HashMap::default())
+            .await
+            .expect("persist events in AggregateTestExecutor should be successful");
     }
 }

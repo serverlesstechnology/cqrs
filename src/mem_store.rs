@@ -4,7 +4,7 @@ use std::sync::{Arc, RwLock};
 use crate::event::EventEnvelope;
 use crate::{Aggregate, AggregateContext, AggregateError, EventStore};
 
-///  Simple memory store useful for application development and testing purposes.
+/// Simple memory store useful for application development and testing purposes.
 ///
 /// Creation and use in a constructing a `CqrsFramework`:
 /// ```
