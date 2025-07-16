@@ -3,6 +3,7 @@ use crate::query::Query;
 use crate::store::AggregateContext;
 use crate::store::EventStore;
 use crate::test::AggregateResultValidator;
+use crate::EventEnvelope;
 
 /// Holds the initial event state of an aggregate and accepts a command.
 pub struct AggregateTestExecutor<A, AC, S>
@@ -37,7 +38,13 @@ where
     ///
     /// For `async` tests use `when_async` instead.
     pub fn when(self, command: A::Command) -> AggregateResultValidator<A> {
-        let result = when::<A, AC, S>(self.events, command, self.service, self.context_store);
+        let result = when::<A, AC, S>(
+            self.events,
+            command,
+            self.service,
+            self.queries,
+            self.context_store,
+        );
         AggregateResultValidator::new(result)
     }
 
@@ -60,12 +67,16 @@ where
         let mut aggregate = A::default();
         let events = self.events;
         let service = self.service;
+        let queries = self.queries;
         let context_store = self.context_store;
-        persist_events(&events, context_store).await;
         for event in events {
             aggregate.apply(event);
         }
         let result = aggregate.handle(command, &service).await;
+        if let Ok(resultant_events) = &result {
+            let committed_events = commit_events(resultant_events, context_store).await;
+            dispatch_events(&queries, &committed_events).await;
+        }
         AggregateResultValidator::new(result)
     }
 
@@ -114,6 +125,7 @@ async fn when<A, AC, S>(
     events: Vec<A::Event>,
     command: A::Command,
     service: A::Services,
+    queries: Vec<Box<dyn Query<A>>>,
     context_store: Option<(AC, S)>,
 ) -> Result<Vec<A::Event>, A::Error>
 where
@@ -122,24 +134,46 @@ where
     S: EventStore<A, AC = AC>,
 {
     let mut aggregate = A::default();
-    persist_events(&events, context_store).await;
     for event in events {
         aggregate.apply(event);
     }
-    aggregate.handle(command, &service).await
+    let resultant_events = aggregate.handle(command, &service).await?;
+    let committed_events = commit_events(&resultant_events, context_store).await;
+    dispatch_events(&queries, &committed_events).await;
+    Ok(resultant_events)
 }
 
-async fn persist_events<A, AC, S>(events: &Vec<A::Event>, context_store: Option<(AC, S)>)
+async fn commit_events<A, AC, S>(
+    events: &[A::Event],
+    context_store: Option<(AC, S)>,
+) -> Vec<EventEnvelope<A>>
 where
     A: Aggregate,
     AC: AggregateContext<A>,
     S: EventStore<A, AC = AC>,
 {
+    let mut wrapped_events = Vec::default();
+
     if let Some((ctx, store)) = context_store {
-        let events = events.clone();
-        store
-            .commit(events.clone(), ctx, std::collections::HashMap::default())
+        let events = Vec::from(events);
+        let mut events = store
+            .commit(events, ctx, std::collections::HashMap::default())
             .await
             .expect("persist events in AggregateTestExecutor should be successful");
+        wrapped_events.append(&mut events);
+    }
+
+    wrapped_events
+}
+
+async fn dispatch_events<A: Aggregate>(
+    queries: &Vec<Box<dyn Query<A>>>,
+    events: &Vec<EventEnvelope<A>>,
+) {
+    const AGGREGATE_ID: &str = "test_executor_aggregate";
+
+    for query in queries {
+        let dispatch_events = events.as_slice();
+        query.dispatch(AGGREGATE_ID, dispatch_events).await;
     }
 }
