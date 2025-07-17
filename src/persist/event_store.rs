@@ -1047,7 +1047,7 @@ pub(crate) mod aggregate_store_test {
 
     #[tokio::test]
     async fn load_aggregate_new() {
-        let repo = MockRepo::with_last_events(Ok(vec![]), Ok(None));
+        let repo = MockRepo::with_snapshot(Ok(None));
         let store = PersistedEventStore::<MockRepo, TestAggregate>::new_aggregate_store(repo);
         let snapshot_context = store.load_aggregate(TEST_AGGREGATE_ID).await.unwrap();
         assert_eq!(None, snapshot_context.current_snapshot);
