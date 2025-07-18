@@ -4,7 +4,7 @@ use std::sync::{Arc, RwLock};
 use crate::event::EventEnvelope;
 use crate::{Aggregate, AggregateContext, AggregateError, EventStore};
 
-///  Simple memory store useful for application development and testing purposes.
+/// Simple memory store useful for application development and testing purposes.
 ///
 /// Creation and use in a constructing a `CqrsFramework`:
 /// ```
@@ -179,6 +179,19 @@ where
     pub aggregate: A,
     /// The last committed event sequence number for this aggregate instance.
     pub current_sequence: usize,
+}
+
+impl<A> Default for MemStoreAggregateContext<A>
+where
+    A: Aggregate + Default,
+{
+    fn default() -> Self {
+        Self {
+            aggregate_id: String::from(""),
+            aggregate: A::default(),
+            current_sequence: 0,
+        }
+    }
 }
 
 impl<A> AggregateContext<A> for MemStoreAggregateContext<A>
