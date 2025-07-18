@@ -6,7 +6,9 @@ use crate::store::{AggregateContext, EventStore};
 use crate::test::AggregateTestExecutor;
 
 /// A framework for rigorously testing the aggregate logic, one of the *most important*
-/// parts of any DDD system.
+/// parts of any DDD system. Note: the defaulted [AggregateContext] and [Store] types
+/// are incidental as the default `context_store` is None. The types are defined when
+/// using [`using_context_and_store`] and [`using_mem_store`].
 pub type TestFramework<A> = GenericTestFramework<A, MemStoreAggregateContext<A>, MemStore<A>>;
 
 /// The framework implementation.

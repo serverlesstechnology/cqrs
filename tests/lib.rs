@@ -147,6 +147,7 @@ impl TestView {
         Self { events }
     }
 }
+
 #[async_trait]
 impl Query<TestAggregate> for TestView {
     async fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<TestAggregate>]) {
@@ -227,11 +228,11 @@ type ThisTestFramework = TestFramework<TestAggregate>;
 
 #[test]
 fn test_framework_test() {
-    let test_name = "test A";
+    let test_name = "test A.1";
 
     ThisTestFramework::with(TestService)
         .given(vec![TestEvent::Created(Created {
-            id: "test_id_A".to_string(),
+            id: "test_id_A_1".to_string(),
         })])
         .when(TestCommand::ConfirmTest(ConfirmTest {
             test_name: test_name.to_string(),
@@ -248,6 +249,49 @@ fn test_framework_test() {
             test_name: test_name.to_string(),
         }))
         .then_expect_error_message("test already performed");
+}
+
+#[test]
+fn test_framework_queries_test() {
+    let test_name = "test A.2";
+
+    let delivered_events = Arc::default();
+    let view = TestView::new(Arc::clone(&delivered_events));
+    ThisTestFramework::with(TestService)
+        .using_mem_store()
+        .and_query(Box::new(view))
+        .given(vec![TestEvent::Created(Created {
+            id: "test_id_A_2".to_string(),
+        })])
+        .when(TestCommand::ConfirmTest(ConfirmTest {
+            test_name: test_name.to_string(),
+        }))
+        .then_expect_events(vec![TestEvent::Tested(Tested {
+            test_name: test_name.to_string(),
+        })]);
+
+    assert_eq!(delivered_events.read().unwrap().len(), 1);
+    let delivered_event = &delivered_events.read().unwrap()[0];
+    if let TestEvent::Tested(tested) = &delivered_event.payload {
+        assert_eq!(tested.test_name, test_name.to_string())
+    } else {
+        panic!("unexpected event {:?}", delivered_event)
+    }
+
+    let delivered_events = Arc::default();
+    let view = TestView::new(Arc::clone(&delivered_events));
+    ThisTestFramework::with(TestService)
+        .using_mem_store()
+        .and_query(Box::new(view))
+        .given(vec![TestEvent::Tested(Tested {
+            test_name: test_name.to_string(),
+        })])
+        .when(TestCommand::ConfirmTest(ConfirmTest {
+            test_name: test_name.to_string(),
+        }))
+        .then_expect_error_message("test already performed");
+
+    assert_eq!(delivered_events.read().unwrap().len(), 0);
 }
 
 #[test]
