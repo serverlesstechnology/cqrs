@@ -25,7 +25,7 @@ chrono = { version = "^0.4.41", default-features = false, features = ["clock"] }
 tokio = { workspace = true, features = ["full"] }
 
 lambda_http = "0.17"
-thiserror = "2.0.12"
+thiserror = "2.0.16"
 
 [[bin]]
 name = "cqrs-demo"
