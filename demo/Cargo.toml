@@ -21,11 +21,11 @@ axum = "0.8"
 serde = { workspace = true, features = ["derive"]}
 serde_json = "1.0"
 sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio-rustls", "json"] }
-chrono = { version = "^0.4.41", default-features = false, features = ["clock"] }
+chrono = { version = "^0.4.42", default-features = false, features = ["clock"] }
 tokio = { workspace = true, features = ["full"] }
 
 lambda_http = "0.17"
-thiserror = "2.0.16"
+thiserror = "2.0.17"
 
 [[bin]]
 name = "cqrs-demo"
