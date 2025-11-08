@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
@@ -6,8 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use cqrs_es::mem_store::MemStore;
 use cqrs_es::test::TestFramework;
-use cqrs_es::Query;
 use cqrs_es::{Aggregate, AggregateError, CqrsFramework, DomainEvent, EventEnvelope, EventStore};
+use cqrs_es::{Query, QueryWrapper};
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq)]
 pub struct TestAggregate {
@@ -147,7 +146,7 @@ impl TestView {
         Self { events }
     }
 }
-#[async_trait]
+
 impl Query<TestAggregate> for TestView {
     async fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<TestAggregate>]) {
         for event in events {
@@ -289,7 +288,11 @@ async fn framework_test() {
     let delivered_events = Arc::default();
     let view = TestView::new(Arc::clone(&delivered_events));
 
-    let cqrs = CqrsFramework::new(event_store.clone(), vec![Box::new(view)], TestService);
+    let cqrs = CqrsFramework::new(
+        event_store.clone(),
+        vec![QueryWrapper::new(view)],
+        TestService,
+    );
     let uuid = uuid::Uuid::new_v4().to_string();
     let id = uuid.clone();
     let metadata = metadata();

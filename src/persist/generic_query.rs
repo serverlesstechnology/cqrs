@@ -1,8 +1,6 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use async_trait::async_trait;
-
 use crate::persist::{PersistenceError, ViewContext, ViewRepository};
 use crate::{Aggregate, EventEnvelope, Query, View};
 
@@ -115,7 +113,6 @@ where
     }
 }
 
-#[async_trait]
 impl<R, V, A> Query<A> for GenericQuery<R, V, A>
 where
     R: ViewRepository<V, A>,

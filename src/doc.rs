@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -72,7 +71,6 @@ pub struct MyService;
 #[derive(Debug, Default)]
 pub struct MyQuery;
 
-#[async_trait]
 impl Query<MyAggregate> for MyQuery {
     async fn dispatch(&self, _aggregate_id: &str, _events: &[EventEnvelope<MyAggregate>]) {}
 }

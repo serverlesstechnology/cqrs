@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::query::Query;
+use crate::query_wrapper::QueryWrapper;
 use crate::store::EventStore;
 use crate::Aggregate;
 use crate::{AggregateContext, AggregateError};
@@ -25,7 +25,7 @@ where
     ES: EventStore<A>,
 {
     store: ES,
-    queries: Vec<Box<dyn Query<A>>>,
+    queries: Vec<QueryWrapper<A>>,
     service: A::Services,
 }
 
@@ -59,7 +59,7 @@ where
     /// - [MySQL](https://www.mysql.com/) - [mysql-es](https://crates.io/crates/mysql-es)
     /// - [DynamoDb](https://aws.amazon.com/dynamodb/) - [dynamo-es](https://crates.io/crates/dynamo-es)
     ///
-    pub fn new(store: ES, queries: Vec<Box<dyn Query<A>>>, service: A::Services) -> Self
+    pub fn new(store: ES, queries: Vec<QueryWrapper<A>>, service: A::Services) -> Self
     where
         A: Aggregate,
         ES: EventStore<A>,
@@ -73,7 +73,7 @@ where
     /// Appends an additional query to the framework.
     /// ```rust
     /// # use cqrs_es::doc::{MyAggregate, MyQuery, MyService};
-    /// use cqrs_es::CqrsFramework;
+    /// use cqrs_es::{CqrsFramework, QueryWrapper};
     /// use cqrs_es::mem_store::MemStore;
     ///
     /// let store = MemStore::<MyAggregate>::default();
@@ -81,9 +81,9 @@ where
     /// let service = MyService::default();
     ///
     /// let cqrs = CqrsFramework::new(store, queries, service)
-    ///     .append_query(Box::new(MyQuery::default()));
+    ///     .append_query(QueryWrapper::new(MyQuery::default()));
     /// ```
-    pub fn append_query(self, query: Box<dyn Query<A>>) -> Self
+    pub fn append_query(self, query: QueryWrapper<A>) -> Self
     where
         A: Aggregate,
         ES: EventStore<A>,
