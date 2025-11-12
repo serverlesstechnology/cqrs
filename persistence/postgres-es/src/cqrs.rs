@@ -1,5 +1,5 @@
 use cqrs_es::persist::PersistedEventStore;
-use cqrs_es::{Aggregate, CqrsFramework, Query};
+use cqrs_es::{Aggregate, CqrsFramework, QueryWrapper};
 
 use crate::{PostgresCqrs, PostgresEventRepository};
 use sqlx::postgres::PgPoolOptions;
@@ -29,7 +29,7 @@ pub async fn default_postgress_pool(connection_string: &str) -> Pool<Postgres> {
 /// and queries.
 pub fn postgres_cqrs<A>(
     pool: Pool<Postgres>,
-    query_processor: Vec<Box<dyn Query<A>>>,
+    query_processor: Vec<QueryWrapper<A>>,
     services: A::Services,
 ) -> PostgresCqrs<A>
 where
@@ -43,7 +43,7 @@ where
 /// A convenience function for creating a CqrsFramework using a snapshot store.
 pub fn postgres_snapshot_cqrs<A>(
     pool: Pool<Postgres>,
-    query_processor: Vec<Box<dyn Query<A>>>,
+    query_processor: Vec<QueryWrapper<A>>,
     snapshot_size: usize,
     services: A::Services,
 ) -> PostgresCqrs<A>
@@ -58,7 +58,7 @@ where
 /// A convenience function for creating a CqrsFramework using an aggregate store.
 pub fn postgres_aggregate_cqrs<A>(
     pool: Pool<Postgres>,
-    query_processor: Vec<Box<dyn Query<A>>>,
+    query_processor: Vec<QueryWrapper<A>>,
     services: A::Services,
 ) -> PostgresCqrs<A>
 where
@@ -71,6 +71,8 @@ where
 
 #[cfg(test)]
 mod test {
+    use cqrs_es::QueryWrapper;
+
     use crate::testing::tests::{
         TestAggregate, TestQueryRepository, TestServices, TestView, TEST_CONNECTION_STRING,
     };
@@ -83,6 +85,6 @@ mod test {
         let repo =
             PostgresViewRepository::<TestView, TestAggregate>::new("test_view", pool.clone());
         let query = TestQueryRepository::new(Arc::new(repo));
-        let _ps = postgres_cqrs(pool, vec![Box::new(query)], TestServices);
+        let _ps = postgres_cqrs(pool, vec![QueryWrapper::new(query)], TestServices);
     }
 }

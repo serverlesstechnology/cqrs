@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use cqrs_es::Query;
+use cqrs_es::QueryWrapper;
 use postgres_es::{PostgresCqrs, PostgresViewRepository};
 use sqlx::{Pool, Postgres};
 
@@ -27,8 +27,10 @@ pub fn cqrs_framework(
     account_query.use_error_handler(Box::new(|e| println!("{e}")));
 
     // Create and return an event-sourced `CqrsFramework`.
-    let queries: Vec<Box<dyn Query<BankAccount>>> =
-        vec![Box::new(simple_query), Box::new(account_query)];
+    let queries: Vec<QueryWrapper<BankAccount>> = vec![
+        QueryWrapper::new(simple_query),
+        QueryWrapper::new(account_query),
+    ];
     let services = BankAccountServices::new(Box::new(HappyPathBankAccountServices));
     (
         Arc::new(postgres_es::postgres_cqrs(pool, queries, services)),

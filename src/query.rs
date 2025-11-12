@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use std::fmt::Debug;
 
 use serde::de::DeserializeOwned;
@@ -14,10 +13,13 @@ use crate::event::EventEnvelope;
 /// - update materialized views
 /// - publish events to messaging service
 /// - trigger a command on another aggregate
-#[async_trait]
 pub trait Query<A: Aggregate>: Send + Sync {
     /// Events will be dispatched here immediately after being committed.
-    async fn dispatch(&self, aggregate_id: &str, events: &[EventEnvelope<A>]);
+    fn dispatch(
+        &self,
+        aggregate_id: &str,
+        events: &[EventEnvelope<A>],
+    ) -> impl std::future::Future<Output = ()> + Send;
 }
 
 /// A `View` represents a materialized view, generally serialized for persistence, that is updated by a query.

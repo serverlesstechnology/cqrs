@@ -19,12 +19,14 @@ async fn main() -> Result<(), Error> {
     run(app).await?;
     Ok(())
 }
+
 pub async fn lambda_query_handler(
     Path(account_id): Path<String>,
     State(state): State<ApplicationState>,
 ) -> Result<Response, (StatusCode, String)> {
     Ok(query_handler(Path(account_id), State(state)).await)
 }
+
 async fn lambda_command_handler(
     Path(account_id): Path<String>,
     State(state): State<ApplicationState>,

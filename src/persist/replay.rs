@@ -114,7 +114,6 @@ mod test {
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
 
-    use async_trait::async_trait;
     use serde_json::Value::Object;
     use serde_json::{json, Map, Value};
 
@@ -139,7 +138,6 @@ mod test {
         }
     }
 
-    #[async_trait]
     impl Query<MyAggregate> for MockQuery {
         async fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<MyAggregate>]) {
             let mut event_list = self.events.lock().unwrap();

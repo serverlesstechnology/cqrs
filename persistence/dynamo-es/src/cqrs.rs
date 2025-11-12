@@ -1,5 +1,5 @@
 use cqrs_es::persist::PersistedEventStore;
-use cqrs_es::{Aggregate, CqrsFramework, Query};
+use cqrs_es::{Aggregate, CqrsFramework, QueryWrapper};
 
 use crate::{DynamoCqrs, DynamoEventRepository};
 
@@ -7,7 +7,7 @@ use crate::{DynamoCqrs, DynamoEventRepository};
 /// and queries.
 pub fn dynamodb_cqrs<A>(
     dynamo_client: aws_sdk_dynamodb::client::Client,
-    query_processor: Vec<Box<dyn Query<A>>>,
+    query_processor: Vec<QueryWrapper<A>>,
     services: A::Services,
 ) -> DynamoCqrs<A>
 where
@@ -21,7 +21,7 @@ where
 /// A convenience function for creating a CqrsFramework using an aggregate store.
 pub fn dynamodb_aggregate_cqrs<A>(
     dynamo_client: aws_sdk_dynamodb::client::Client,
-    query_processor: Vec<Box<dyn Query<A>>>,
+    query_processor: Vec<QueryWrapper<A>>,
     services: A::Services,
 ) -> DynamoCqrs<A>
 where
@@ -35,7 +35,7 @@ where
 /// A convenience function for creating a CqrsFramework using a snapshot store.
 pub fn dynamodb_snapshot_cqrs<A>(
     dynamo_client: aws_sdk_dynamodb::client::Client,
-    query_processor: Vec<Box<dyn Query<A>>>,
+    query_processor: Vec<QueryWrapper<A>>,
     snapshot_size: usize,
     services: A::Services,
 ) -> DynamoCqrs<A>
@@ -51,6 +51,8 @@ where
 mod test {
     use std::sync::Arc;
 
+    use cqrs_es::QueryWrapper;
+
     use crate::cqrs::dynamodb_cqrs;
     use crate::testing::tests::{test_dynamodb_client, TestQueryRepository, TestServices};
     use crate::DynamoViewRepository;
@@ -60,6 +62,6 @@ mod test {
         let client = test_dynamodb_client().await;
         let view_repo = DynamoViewRepository::new("test_query", client.clone());
         let query = TestQueryRepository::new(Arc::new(view_repo));
-        let _ps = dynamodb_cqrs(client, vec![Box::new(query)], TestServices);
+        let _ps = dynamodb_cqrs(client, vec![QueryWrapper::new(query)], TestServices);
     }
 }

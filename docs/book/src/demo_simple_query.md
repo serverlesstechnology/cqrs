@@ -9,7 +9,6 @@ For our first query, we will just print the aggregate instance ID, sequence numb
 ```rust
 struct SimpleLoggingQuery {}
 
-#[async_trait]
 impl Query<BankAccount> for SimpleLoggingQuery {
     async fn dispatch(&self, aggregate_id: &str, events: &[EventEnvelope<BankAccount>]) {
         for event in events {
@@ -19,12 +18,12 @@ impl Query<BankAccount> for SimpleLoggingQuery {
 }
 ```
 
-Note that the trait's sole method takes a vector of 
-[`EventEnvelope`](https://docs.rs/cqrs-es/0.3.0/cqrs_es/struct.EventEnvelope.html)s, 
-a struct that contains the event along with supporting context and 
+Note that the trait's sole method takes a vector of
+[`EventEnvelope`](https://docs.rs/cqrs-es/0.3.0/cqrs_es/struct.EventEnvelope.html)s,
+a struct that contains the event along with supporting context and
 [metadata](application_metadata.md).
-This allows queries to have the full context surrounding the event, important since a query may be 
+This allows queries to have the full context surrounding the event, important since a query may be
 interested in a very different set of fields than those of interest within the aggregate.
 
-E.g., the user's IP address is likely unimportant for the business rules but could be of interest in a query 
+E.g., the user's IP address is likely unimportant for the business rules but could be of interest in a query
 used for security audits

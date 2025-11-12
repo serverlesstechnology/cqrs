@@ -1,5 +1,5 @@
 use cqrs_es::persist::PersistedEventStore;
-use cqrs_es::{Aggregate, CqrsFramework, Query};
+use cqrs_es::{Aggregate, CqrsFramework, QueryWrapper};
 
 use crate::{MysqlCqrs, MysqlEventRepository};
 use sqlx::mysql::MySqlPoolOptions;
@@ -28,7 +28,7 @@ pub async fn default_mysql_pool(connection_string: &str) -> Pool<MySql> {
 /// ```
 pub fn mysql_cqrs<A>(
     pool: Pool<MySql>,
-    query_processor: Vec<Box<dyn Query<A>>>,
+    query_processor: Vec<QueryWrapper<A>>,
     services: A::Services,
 ) -> MysqlCqrs<A>
 where
@@ -42,7 +42,7 @@ where
 /// A convenience function for creating a CqrsFramework using a snapshot store.
 pub fn mysql_snapshot_cqrs<A>(
     pool: Pool<MySql>,
-    query_processor: Vec<Box<dyn Query<A>>>,
+    query_processor: Vec<QueryWrapper<A>>,
     snapshot_size: usize,
     services: A::Services,
 ) -> MysqlCqrs<A>
@@ -57,7 +57,7 @@ where
 /// A convenience function for creating a CqrsFramework using an aggregate store.
 pub fn mysql_aggregate_cqrs<A>(
     pool: Pool<MySql>,
-    query_processor: Vec<Box<dyn Query<A>>>,
+    query_processor: Vec<QueryWrapper<A>>,
     services: A::Services,
 ) -> MysqlCqrs<A>
 where
@@ -70,6 +70,8 @@ where
 
 #[cfg(test)]
 mod test {
+    use cqrs_es::QueryWrapper;
+
     use crate::testing::tests::{
         TestAggregate, TestQueryRepository, TestServices, TestView, TEST_CONNECTION_STRING,
     };
@@ -81,6 +83,6 @@ mod test {
         let pool = default_mysql_pool(TEST_CONNECTION_STRING).await;
         let repo = MysqlViewRepository::<TestView, TestAggregate>::new("test_view", pool.clone());
         let query = TestQueryRepository::new(Arc::new(repo));
-        let _ps = mysql_cqrs(pool, vec![Box::new(query)], TestServices);
+        let _ps = mysql_cqrs(pool, vec![QueryWrapper::new(query)], TestServices);
     }
 }

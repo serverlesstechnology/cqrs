@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use cqrs_es::persist::GenericQuery;
 use cqrs_es::{EventEnvelope, Query, View};
 use postgres_es::PostgresViewRepository;
@@ -11,7 +10,6 @@ pub struct SimpleLoggingQuery {}
 
 // Our simplest query, this is great for debugging but absolutely useless in production.
 // This query just pretty prints the events as they are processed.
-#[async_trait]
 impl Query<BankAccount> for SimpleLoggingQuery {
     async fn dispatch(&self, aggregate_id: &str, events: &[EventEnvelope<BankAccount>]) {
         for event in events {
