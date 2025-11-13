@@ -1,4 +1,5 @@
 use crate::aggregate::Aggregate;
+use crate::event_sink::EventSink;
 use crate::test::AggregateResultValidator;
 
 /// Holds the initial event state of an aggregate and accepts a command.
@@ -52,8 +53,11 @@ where
         for event in self.events {
             aggregate.apply(event);
         }
-        let result = aggregate.handle(command, &self.service).await;
-        AggregateResultValidator::new(result)
+        let sink: EventSink<A> = Default::default();
+        match aggregate.handle(command, &self.service, &sink).await {
+            Ok(_) => AggregateResultValidator::new(Ok(sink.drain().await)),
+            Err(e) => AggregateResultValidator::new(Err(e)),
+        }
     }
 
     /// Adds additional events to an aggregate test.
@@ -89,5 +93,7 @@ async fn when<A: Aggregate>(
     for event in events {
         aggregate.apply(event);
     }
-    aggregate.handle(command, &service).await
+    let sink: EventSink<A> = Default::default();
+    aggregate.handle(command, &service, &sink).await?;
+    Ok(sink.drain().await)
 }

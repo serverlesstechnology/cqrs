@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::event_sink::EventSink;
 use crate::persist::{
     PersistedEventRepository, PersistenceError, ReplayStream, SerializedEvent, SerializedSnapshot,
 };
@@ -36,12 +37,16 @@ impl Aggregate for MyAggregate {
     type Services = MyService;
 
     async fn handle(
-        &self,
+        &mut self,
         command: Self::Command,
         _service: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error> {
+        sink: &EventSink<Self>,
+    ) -> Result<(), Self::Error> {
         match command {
-            MyCommands::DoSomething => Ok(vec![MyEvents::SomethingWasDone]),
+            MyCommands::DoSomething => {
+                sink.write(MyEvents::SomethingWasDone, self).await;
+                Ok(())
+            }
             MyCommands::BadCommand => Err("the expected error message".into()),
         }
     }
@@ -85,19 +90,34 @@ impl Aggregate for Customer {
     type Services = CustomerService;
 
     async fn handle(
-        &self,
+        &mut self,
         command: Self::Command,
         _service: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error> {
+        sink: &EventSink<Self>,
+    ) -> Result<(), Self::Error> {
         match command {
             CustomerCommand::AddCustomerName { .. } if self.name.as_str() != "" => {
                 Err("a name has already been added for this customer".into())
             }
             CustomerCommand::AddCustomerName { name: changed_name } => {
-                Ok(vec![CustomerEvent::NameAdded { name: changed_name }])
+                sink.write(
+                    CustomerEvent::NameAdded {
+                        name: changed_name.to_string(),
+                    },
+                    self,
+                )
+                .await;
+                Ok(())
             }
             CustomerCommand::UpdateEmail { new_email } => {
-                Ok(vec![CustomerEvent::EmailUpdated { new_email }])
+                sink.write(
+                    CustomerEvent::EmailUpdated {
+                        new_email: new_email.to_string(),
+                    },
+                    self,
+                )
+                .await;
+                Ok(())
             }
         }
     }
