@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::event_sink::EventSink;
 use crate::persist::{
     PersistedEventRepository, PersistenceError, ReplayStream, SerializedEvent, SerializedSnapshot,
 };
@@ -36,12 +37,16 @@ impl Aggregate for MyAggregate {
     type Services = MyService;
 
     async fn handle(
-        &self,
+        &mut self,
         command: Self::Command,
         _service: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error> {
+        sink: &EventSink<Self>,
+    ) -> Result<(), Self::Error> {
         match command {
-            MyCommands::DoSomething => Ok(vec![MyEvents::SomethingWasDone]),
+            MyCommands::DoSomething => {
+                sink.write(MyEvents::SomethingWasDone, self).await;
+                Ok(())
+            }
             MyCommands::BadCommand => Err("the expected error message".into()),
         }
     }
@@ -54,6 +59,7 @@ pub struct Customer {
     pub customer_id: String,
     pub name: String,
     pub email: String,
+    pub data_populated: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, thiserror::Error)]
@@ -85,31 +91,45 @@ impl Aggregate for Customer {
     type Services = CustomerService;
 
     async fn handle(
-        &self,
+        &mut self,
         command: Self::Command,
         _service: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error> {
+        sink: &EventSink<Self>,
+    ) -> Result<(), Self::Error> {
         match command {
             CustomerCommand::AddCustomerName { .. } if self.name.as_str() != "" => {
-                Err("a name has already been added for this customer".into())
+                return Err("a name has already been added for this customer".into())
             }
             CustomerCommand::AddCustomerName { name: changed_name } => {
-                Ok(vec![CustomerEvent::NameAdded { name: changed_name }])
+                sink.write(
+                    CustomerEvent::NameAdded {
+                        name: changed_name.to_string(),
+                    },
+                    self,
+                )
+                .await;
             }
             CustomerCommand::UpdateEmail { new_email } => {
-                Ok(vec![CustomerEvent::EmailUpdated { new_email }])
+                sink.write(
+                    CustomerEvent::EmailUpdated {
+                        new_email: new_email.to_string(),
+                    },
+                    self,
+                )
+                .await;
             }
+        };
+        if !self.data_populated && !self.name.is_empty() && !self.email.is_empty() {
+            sink.write(CustomerEvent::CustomerDataPopulated, self).await;
         }
+        Ok(())
     }
 
     fn apply(&mut self, event: Self::Event) {
         match event {
-            CustomerEvent::NameAdded { name: changed_name } => {
-                self.name = changed_name;
-            }
-            CustomerEvent::EmailUpdated { new_email } => {
-                self.email = new_email;
-            }
+            CustomerEvent::NameAdded { name: changed_name } => self.name = changed_name,
+            CustomerEvent::EmailUpdated { new_email } => self.email = new_email,
+            CustomerEvent::CustomerDataPopulated => self.data_populated = true,
         }
     }
 }
@@ -131,6 +151,7 @@ pub struct CustomerService;
 pub enum CustomerEvent {
     NameAdded { name: String },
     EmailUpdated { new_email: String },
+    CustomerDataPopulated,
 }
 
 impl DomainEvent for CustomerEvent {
@@ -138,6 +159,7 @@ impl DomainEvent for CustomerEvent {
         match self {
             Self::NameAdded { .. } => "NameAdded".to_string(),
             Self::EmailUpdated { .. } => "EmailUpdated".to_string(),
+            CustomerEvent::CustomerDataPopulated => "CustomerDataPoplated".to_string(),
         }
     }
 
@@ -227,5 +249,34 @@ mod doc_tests {
                 name: "John Doe".to_string(),
             })
             .then_expect_error_message("a name has already been added for this customer");
+    }
+
+    #[test]
+    fn test_add_email() {
+        CustomerTestFramework::with(CustomerService)
+            .given_no_previous_events()
+            .when(CustomerCommand::UpdateEmail {
+                new_email: "john.doe@example.com".to_string(),
+            })
+            .then_expect_events(vec![CustomerEvent::EmailUpdated {
+                new_email: "john.doe@example.com".to_string(),
+            }]);
+    }
+
+    #[test]
+    fn test_add_email_name_populted() {
+        CustomerTestFramework::with(CustomerService)
+            .given(vec![CustomerEvent::NameAdded {
+                name: "John Doe".to_string(),
+            }])
+            .when(CustomerCommand::UpdateEmail {
+                new_email: "john.doe@example.com".to_string(),
+            })
+            .then_expect_events(vec![
+                CustomerEvent::EmailUpdated {
+                    new_email: "john.doe@example.com".to_string(),
+                },
+                CustomerEvent::CustomerDataPopulated,
+            ]);
     }
 }

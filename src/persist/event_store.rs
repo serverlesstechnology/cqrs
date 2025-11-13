@@ -336,6 +336,7 @@ pub(crate) mod shared_test {
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
 
+    use crate::event_sink::EventSink;
     use crate::persist::event_stream::ReplayStream;
     use crate::persist::{
         PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
@@ -392,14 +393,16 @@ pub(crate) mod shared_test {
         type Services = TestService;
 
         async fn handle(
-            &self,
+            &mut self,
             command: Self::Command,
             _service: &Self::Services,
-        ) -> Result<Vec<Self::Event>, Self::Error> {
+            sink: &EventSink<Self>,
+        ) -> Result<(), Self::Error> {
             match command {
-                TestCommands::DoSomething => Ok(vec![TestEvents::SomethingWasDone]),
-                TestCommands::BadCommand => Err("the expected error message".into()),
-            }
+                TestCommands::DoSomething => sink.write(TestEvents::SomethingWasDone, self).await,
+                TestCommands::BadCommand => return Err("the expected error message".into()),
+            };
+            Ok(())
         }
         fn apply(&mut self, event: Self::Event) {
             match event {

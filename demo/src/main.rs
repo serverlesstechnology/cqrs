@@ -12,7 +12,7 @@ async fn main() {
     // distinguishes whether the call is a command or a query.
     let router = Router::new()
         .route(
-            "/account/:account_id",
+            "/account/{account_id}",
             get(query_handler).post(command_handler),
         )
         .with_state(state);
