@@ -20,10 +20,7 @@ impl<A: Aggregate> EventSink<A> {
         self.events.lock().await.push(event);
     }
 
-    pub async fn drain(&self) -> Vec<A::Event> {
-        let mut events = self.events.lock().await;
-        let result = events.clone();
-        events.clear();
-        result
+    pub async fn collect(self) -> Vec<A::Event> {
+        self.events.into_inner()
     }
 }

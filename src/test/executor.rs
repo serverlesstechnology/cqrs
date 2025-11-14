@@ -55,7 +55,7 @@ where
         }
         let sink: EventSink<A> = Default::default();
         match aggregate.handle(command, &self.service, &sink).await {
-            Ok(_) => AggregateResultValidator::new(Ok(sink.drain().await)),
+            Ok(_) => AggregateResultValidator::new(Ok(sink.collect().await)),
             Err(e) => AggregateResultValidator::new(Err(e)),
         }
     }
@@ -95,5 +95,5 @@ async fn when<A: Aggregate>(
     }
     let sink: EventSink<A> = Default::default();
     aggregate.handle(command, &service, &sink).await?;
-    Ok(sink.drain().await)
+    Ok(sink.collect().await)
 }

@@ -177,7 +177,7 @@ where
             .handle(command, &self.service, &sink)
             .await
             .map_err(AggregateError::UserError)?;
-        let resultant_events = sink.drain().await;
+        let resultant_events = sink.collect().await;
         let committed_events = self
             .store
             .commit(resultant_events, aggregate_context, metadata)
