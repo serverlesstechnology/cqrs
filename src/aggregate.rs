@@ -25,6 +25,7 @@ use crate::DomainEvent;
 /// struct Customer {
 ///     name: Option<String>,
 ///     email: Option<String>,
+///     data_populated: bool,
 /// }
 ///
 /// impl Aggregate for Customer {
@@ -52,13 +53,9 @@ use crate::DomainEvent;
 ///
 ///     fn apply(&mut self, event: Self::Event) {
 ///         match event {
-///             CustomerEvent::NameAdded{name: changed_name} => {
-///                 self.name = Some(changed_name);
-///             }
-///
-///             CustomerEvent::EmailUpdated{new_email} => {
-///                 self.email = Some(new_email);
-///             }
+///             CustomerEvent::NameAdded{name: changed_name} => self.name = Some(changed_name),
+///             CustomerEvent::EmailUpdated{new_email} => self.email = Some(new_email),
+///             CustomerEvent::CustomerDataPopulated => self.data_populated = true,
 ///         }
 ///     }
 /// }
@@ -147,6 +144,7 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # struct Customer {
     /// #     name: Option<String>,
     /// #     email: Option<String>,
+    /// #     data_populated: bool,
     /// # }
     /// # impl Aggregate for Customer {
     /// #     const TYPE: &'static str = "customer";
@@ -159,13 +157,9 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # }
     /// fn apply(&mut self, event: Self::Event) {
     ///     match event {
-    ///         CustomerEvent::NameAdded{name} => {
-    ///             self.name = Some(name);
-    ///         }
-    ///
-    ///         CustomerEvent::EmailUpdated{new_email} => {
-    ///             self.email = Some(new_email);
-    ///         }
+    ///         CustomerEvent::NameAdded{name: changed_name} => self.name = Some(changed_name),
+    ///         CustomerEvent::EmailUpdated{new_email} => self.email = Some(new_email),
+    ///         CustomerEvent::CustomerDataPopulated => self.data_populated = true,
     ///     }
     /// }
     /// # }
