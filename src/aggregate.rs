@@ -3,6 +3,7 @@ use std::future::Future;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
+use crate::event_sink::EventSink;
 use crate::DomainEvent;
 
 /// In CQRS (and Domain Driven Design) an `Aggregate` is the fundamental component that
@@ -19,10 +20,12 @@ use crate::DomainEvent;
 /// # use cqrs_es::doc::{CustomerEvent, CustomerError, CustomerCommand, CustomerService};
 /// # use cqrs_es::{Aggregate, AggregateError};
 /// # use serde::{Serialize,Deserialize};
+/// # use cqrs_es::event_sink::EventSink;
 /// #[derive(Default,Serialize,Deserialize)]
 /// struct Customer {
 ///     name: Option<String>,
 ///     email: Option<String>,
+///     data_populated: bool,
 /// }
 ///
 /// impl Aggregate for Customer {
@@ -32,30 +35,27 @@ use crate::DomainEvent;
 ///     type Error = CustomerError;
 ///     type Services = CustomerService;
 ///
-///     async fn handle(&self, command: Self::Command, service: &Self::Services) -> Result<Vec<Self::Event>, Self::Error> {
+///     async fn handle(&mut self, command: Self::Command, service: &Self::Services, sink: &EventSink<Self>) -> Result<(), Self::Error> {
 ///         match command {
 ///             CustomerCommand::AddCustomerName{name: changed_name} => {
 ///                 if self.name.is_some() {
 ///                     return Err("a name has already been added".into());
 ///                 }
-///                 Ok(vec![CustomerEvent::NameAdded{name:changed_name}])
+///                 sink.write(CustomerEvent::NameAdded{name: changed_name.to_string()}, self).await;
 ///             }
 ///
 ///             CustomerCommand::UpdateEmail { new_email } => {
-///                 Ok(vec![CustomerEvent::EmailUpdated { new_email }])
+///                 sink.write(CustomerEvent::EmailUpdated { new_email: new_email.to_string()}, self).await;
 ///             }
-///         }
+///         };
+///         Ok(())
 ///     }
 ///
 ///     fn apply(&mut self, event: Self::Event) {
 ///         match event {
-///             CustomerEvent::NameAdded{name: changed_name} => {
-///                 self.name = Some(changed_name);
-///             }
-///
-///             CustomerEvent::EmailUpdated{new_email} => {
-///                 self.email = Some(new_email);
-///             }
+///             CustomerEvent::NameAdded{name: changed_name} => self.name = Some(changed_name),
+///             CustomerEvent::EmailUpdated{new_email} => self.email = Some(new_email),
+///             CustomerEvent::CustomerDataPopulated => self.data_populated = true,
 ///         }
 ///     }
 /// }
@@ -84,6 +84,7 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # use std::sync::Arc;
     /// use cqrs_es::{Aggregate, AggregateError};
     /// # use serde::{Serialize, Deserialize, de::DeserializeOwned};
+    /// # use cqrs_es::event_sink::EventSink;
     /// # use cqrs_es::doc::{CustomerCommand, CustomerError, CustomerEvent, CustomerService};
     /// #[derive(Default,Serialize,Deserialize)]
     /// # struct Customer {
@@ -96,28 +97,30 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// #     type Event = CustomerEvent;
     /// #     type Error = CustomerError;
     /// #     type Services = CustomerService;
-    /// async fn handle(&self, command: Self::Command, service: &Self::Services) -> Result<Vec<Self::Event>, Self::Error> {
+    /// async fn handle(&mut self, command: Self::Command, service: &Self::Services, sink: &EventSink<Self>) -> Result<(), Self::Error> {
     ///     match command {
     ///         CustomerCommand::AddCustomerName{name: changed_name} => {
     ///             if self.name.is_some() {
     ///                 return Err("a name has already been added".into());
     ///             }
-    ///             Ok(vec![CustomerEvent::NameAdded{ name: changed_name}])
+    ///             sink.write(CustomerEvent::NameAdded{ name: changed_name.to_string()}, self).await;
     ///         }
     ///
     ///         CustomerCommand::UpdateEmail { new_email } => {
-    ///             Ok(vec![CustomerEvent::EmailUpdated { new_email }])
+    ///             sink.write(CustomerEvent::EmailUpdated { new_email: new_email.to_string() }, self).await;
     ///         }
-    ///     }
+    ///     };
+    ///     Ok(())
     /// }
     /// # fn apply(&mut self, event: Self::Event) {}
     /// # }
     /// ```
     fn handle(
-        &self,
+        &mut self,
         command: Self::Command,
         service: &Self::Services,
-    ) -> impl Future<Output = Result<Vec<Self::Event>, Self::Error>> + Send;
+        sink: &EventSink<Self>,
+    ) -> impl Future<Output = Result<(), Self::Error>> + Send;
     /// This is used to update the aggregate's state once an event has been committed.
     /// Any events returned from the `handle` method will be applied using this method
     /// in order to populate the state of the aggregate instance.
@@ -135,11 +138,13 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # use std::sync::Arc;
     /// # use serde::{Serialize, Deserialize, de::DeserializeOwned};
     /// # use cqrs_es::doc::{CustomerCommand, CustomerError, CustomerEvent, CustomerService};
+    /// # use cqrs_es::event_sink::EventSink;
     /// use cqrs_es::{Aggregate, AggregateError};
     /// #[derive(Default,Serialize,Deserialize)]
     /// # struct Customer {
     /// #     name: Option<String>,
     /// #     email: Option<String>,
+    /// #     data_populated: bool,
     /// # }
     /// # impl Aggregate for Customer {
     /// #     const TYPE: &'static str = "customer";
@@ -147,18 +152,14 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// #     type Event = CustomerEvent;
     /// #     type Error = CustomerError;
     /// #     type Services = CustomerService;
-    /// # async fn handle(&self, command: Self::Command, service: &Self::Services) -> Result<Vec<Self::Event>, Self::Error> {
-    /// # Ok(vec![])
+    /// # async fn handle(&mut self, command: Self::Command, service: &Self::Services, sink: &EventSink<Self>) -> Result<(), Self::Error> {
+    /// # Ok(())
     /// # }
     /// fn apply(&mut self, event: Self::Event) {
     ///     match event {
-    ///         CustomerEvent::NameAdded{name} => {
-    ///             self.name = Some(name);
-    ///         }
-    ///
-    ///         CustomerEvent::EmailUpdated{new_email} => {
-    ///             self.email = Some(new_email);
-    ///         }
+    ///         CustomerEvent::NameAdded{name: changed_name} => self.name = Some(changed_name),
+    ///         CustomerEvent::EmailUpdated{new_email} => self.email = Some(new_email),
+    ///         CustomerEvent::CustomerDataPopulated => self.data_populated = true,
     ///     }
     /// }
     /// # }

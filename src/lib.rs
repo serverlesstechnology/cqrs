@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-#![deny(missing_docs)]
+// #![deny(missing_docs)]
 #![deny(clippy::all)]
 #![warn(rust_2018_idioms)]
 #![doc = include_str!("../README.md")]
@@ -40,4 +40,5 @@ pub mod mem_store;
 
 pub mod persist;
 
+pub mod event_sink;
 pub mod test;

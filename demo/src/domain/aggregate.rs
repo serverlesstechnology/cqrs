@@ -1,9 +1,9 @@
-use cqrs_es::Aggregate;
-use serde::{Deserialize, Serialize};
-
 use crate::domain::commands::BankAccountCommand;
 use crate::domain::events::{BankAccountError, BankAccountEvent};
 use crate::services::BankAccountServices;
+use cqrs_es::event_sink::EventSink;
+use cqrs_es::Aggregate;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct BankAccount {
@@ -22,20 +22,23 @@ impl Aggregate for BankAccount {
     // The aggregate logic goes here. Note that this will be the _bulk_ of a CQRS system
     // so expect to use helper functions elsewhere to keep the code clean.
     async fn handle(
-        &self,
+        &mut self,
         command: Self::Command,
         services: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error> {
+        sink: &EventSink<Self>,
+    ) -> Result<(), Self::Error> {
         match command {
             BankAccountCommand::OpenAccount { account_id } => {
-                Ok(vec![BankAccountEvent::AccountOpened { account_id }])
+                sink.write(BankAccountEvent::AccountOpened { account_id }, self)
+                    .await;
             }
             BankAccountCommand::DepositMoney { amount } => {
                 let balance = self.balance + amount;
-                Ok(vec![BankAccountEvent::CustomerDepositedMoney {
-                    amount,
-                    balance,
-                }])
+                sink.write(
+                    BankAccountEvent::CustomerDepositedMoney { amount, balance },
+                    self,
+                )
+                .await;
             }
             BankAccountCommand::WithdrawMoney { amount, atm_id } => {
                 let balance = self.balance - amount;
@@ -50,10 +53,11 @@ impl Aggregate for BankAccount {
                 {
                     return Err("atm rule violation".into());
                 }
-                Ok(vec![BankAccountEvent::CustomerWithdrewCash {
-                    amount,
-                    balance,
-                }])
+                sink.write(
+                    BankAccountEvent::CustomerWithdrewCash { amount, balance },
+                    self,
+                )
+                .await;
             }
             BankAccountCommand::WriteCheck {
                 check_number,
@@ -71,13 +75,18 @@ impl Aggregate for BankAccount {
                 {
                     return Err("check invalid".into());
                 }
-                Ok(vec![BankAccountEvent::CustomerWroteCheck {
-                    check_number,
-                    amount,
-                    balance,
-                }])
+                sink.write(
+                    BankAccountEvent::CustomerWroteCheck {
+                        check_number,
+                        amount,
+                        balance,
+                    },
+                    self,
+                )
+                .await;
             }
-        }
+        };
+        Ok(())
     }
 
     fn apply(&mut self, event: Self::Event) {

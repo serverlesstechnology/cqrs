@@ -13,7 +13,7 @@ publish = false
 default-run = "cqrs-demo"
 
 [dependencies]
-cqrs-es = {path = "../", version = "0.4.12" }
+cqrs-es = {path = "../", version = "0.5.0" }
 postgres-es = { path = "../persistence/postgres-es" }
 
 async-trait = "0.1"

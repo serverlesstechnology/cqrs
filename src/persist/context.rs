@@ -25,7 +25,7 @@ impl<A: Aggregate> EventStoreAggregateContext<A> {
 }
 
 impl<A: Aggregate> AggregateContext<A> for EventStoreAggregateContext<A> {
-    fn aggregate(&self) -> &A {
-        &self.aggregate
+    fn aggregate(&mut self) -> &mut A {
+        &mut self.aggregate
     }
 }

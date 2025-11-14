@@ -43,5 +43,5 @@ where
     A: Aggregate,
 {
     /// The aggregate instance with all state loaded.
-    fn aggregate(&self) -> &A;
+    fn aggregate(&mut self) -> &mut A;
 }

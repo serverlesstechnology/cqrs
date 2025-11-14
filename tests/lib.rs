@@ -4,6 +4,7 @@ use std::sync::{Arc, RwLock};
 
 use serde::{Deserialize, Serialize};
 
+use cqrs_es::event_sink::EventSink;
 use cqrs_es::mem_store::MemStore;
 use cqrs_es::test::TestFramework;
 use cqrs_es::Query;
@@ -36,16 +37,20 @@ impl Aggregate for TestAggregate {
     type Services = TestService;
 
     async fn handle(
-        &self,
+        &mut self,
         command: Self::Command,
         _service: &Self::Services,
-    ) -> Result<Vec<TestEvent>, Self::Error> {
+        sink: &EventSink<Self>,
+    ) -> Result<(), Self::Error> {
         match &command {
             TestCommand::CreateTest(command) => {
-                let event = TestEvent::Created(Created {
-                    id: command.id.to_string(),
-                });
-                Ok(vec![event])
+                sink.write(
+                    TestEvent::Created(Created {
+                        id: command.id.to_string(),
+                    }),
+                    self,
+                )
+                .await;
             }
 
             TestCommand::ConfirmTest(command) => {
@@ -54,19 +59,26 @@ impl Aggregate for TestAggregate {
                         return Err("test already performed".into());
                     }
                 }
-                let event = TestEvent::Tested(Tested {
-                    test_name: command.test_name.to_string(),
-                });
-                Ok(vec![event])
+                sink.write(
+                    TestEvent::Tested(Tested {
+                        test_name: command.test_name.to_string(),
+                    }),
+                    self,
+                )
+                .await;
             }
 
             TestCommand::DoSomethingElse(command) => {
-                let event = TestEvent::SomethingElse(SomethingElse {
-                    description: command.description.clone(),
-                });
-                Ok(vec![event])
+                sink.write(
+                    TestEvent::SomethingElse(SomethingElse {
+                        description: command.description.clone(),
+                    }),
+                    self,
+                )
+                .await;
             }
-        }
+        };
+        Ok(())
     }
 
     fn apply(&mut self, event: Self::Event) {
