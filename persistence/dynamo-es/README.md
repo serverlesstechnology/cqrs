@@ -7,8 +7,8 @@ Add to your Cargo.toml file:
 
 ```toml
 [dependencies]
-cqrs-es = "0.4.11"
-dynamo-es = "0.4.11"
+cqrs-es = "0.5.0"
+dynamo-es = "0.5.0"
 ```
 
 Requires access to a Dynamo DB with existing tables. See:
@@ -64,7 +64,7 @@ https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-api
 
 Things that could be helpful:
 - [User guide](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
-- [Demo application](https://github.com/serverlesstechnology/cqrs-demo) using the warp http server.
+- [Demo application](https://github.com/serverlesstechnology/cqrs/tree/main/demo) using the warp http server.
 - [Change log](https://github.com/serverlesstechnology/cqrs/blob/main/change_log.md)
 
 [![Crates.io](https://img.shields.io/crates/v/dynamo-es)](https://crates.io/crates/dynamo-es)

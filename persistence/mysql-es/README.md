@@ -9,8 +9,8 @@ Add to your Cargo.toml file:
 
 ```toml
 [dependencies]
-cqrs-es = "0.4.12"
-mysql-es = "0.4.12"
+cqrs-es = "0.5.0"
+mysql-es = "0.5.0"
 ```
 
 Requires access to a MySql DB with existing tables. See:
@@ -25,7 +25,7 @@ let cqrs = mysql_es::mysql_cqrs(pool, vec![])
 
 Things that could be helpful:
 - [User guide](https://doc.rust-cqrs.org) along with an introduction to CQRS and event sourcing.
-- [Demo application](https://github.com/serverlesstechnology/cqrs-demo) using the warp http server.
+- [Demo application](https://github.com/serverlesstechnology/cqrs/tree/main/demo) using the warp http server.
 - [Change log](https://github.com/serverlesstechnology/cqrs/blob/main/docs/versions/change_log.md)
 
 
