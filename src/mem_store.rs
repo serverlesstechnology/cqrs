@@ -185,7 +185,7 @@ impl<A> AggregateContext<A> for MemStoreAggregateContext<A>
 where
     A: Aggregate,
 {
-    fn aggregate(&self) -> &A {
-        &self.aggregate
+    fn aggregate(&mut self) -> &mut A {
+        &mut self.aggregate
     }
 }

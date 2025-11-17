@@ -3,8 +3,10 @@ pub(crate) mod tests {
     use std::collections::HashMap;
     use std::fmt::{Display, Formatter};
 
+    use crate::{DynamoEventRepository, DynamoViewRepository};
     use aws_sdk_dynamodb::config::{Credentials, Region};
     use aws_sdk_dynamodb::Client;
+    use cqrs_es::event_sink::EventSink;
     use cqrs_es::persist::{
         GenericQuery, PersistedEventRepository, PersistedEventStore, SerializedEvent,
         SerializedSnapshot,
@@ -12,8 +14,6 @@ pub(crate) mod tests {
     use cqrs_es::{Aggregate, DomainEvent, EventEnvelope, EventStore, View};
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
-
-    use crate::{DynamoEventRepository, DynamoViewRepository};
 
     #[derive(Debug, Serialize, Deserialize, PartialEq, Default)]
     pub(crate) struct TestAggregate {
@@ -30,11 +30,12 @@ pub(crate) mod tests {
         type Services = TestServices;
 
         async fn handle(
-            &self,
+            &mut self,
             _command: Self::Command,
             _services: &Self::Services,
-        ) -> Result<Vec<Self::Event>, Self::Error> {
-            Ok(vec![])
+            _sink: &EventSink<Self>,
+        ) -> Result<(), Self::Error> {
+            Ok(())
         }
 
         fn apply(&mut self, _e: Self::Event) {}

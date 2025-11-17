@@ -1,5 +1,11 @@
 # Change log
 
+#### `v0.5.0`
+- Changes to the `Aggregate::handle` interface to support [applying events in real time during command
+handling](https://github.com/serverlesstechnology/cqrs/issues/224)
+(see [migration guide](migration_0_5_0.md)).
+- Remove `async-trait` from a number of traits.
+
 #### `v0.4.11`
 - Commits with no produced events will not invoke downstream queries.
 - Updates per Clippy due to Rust compiler changes.

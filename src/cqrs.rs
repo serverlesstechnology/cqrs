@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::event_sink::EventSink;
 use crate::query::Query;
 use crate::store::EventStore;
 use crate::Aggregate;
@@ -169,12 +170,14 @@ where
         command: A::Command,
         metadata: HashMap<String, String>,
     ) -> Result<(), AggregateError<A::Error>> {
-        let aggregate_context = self.store.load_aggregate(aggregate_id).await?;
+        let mut aggregate_context = self.store.load_aggregate(aggregate_id).await?;
         let aggregate = aggregate_context.aggregate();
-        let resultant_events = aggregate
-            .handle(command, &self.service)
+        let sink: EventSink<A> = Default::default();
+        aggregate
+            .handle(command, &self.service, &sink)
             .await
             .map_err(AggregateError::UserError)?;
+        let resultant_events = sink.collect().await;
         let committed_events = self
             .store
             .commit(resultant_events, aggregate_context, metadata)
