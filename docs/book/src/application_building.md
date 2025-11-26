@@ -23,6 +23,6 @@ For using `postgres-es` for persistence, add to the dependencies section of your
 
 ```toml
 [dependencies]
-cqrs-es = "0.3.0"
-postgres-es = "0.3.0"
+cqrs-es = "0.5.0"
+postgres-es = "0.5.0"
 ```

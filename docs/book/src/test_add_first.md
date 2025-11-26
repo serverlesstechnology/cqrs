@@ -57,17 +57,18 @@ We have told the test to expect a `CustomerDepositedMoney` event, but none has b
 Let's go back to our `Command` implementation for `DepositMoney` and fix this.
 
 ```rust
-async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError<Self::Error>> {
+async fn handle(&mut self, command: Self::Command, service: &Self::Services, sink: &EventSink<Self>) -> Result<(), Self::Error> {
     match command {
         BankAccountCommand::DepositMoney { amount } => {
             let balance = self.balance + amount;
-            Ok(vec![BankAccountEvent::CustomerDepositedMoney {
+            sink.write(BankAccountEvent::CustomerDepositedMoney {
                 amount,
                 balance,
-            }])
+            }, self);
         }
-        _ => Ok(vec![])
+        _ => {}
     }
+    Ok(())
 }
 
 ```

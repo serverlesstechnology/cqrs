@@ -28,14 +28,14 @@ Since we have not added any withdrawal logic yet this should fail.
 Let's correct this with some naive logic to produce the event:
 
 ```rust
-    async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError<Self::Error>> {
+    async fn handle(&mut self, command: Self::Command, service: &Self::Services, sink: &EventSink<Self>) -> Result<(), Self::Error> {
         match command {
             BankAccountCommand::WithdrawMoney { amount } => {
                 let balance = self.balance - amount;
-                Ok(vec![BankAccountEvent::CustomerWithdrewCash {
+                sink.write(BankAccountEvent::CustomerWithdrewCash {
                     amount,
                     balance,
-                }])
+                }, self);
             }
             ...
         }
@@ -63,17 +63,17 @@ We should see our new test fail since our naive logic cannot handle this yet.
 Now we update our command logic to return an error when this situation arises:
 
 ```rust
-    async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError<Self::Error>> {
+    async fn handle(&mut self, command: Self::Command, service: &Self::Services, sink: &EventSink<Self>) -> Result<(), Self::Error> {
         match command {
             BankAccountCommand::WithdrawMoney { amount } => {
                 let balance = self.balance - amount;
                 if balance < 0_f64 {
                     return Err(BankAccountError::from("funds not available"));
                 }
-                Ok(vec![BankAccountEvent::CustomerWithdrewCash {
+                sink.write(BankAccountEvent::CustomerWithdrewCash {
                     amount,
                     balance,
-                }])
+                }, self);
             }
             ...
         }

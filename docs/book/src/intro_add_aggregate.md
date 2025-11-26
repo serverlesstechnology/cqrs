@@ -32,7 +32,7 @@ impl Aggregate for BankAccount {
 
     // The aggregate logic goes here. Note that this will be the _bulk_ of a CQRS system
     // so expect to use helper functions elsewhere to keep the code clean.
-    async fn handle(&self, command: Self::Command, services: Self::Services) -> Result<Vec<Self::Event>, Self::Error> {
+    async fn handle(&mut self, command: Self::Command, service: &Self::Services, sink: &EventSink<Self>) -> Result<(), Self::Error> {
         todo!()
     }
 
@@ -80,7 +80,7 @@ The `handle` method of this trait is where _all_ of the business logic will go, 
 
 ```rust
     // note that the aggregate is immutable and an error can be returned
-    async fn handle(&self, command: Self::Command) -> Result<Vec<Self::Event>, AggregateError<Self::Error>> {
+async fn handle(&mut self, command: Self::Command, service: &Self::Services, sink: &EventSink<Self>) -> Result<(), Self::Error> {
         todo!()
     }
 ```
