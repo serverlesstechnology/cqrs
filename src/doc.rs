@@ -264,7 +264,7 @@ mod doc_tests {
     }
 
     #[test]
-    fn test_add_email_name_populted() {
+    fn test_add_email_name_populated() {
         CustomerTestFramework::with(CustomerService)
             .given(vec![CustomerEvent::NameAdded {
                 name: "John Doe".to_string(),
@@ -278,5 +278,43 @@ mod doc_tests {
                 },
                 CustomerEvent::CustomerDataPopulated,
             ]);
+    }
+
+    #[test]
+    fn test_add_email_name_populated_single_event() {
+        CustomerTestFramework::with(CustomerService)
+            .given(vec![CustomerEvent::NameAdded {
+                name: "John Doe".to_string(),
+            }])
+            .when(CustomerCommand::UpdateEmail {
+                new_email: "john.doe@example.com".to_string(),
+            })
+            .then_expect_events_matching(vec![CustomerEvent::EmailUpdated {
+                new_email: "john.doe@example.com".to_string(),
+            }]);
+
+        CustomerTestFramework::with(CustomerService)
+            .given(vec![CustomerEvent::NameAdded {
+                name: "John Doe".to_string(),
+            }])
+            .when(CustomerCommand::UpdateEmail {
+                new_email: "john.doe@example.com".to_string(),
+            })
+            .then_expect_events_matching(vec![CustomerEvent::CustomerDataPopulated]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_add_email_name_populated_single_event_missing() {
+        CustomerTestFramework::with(CustomerService)
+            .given(vec![CustomerEvent::NameAdded {
+                name: "John Doe".to_string(),
+            }])
+            .when(CustomerCommand::UpdateEmail {
+                new_email: "john.doe@example.com".to_string(),
+            })
+            .then_expect_events_matching(vec![CustomerEvent::EmailUpdated {
+                new_email: "incorrect_email@example.com".to_string(),
+            }]);
     }
 }
