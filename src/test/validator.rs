@@ -30,6 +30,46 @@ impl<A: Aggregate> AggregateResultValidator<A> {
         assert_eq!(events, expected_events);
     }
 
+    /// Verifies that the individual expected events have been produced by the command.
+    /// This only checks that the events exist, it does not verify the order nor does it check any
+    /// events that are not provided.
+    ///
+    /// ```
+    /// # use cqrs_es::doc::{MyAggregate, MyCommands, MyEvents, MyService};
+    /// # async fn test() {
+    /// use cqrs_es::test::TestFramework;
+    ///
+    /// let validator = TestFramework::<MyAggregate>::with(MyService)
+    ///     .given_no_previous_events()
+    ///     .when(MyCommands::DoSomething);
+    ///
+    /// validator.then_expect_events_matching(vec![MyEvents::SomethingWasDone]);
+    /// # }
+    /// ```
+    pub fn then_expect_events_matching(self, expected_events: Vec<A::Event>) {
+        let events = self.result.unwrap_or_else(|err| {
+            panic!("expected success, received aggregate error: '{err}'");
+        });
+        let mut missing_events: Vec<A::Event> = Default::default();
+        for expected_event in expected_events {
+            if !Self::event_exists(&expected_event, &events) {
+                missing_events.push(expected_event);
+            }
+        }
+        if !missing_events.is_empty() {
+            panic!("missing events: '{missing_events:?}'\n  found: '{events:?}");
+        }
+    }
+
+    fn event_exists(expected_event: &A::Event, actual_events: &[A::Event]) -> bool {
+        for event in actual_events {
+            if expected_event == event {
+                return true;
+            }
+        }
+        false
+    }
+
     /// Verifies that the result is a `UserError` and returns the internal error payload for
     /// further validation.
     ///
