@@ -7,7 +7,7 @@ use futures::stream::BoxStream;
 use futures::TryStreamExt;
 use serde_json::Value;
 use sqlx::mysql::MySqlRow;
-use sqlx::{MySql, Pool, Row, Transaction};
+use sqlx::{MySql, Pool, Row, SqlStr, Transaction};
 
 use crate::error::MysqlAggregateError;
 use crate::sql_query::SqlQueryFactory;
@@ -39,7 +39,7 @@ impl PersistedEventRepository for MysqlEventRepository {
         last_sequence: usize,
     ) -> Result<Vec<SerializedEvent>, PersistenceError> {
         let query = self.query_factory.get_last_events(last_sequence);
-        self.select_events::<A>(aggregate_id, &query).await
+        self.select_events::<A>(aggregate_id, query).await
     }
 
     async fn get_snapshot<A: Aggregate>(
@@ -85,7 +85,7 @@ impl PersistedEventRepository for MysqlEventRepository {
         aggregate_id: &str,
     ) -> Result<ReplayStream, PersistenceError> {
         Ok(stream_events(
-            self.query_factory.select_events().to_string(),
+            self.query_factory.select_events(),
             A::TYPE.to_string(),
             aggregate_id.to_string(),
             self.pool.clone(),
@@ -95,7 +95,7 @@ impl PersistedEventRepository for MysqlEventRepository {
 
     async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
         Ok(stream_all_events(
-            self.query_factory.all_events().to_string(),
+            self.query_factory.all_events(),
             A::TYPE.to_string(),
             self.pool.clone(),
             self.stream_channel_size,
@@ -104,7 +104,7 @@ impl PersistedEventRepository for MysqlEventRepository {
 }
 
 fn stream_events(
-    query: String,
+    query: SqlStr,
     aggregate_type: String,
     aggregate_id: String,
     pool: Pool<MySql>,
@@ -112,23 +112,21 @@ fn stream_events(
 ) -> ReplayStream {
     let (feed, stream) = ReplayStream::new(channel_size);
     tokio::spawn(async move {
-        let query = sqlx::query(&query)
-            .bind(&aggregate_type)
-            .bind(&aggregate_id);
+        let query = sqlx::query(query).bind(&aggregate_type).bind(&aggregate_id);
         let rows = query.fetch(&pool);
         process_rows(feed, rows).await;
     });
     stream
 }
 fn stream_all_events(
-    query: String,
+    query: SqlStr,
     aggregate_type: String,
     pool: Pool<MySql>,
     channel_size: usize,
 ) -> ReplayStream {
     let (feed, stream) = ReplayStream::new(channel_size);
     tokio::spawn(async move {
-        let query = sqlx::query(&query).bind(&aggregate_type);
+        let query = sqlx::query(query).bind(&aggregate_type);
         let rows = query.fetch(&pool);
         process_rows(feed, rows).await;
     });
@@ -153,7 +151,7 @@ impl MysqlEventRepository {
     async fn select_events<A: Aggregate>(
         &self,
         aggregate_id: &str,
-        query: &str,
+        query: SqlStr,
     ) -> Result<Vec<SerializedEvent>, PersistenceError> {
         let mut rows = sqlx::query(query)
             .bind(A::TYPE)
@@ -216,11 +214,15 @@ impl MysqlEventRepository {
     ///     store.with_tables("my_event_table", "my_snapshot_table")
     /// }
     /// ```
-    pub fn with_tables(self, events_table: &str, snapshots_table: &str) -> Self {
+    pub fn with_tables(self, events_table: &'static str, snapshots_table: &'static str) -> Self {
         Self::use_tables(self.pool, events_table, snapshots_table)
     }
 
-    fn use_tables(pool: Pool<MySql>, events_table: &str, snapshots_table: &str) -> Self {
+    fn use_tables(
+        pool: Pool<MySql>,
+        events_table: &'static str,
+        snapshots_table: &'static str,
+    ) -> Self {
         Self {
             pool,
             query_factory: SqlQueryFactory::new(events_table, snapshots_table),
