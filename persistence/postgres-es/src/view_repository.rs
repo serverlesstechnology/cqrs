@@ -3,15 +3,15 @@ use std::marker::PhantomData;
 use cqrs_es::persist::{PersistenceError, ViewContext, ViewRepository};
 use cqrs_es::{Aggregate, View};
 use sqlx::postgres::PgRow;
-use sqlx::{Pool, Postgres, Row};
+use sqlx::{AssertSqlSafe, Pool, Postgres, Row, SqlSafeStr, SqlStr};
 
 use crate::error::PostgresAggregateError;
 
 /// A postgres backed query repository for use in backing a `GenericQuery`.
 pub struct PostgresViewRepository<V, A> {
-    insert_sql: String,
-    update_sql: String,
-    select_sql: String,
+    insert_sql: SqlStr,
+    update_sql: SqlStr,
+    select_sql: SqlStr,
     pool: Pool<Postgres>,
     _phantom: PhantomData<(V, A)>,
 }
@@ -35,13 +35,19 @@ where
     ///     PostgresViewRepository::new("my_view_table", pool)
     /// }
     /// ```
-    pub fn new(view_name: &str, pool: Pool<Postgres>) -> Self {
-        let insert_sql =
-            format!("INSERT INTO {view_name} (payload, version, view_id) VALUES ( $1, $2, $3 )");
-        let update_sql = format!(
+    pub fn new(view_name: &'static str, pool: Pool<Postgres>) -> Self {
+        let insert_sql = AssertSqlSafe(format!(
+            "INSERT INTO {view_name} (payload, version, view_id) VALUES ( $1, $2, $3 )"
+        ))
+        .into_sql_str();
+        let update_sql = AssertSqlSafe(format!(
             "UPDATE {view_name} SET payload= $1 , version= $2 WHERE view_id= $3 AND version= $4"
-        );
-        let select_sql = format!("SELECT version,payload FROM {view_name} WHERE view_id= $1");
+        ))
+        .into_sql_str();
+        let select_sql = AssertSqlSafe(format!(
+            "SELECT version,payload FROM {view_name} WHERE view_id= $1"
+        ))
+        .into_sql_str();
         Self {
             insert_sql,
             update_sql,
@@ -58,7 +64,7 @@ where
     A: Aggregate,
 {
     async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError> {
-        let row: Option<PgRow> = sqlx::query(&self.select_sql)
+        let row: Option<PgRow> = sqlx::query(self.select_sql.clone())
             .bind(view_id)
             .fetch_optional(&self.pool)
             .await
@@ -76,7 +82,7 @@ where
         &self,
         view_id: &str,
     ) -> Result<Option<(V, ViewContext)>, PersistenceError> {
-        let row: Option<PgRow> = sqlx::query(&self.select_sql)
+        let row: Option<PgRow> = sqlx::query(self.select_sql.clone())
             .bind(view_id)
             .fetch_optional(&self.pool)
             .await
@@ -94,12 +100,12 @@ where
 
     async fn update_view(&self, view: V, context: ViewContext) -> Result<(), PersistenceError> {
         let sql = match context.version {
-            0 => &self.insert_sql,
-            _ => &self.update_sql,
+            0 => self.insert_sql.clone(),
+            _ => self.update_sql.clone(),
         };
         let version = context.version + 1;
         let payload = serde_json::to_value(&view).map_err(PostgresAggregateError::from)?;
-        let rows_affected = sqlx::query(sql.as_str())
+        let rows_affected = sqlx::query(sql)
             .bind(payload)
             .bind(version)
             .bind(context.view_instance_id)

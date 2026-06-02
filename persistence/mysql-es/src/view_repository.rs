@@ -3,15 +3,15 @@ use std::marker::PhantomData;
 use cqrs_es::persist::{PersistenceError, ViewContext, ViewRepository};
 use cqrs_es::{Aggregate, View};
 use sqlx::mysql::MySqlRow;
-use sqlx::{MySql, Pool, Row};
+use sqlx::{AssertSqlSafe, MySql, Pool, Row, SqlSafeStr, SqlStr};
 
 use crate::error::MysqlAggregateError;
 
 /// A mysql backed query repository for use in backing a `GenericQuery`.
 pub struct MysqlViewRepository<V, A> {
-    insert_sql: String,
-    update_sql: String,
-    select_sql: String,
+    insert_sql: SqlStr,
+    update_sql: SqlStr,
+    select_sql: SqlStr,
     pool: Pool<MySql>,
     _phantom: PhantomData<(V, A)>,
 }
@@ -35,11 +35,19 @@ where
     ///     MysqlViewRepository::new("my_view_table", pool)
     /// }
     /// ```
-    pub fn new(view_name: &str, pool: Pool<MySql>) -> Self {
-        let insert_sql =
-            format!("INSERT INTO {view_name} (payload, version, view_id) VALUES ( ?, ?, ? )");
-        let update_sql = format!("UPDATE {view_name} SET payload= ? , version= ? WHERE view_id= ?");
-        let select_sql = format!("SELECT version,payload FROM {view_name} WHERE view_id= ?");
+    pub fn new(view_name: &'static str, pool: Pool<MySql>) -> Self {
+        let insert_sql = AssertSqlSafe(format!(
+            "INSERT INTO {view_name} (payload, version, view_id) VALUES ( ?, ?, ? )"
+        ))
+        .into_sql_str();
+        let update_sql = AssertSqlSafe(format!(
+            "UPDATE {view_name} SET payload= ? , version= ? WHERE view_id= ?"
+        ))
+        .into_sql_str();
+        let select_sql = AssertSqlSafe(format!(
+            "SELECT version,payload FROM {view_name} WHERE view_id= ?"
+        ))
+        .into_sql_str();
         Self {
             insert_sql,
             update_sql,
@@ -56,7 +64,7 @@ where
     A: Aggregate,
 {
     async fn load(&self, view_id: &str) -> Result<Option<V>, PersistenceError> {
-        let row: Option<MySqlRow> = sqlx::query(&self.select_sql)
+        let row: Option<MySqlRow> = sqlx::query(self.select_sql.clone())
             .bind(view_id)
             .fetch_optional(&self.pool)
             .await
@@ -74,7 +82,7 @@ where
         &self,
         view_id: &str,
     ) -> Result<Option<(V, ViewContext)>, PersistenceError> {
-        let row: Option<MySqlRow> = sqlx::query(&self.select_sql)
+        let row: Option<MySqlRow> = sqlx::query(self.select_sql.clone())
             .bind(view_id)
             .fetch_optional(&self.pool)
             .await
@@ -92,12 +100,12 @@ where
 
     async fn update_view(&self, view: V, context: ViewContext) -> Result<(), PersistenceError> {
         let sql = match context.version {
-            0 => &self.insert_sql,
-            _ => &self.update_sql,
+            0 => self.insert_sql.clone(),
+            _ => self.update_sql.clone(),
         };
         let version = context.version + 1;
         let payload = serde_json::to_value(&view).map_err(MysqlAggregateError::from)?;
-        sqlx::query(sql.as_str())
+        sqlx::query(sql)
             .bind(payload)
             .bind(version)
             .bind(context.view_instance_id)
