@@ -35,17 +35,21 @@ where
     ///     PostgresViewRepository::new("my_view_table", pool)
     /// }
     /// ```
-    pub fn new(view_name: &'static str, pool: Pool<Postgres>) -> Self {
+    pub fn new(view_name: impl SqlSafeStr, pool: Pool<Postgres>) -> Self {
+        let view_sql_str = view_name.into_sql_str();
         let insert_sql = AssertSqlSafe(format!(
-            "INSERT INTO {view_name} (payload, version, view_id) VALUES ( $1, $2, $3 )"
+            "INSERT INTO {} (payload, version, view_id) VALUES ( $1, $2, $3 )",
+            view_sql_str.as_str()
         ))
         .into_sql_str();
         let update_sql = AssertSqlSafe(format!(
-            "UPDATE {view_name} SET payload= $1 , version= $2 WHERE view_id= $3 AND version= $4"
+            "UPDATE {} SET payload= $1 , version= $2 WHERE view_id= $3 AND version= $4",
+            view_sql_str.as_str()
         ))
         .into_sql_str();
         let select_sql = AssertSqlSafe(format!(
-            "SELECT version,payload FROM {view_name} WHERE view_id= $1"
+            "SELECT version,payload FROM {} WHERE view_id= $1",
+            view_sql_str.as_str()
         ))
         .into_sql_str();
         Self {

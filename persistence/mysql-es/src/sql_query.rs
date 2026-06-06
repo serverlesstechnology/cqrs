@@ -1,7 +1,7 @@
 use sqlx::{AssertSqlSafe, SqlSafeStr, SqlStr};
 
 pub(crate) struct SqlQueryFactory {
-    event_table: &'static str,
+    event_table: SqlStr,
     select_events: SqlStr,
     insert_event: SqlStr,
     all_events: SqlStr,
@@ -11,33 +11,65 @@ pub(crate) struct SqlQueryFactory {
 }
 
 impl SqlQueryFactory {
-    pub fn new(event_table: &'static str, snapshot_table: &'static str) -> Self {
-        Self {
-            event_table: event_table,
-            select_events: AssertSqlSafe(format!("
+    pub fn new(event_table: impl SqlSafeStr, snapshot_table: impl SqlSafeStr) -> Self {
+        let event_table = event_table.into_sql_str();
+        let snapshot_table = snapshot_table.into_sql_str();
+        let select_events = AssertSqlSafe(format!(
+            "
 SELECT aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata
-  FROM {event_table}
+  FROM {}
   WHERE aggregate_type = ? AND aggregate_id = ?
-  ORDER BY sequence")).into_sql_str(),
-            insert_event: AssertSqlSafe(format!("
-INSERT INTO {event_table} (aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata)
-VALUES (?, ?, ?, ?, ?, ?, ?)")).into_sql_str(),
-            all_events: AssertSqlSafe(format!("
+  ORDER BY sequence",
+            event_table.as_str()
+        ))
+        .into_sql_str();
+        let insert_event = AssertSqlSafe(format!(
+            "
+INSERT INTO {} (aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata)
+VALUES (?, ?, ?, ?, ?, ?, ?)",
+            event_table.as_str()
+        ))
+        .into_sql_str();
+        let all_events = AssertSqlSafe(format!(
+            "
 SELECT aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata
-  FROM {event_table}
+  FROM {}
   WHERE aggregate_type = ?
-  ORDER BY sequence")).into_sql_str(),
-            insert_snapshot: AssertSqlSafe(format!("
-INSERT INTO {snapshot_table} (aggregate_type, aggregate_id, last_sequence, current_snapshot, payload)
-VALUES (?, ?, ?, ?, ?)")).into_sql_str(),
-            update_snapshot: AssertSqlSafe(format!("
-UPDATE {snapshot_table}
+  ORDER BY sequence",
+            event_table.as_str()
+        ))
+        .into_sql_str();
+        let insert_snapshot = AssertSqlSafe(format!(
+            "
+INSERT INTO {} (aggregate_type, aggregate_id, last_sequence, current_snapshot, payload)
+VALUES (?, ?, ?, ?, ?)",
+            snapshot_table.as_str()
+        ))
+        .into_sql_str();
+        let update_snapshot = AssertSqlSafe(format!(
+            "
+UPDATE {}
   SET last_sequence= ? , payload= ?, current_snapshot= ?
-  WHERE aggregate_type= ? AND aggregate_id= ? AND current_snapshot= ?")).into_sql_str(),
-            select_snapshot: AssertSqlSafe(format!("
+  WHERE aggregate_type= ? AND aggregate_id= ? AND current_snapshot= ?",
+            snapshot_table.as_str()
+        ))
+        .into_sql_str();
+        let select_snapshot = AssertSqlSafe(format!(
+            "
 SELECT aggregate_type, aggregate_id, last_sequence, current_snapshot, payload
-  FROM {snapshot_table}
-  WHERE aggregate_type = ? AND aggregate_id = ?")).into_sql_str(),
+  FROM {}
+  WHERE aggregate_type = ? AND aggregate_id = ?",
+            snapshot_table.as_str()
+        ))
+        .into_sql_str();
+        Self {
+            event_table,
+            select_events,
+            insert_event,
+            all_events,
+            insert_snapshot,
+            update_snapshot,
+            select_snapshot,
         }
     }
     pub fn select_events(&self) -> SqlStr {
@@ -65,7 +97,8 @@ SELECT aggregate_type, aggregate_id, sequence, event_type, event_version, payloa
   FROM {}
   WHERE aggregate_type = ? AND aggregate_id = ? AND sequence > {}
   ORDER BY sequence",
-            self.event_table, last_sequence
+            self.event_table.as_str(),
+            last_sequence
         ))
         .into_sql_str()
     }

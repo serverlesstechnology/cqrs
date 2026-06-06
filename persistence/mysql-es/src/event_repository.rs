@@ -7,7 +7,7 @@ use futures::stream::BoxStream;
 use futures::TryStreamExt;
 use serde_json::Value;
 use sqlx::mysql::MySqlRow;
-use sqlx::{MySql, Pool, Row, SqlStr, Transaction};
+use sqlx::{MySql, Pool, Row, SqlSafeStr, SqlStr, Transaction};
 
 use crate::error::MysqlAggregateError;
 use crate::sql_query::SqlQueryFactory;
@@ -214,14 +214,18 @@ impl MysqlEventRepository {
     ///     store.with_tables("my_event_table", "my_snapshot_table")
     /// }
     /// ```
-    pub fn with_tables(self, events_table: &'static str, snapshots_table: &'static str) -> Self {
+    pub fn with_tables(
+        self,
+        events_table: impl SqlSafeStr,
+        snapshots_table: impl SqlSafeStr,
+    ) -> Self {
         Self::use_tables(self.pool, events_table, snapshots_table)
     }
 
     fn use_tables(
         pool: Pool<MySql>,
-        events_table: &'static str,
-        snapshots_table: &'static str,
+        events_table: impl SqlSafeStr,
+        snapshots_table: impl SqlSafeStr,
     ) -> Self {
         Self {
             pool,
