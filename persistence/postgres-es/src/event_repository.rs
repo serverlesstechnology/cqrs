@@ -5,7 +5,7 @@ use cqrs_es::Aggregate;
 use futures::TryStreamExt;
 use serde_json::Value;
 use sqlx::postgres::PgRow;
-use sqlx::{Pool, Postgres, Row, Transaction};
+use sqlx::{Pool, Postgres, Row, SqlSafeStr, SqlStr, Transaction};
 
 use crate::error::PostgresAggregateError;
 use crate::sql_query::SqlQueryFactory;
@@ -37,7 +37,7 @@ impl PersistedEventRepository for PostgresEventRepository {
         last_sequence: usize,
     ) -> Result<Vec<SerializedEvent>, PersistenceError> {
         let query = self.query_factory.get_last_events(last_sequence);
-        self.select_events::<A>(aggregate_id, &query).await
+        self.select_events::<A>(aggregate_id, query).await
     }
 
     async fn get_snapshot<A: Aggregate>(
@@ -83,7 +83,7 @@ impl PersistedEventRepository for PostgresEventRepository {
         aggregate_id: &str,
     ) -> Result<ReplayStream, PersistenceError> {
         Ok(stream_events(
-            self.query_factory.select_events().to_string(),
+            self.query_factory.select_events(),
             A::TYPE.to_string(),
             aggregate_id.to_string(),
             self.pool.clone(),
@@ -94,7 +94,7 @@ impl PersistedEventRepository for PostgresEventRepository {
     // TODO: aggregate id is unused here, `stream_events` function needs to be broken up
     async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
         Ok(stream_events(
-            self.query_factory.all_events().to_string(),
+            self.query_factory.all_events(),
             A::TYPE.to_string(),
             String::new(),
             self.pool.clone(),
@@ -104,7 +104,7 @@ impl PersistedEventRepository for PostgresEventRepository {
 }
 
 fn stream_events(
-    query: String,
+    query: SqlStr,
     aggregate_type: String,
     aggregate_id: String,
     pool: Pool<Postgres>,
@@ -112,9 +112,7 @@ fn stream_events(
 ) -> ReplayStream {
     let (mut feed, stream) = ReplayStream::new(channel_size);
     tokio::spawn(async move {
-        let query = sqlx::query(&query)
-            .bind(&aggregate_type)
-            .bind(&aggregate_id);
+        let query = sqlx::query(query).bind(&aggregate_type).bind(&aggregate_id);
         let mut rows = query.fetch(&pool);
         while let Some(row) = rows.try_next().await.unwrap() {
             let event = PostgresEventRepository::deser_event(&row);
@@ -131,7 +129,7 @@ impl PostgresEventRepository {
     async fn select_events<A: Aggregate>(
         &self,
         aggregate_id: &str,
-        query: &str,
+        query: SqlStr,
     ) -> Result<Vec<SerializedEvent>, PersistenceError> {
         let mut rows = sqlx::query(query)
             .bind(A::TYPE)
@@ -198,11 +196,19 @@ impl PostgresEventRepository {
     ///     store.with_tables("my_event_table", "my_snapshot_table")
     /// }
     /// ```
-    pub fn with_tables(self, events_table: &str, snapshots_table: &str) -> Self {
+    pub fn with_tables(
+        self,
+        events_table: impl SqlSafeStr,
+        snapshots_table: impl SqlSafeStr,
+    ) -> Self {
         Self::use_tables(self.pool, events_table, snapshots_table)
     }
 
-    fn use_tables(pool: Pool<Postgres>, events_table: &str, snapshots_table: &str) -> Self {
+    fn use_tables(
+        pool: Pool<Postgres>,
+        events_table: impl SqlSafeStr,
+        snapshots_table: impl SqlSafeStr,
+    ) -> Self {
         Self {
             pool,
             query_factory: SqlQueryFactory::new(events_table, snapshots_table),
@@ -312,7 +318,7 @@ impl PostgresEventRepository {
 
     pub(crate) async fn persist_events<A: Aggregate>(
         &self,
-        inser_event_query: &str,
+        inser_event_query: SqlStr,
         tx: &mut Transaction<'_, Postgres>,
         events: &[SerializedEvent],
     ) -> Result<usize, PostgresAggregateError> {
@@ -323,7 +329,7 @@ impl PostgresEventRepository {
             let event_version = &event.event_version;
             let payload = serde_json::to_value(&event.payload)?;
             let metadata = serde_json::to_value(&event.metadata)?;
-            sqlx::query(inser_event_query)
+            sqlx::query(inser_event_query.clone())
                 .bind(A::TYPE)
                 .bind(event.aggregate_id.as_str())
                 .bind(event.sequence as i32)

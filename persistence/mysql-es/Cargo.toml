@@ -15,7 +15,7 @@ cqrs-es.workspace = true
 futures = "0.3"
 serde = { workspace = true, features = ["derive"] }
 serde_json = "1.0"
-sqlx = { version = "0.8", default-features = false, features = ["mysql", "json"] }
+sqlx = { version = "0.9", default-features = false, features = ["mysql", "json"] }
 tokio = { workspace = true, features = ["rt"] }
 thiserror = "2.0.18"
 
@@ -24,7 +24,22 @@ uuid.workspace = true
 
 [features]
 default = ["runtime-tokio-rustls"]
-runtime-async-std-native-tls = ["sqlx/runtime-async-std-native-tls"]
-runtime-tokio-native-tls = ["sqlx/runtime-tokio-native-tls"]
-runtime-async-std-rustls = ["sqlx/runtime-async-std-rustls"]
-runtime-tokio-rustls = ["sqlx/runtime-tokio-rustls"]
+runtime-async-std-native-tls = [
+    "sqlx/runtime-async-std",
+    "sqlx/tls-native-tls",
+]
+
+runtime-tokio-native-tls = [
+    "sqlx/runtime-tokio",
+    "sqlx/tls-native-tls",
+]
+
+runtime-async-std-rustls = [
+    "sqlx/runtime-async-std",
+    "sqlx/tls-rustls",
+]
+
+runtime-tokio-rustls = [
+    "sqlx/runtime-tokio",
+    "sqlx/tls-rustls",
+]
