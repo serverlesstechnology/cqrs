@@ -347,11 +347,11 @@ mod test {
         snapshot_context, test_event_envelope, Created, SomethingElse, TestAggregate, TestEvent,
         Tested, TEST_CONNECTION_STRING,
     };
-    use crate::{default_postgress_pool, PostgresEventRepository};
+    use crate::{default_postgres_pool, PostgresEventRepository};
 
     #[tokio::test]
     async fn event_repositories() {
-        let pool = default_postgress_pool(TEST_CONNECTION_STRING).await;
+        let pool = default_postgres_pool(TEST_CONNECTION_STRING).await;
         let id = uuid::Uuid::new_v4().to_string();
         let event_repo: PostgresEventRepository =
             PostgresEventRepository::new(pool.clone()).with_streaming_channel_size(1);
@@ -427,7 +427,7 @@ mod test {
 
     #[tokio::test]
     async fn snapshot_repositories() {
-        let pool = default_postgress_pool(TEST_CONNECTION_STRING).await;
+        let pool = default_postgres_pool(TEST_CONNECTION_STRING).await;
         let id = uuid::Uuid::new_v4().to_string();
         let event_repo: PostgresEventRepository = PostgresEventRepository::new(pool.clone());
         let snapshot = event_repo.get_snapshot::<TestAggregate>(&id).await.unwrap();

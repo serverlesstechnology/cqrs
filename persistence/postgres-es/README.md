@@ -19,7 +19,7 @@ Requires access to a Postgres DB with existing tables. See:
 
 A simple configuration example:
 ```
-let store = default_postgress_pool("postgresql://my_user:my_pass@localhost:5432/my_db");
+let store = default_postgres_pool("postgresql://my_user:my_pass@localhost:5432/my_db");
 let cqrs = postgres_es::postgres_cqrs(pool, vec![])
 ```
 
