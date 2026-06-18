@@ -10,14 +10,14 @@ use sqlx::{Pool, Postgres};
 ///
 /// ```
 /// use sqlx::{Pool, Postgres};
-/// use postgres_es::default_postgress_pool;
+/// use postgres_es::default_postgres_pool;
 ///
 /// # async fn configure_pool() {
 /// let connection_string = "postgresql://test_user:test_pass@localhost:5432/test";
-/// let pool: Pool<Postgres> = default_postgress_pool(connection_string).await;
+/// let pool: Pool<Postgres> = default_postgres_pool(connection_string).await;
 /// # }
 /// ```
-pub async fn default_postgress_pool(connection_string: &str) -> Pool<Postgres> {
+pub async fn default_postgres_pool(connection_string: &str) -> Pool<Postgres> {
     PgPoolOptions::new()
         .max_connections(10)
         .connect(connection_string)
@@ -74,12 +74,12 @@ mod test {
     use crate::testing::tests::{
         TestAggregate, TestQueryRepository, TestServices, TestView, TEST_CONNECTION_STRING,
     };
-    use crate::{default_postgress_pool, postgres_cqrs, PostgresViewRepository};
+    use crate::{default_postgres_pool, postgres_cqrs, PostgresViewRepository};
     use std::sync::Arc;
 
     #[tokio::test]
     async fn test_valid_cqrs_framework() {
-        let pool = default_postgress_pool(TEST_CONNECTION_STRING).await;
+        let pool = default_postgres_pool(TEST_CONNECTION_STRING).await;
         let repo =
             PostgresViewRepository::<TestView, TestAggregate>::new("test_view", pool.clone());
         let query = TestQueryRepository::new(Arc::new(repo));

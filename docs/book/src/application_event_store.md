@@ -10,7 +10,7 @@ Creating a `PostgresEventRepository`
 ```rust
 fn configure_repo() -> PostgresEventRepository {
     let connection_string = "postgresql://test_user:test_pass@localhost:5432/test";
-    let pool: Pool<Postgres> = default_postgress_pool(connection_string).await;
+    let pool: Pool<Postgres> = default_postgres_pool(connection_string).await;
     PostgresEventRepository::new(pool)
 }
 ```

@@ -130,12 +130,12 @@ mod test {
     use crate::testing::tests::{
         Created, TestAggregate, TestEvent, TestView, TEST_CONNECTION_STRING,
     };
-    use crate::{default_postgress_pool, PostgresViewRepository};
+    use crate::{default_postgres_pool, PostgresViewRepository};
     use cqrs_es::persist::{ViewContext, ViewRepository};
 
     #[tokio::test]
     async fn test_valid_view_repository() {
-        let pool = default_postgress_pool(TEST_CONNECTION_STRING).await;
+        let pool = default_postgres_pool(TEST_CONNECTION_STRING).await;
         let repo =
             PostgresViewRepository::<TestView, TestAggregate>::new("test_view", pool.clone());
         let test_view_id = uuid::Uuid::new_v4().to_string();

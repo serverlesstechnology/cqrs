@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use cqrs_es::doc::{Customer, CustomerEvent};
 use cqrs_es::persist::{PersistedEventStore, SemanticVersionEventUpcaster};
 use cqrs_es::EventStore;
-use postgres_es::{default_postgress_pool, PostgresEventRepository};
+use postgres_es::{default_postgres_pool, PostgresEventRepository};
 use serde_json::Value;
 use sqlx::{Pool, Postgres};
 
@@ -18,7 +18,7 @@ fn new_test_event_store(
 
 #[tokio::test]
 async fn commit_and_load_events() {
-    let pool = default_postgress_pool(TEST_CONNECTION_STRING).await;
+    let pool = default_postgres_pool(TEST_CONNECTION_STRING).await;
     let repo = PostgresEventRepository::new(pool);
     let event_store =
         PersistedEventStore::<PostgresEventRepository, Customer>::new_event_store(repo);
@@ -28,7 +28,7 @@ async fn commit_and_load_events() {
 
 #[tokio::test]
 async fn commit_and_load_events_snapshot_store() {
-    let pool = default_postgress_pool(TEST_CONNECTION_STRING).await;
+    let pool = default_postgres_pool(TEST_CONNECTION_STRING).await;
     let repo = PostgresEventRepository::new(pool);
     let event_store =
         PersistedEventStore::<PostgresEventRepository, Customer>::new_aggregate_store(repo);
@@ -77,7 +77,7 @@ async fn simple_es_commit_and_load_test(
 
 #[tokio::test]
 async fn upcasted_event() {
-    let pool = default_postgress_pool(TEST_CONNECTION_STRING).await;
+    let pool = default_postgres_pool(TEST_CONNECTION_STRING).await;
     let upcaster = SemanticVersionEventUpcaster::new(
         "NameAdded",
         "1.0.1",

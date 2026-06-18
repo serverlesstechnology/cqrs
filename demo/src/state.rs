@@ -1,7 +1,7 @@
 use crate::config::cqrs_framework;
 use crate::domain::aggregate::BankAccount;
 use crate::queries::BankAccountView;
-use postgres_es::{default_postgress_pool, PostgresCqrs, PostgresViewRepository};
+use postgres_es::{default_postgres_pool, PostgresCqrs, PostgresViewRepository};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -17,7 +17,7 @@ pub async fn new_application_state() -> ApplicationState {
     //
     // The needed database tables are automatically configured with `docker-compose up -d`,
     // see init file at `/db/init.sql` for more.
-    let pool = default_postgress_pool("postgresql://demo_user:demo_pass@localhost:5432/demo").await;
+    let pool = default_postgres_pool("postgresql://demo_user:demo_pass@localhost:5432/demo").await;
     let (cqrs, account_query) = cqrs_framework(pool);
     ApplicationState {
         cqrs,
