@@ -1008,7 +1008,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1583,7 +1583,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.5.10",
+ "socket2 0.6.3",
  "tokio",
  "tower-service",
  "tracing",
@@ -1785,9 +1785,9 @@ dependencies = [
 
 [[package]]
 name = "lambda_http"
-version = "1.3.1"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13a604844a6087df69f1271ef31b11178d5bf91094cae1a0d26900b2044ef07b"
+checksum = "f468b922ed4a28ab7a49c8e2a311e0e33c0b564877acc7db8eb5150e91e3577b"
 dependencies = [
  "aws_lambda_events",
  "bytes",
@@ -1810,9 +1810,9 @@ dependencies = [
 
 [[package]]
 name = "lambda_runtime"
-version = "1.4.0"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b4a47ba6672230da151bb4bc10e4c09c9dcb7f6b363f47dc3ce84df1ec9bbbd"
+checksum = "299ff04ffc8ff30a26f5a45fbad8f04dbaf9f05ba035e220045754955138c19c"
 dependencies = [
  "async-stream",
  "base64",
@@ -2373,7 +2373,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2557,9 +2557,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.151"
+version = "1.0.154"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14"
+checksum = "e7e9cc8b1b85264074fbcc02a88680c4096b1e47df8f739dceb03bf482f04bd6"
 dependencies = [
  "itoa",
  "memchr",
@@ -2942,7 +2942,7 @@ dependencies = [
  "getrandom 0.3.4",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
