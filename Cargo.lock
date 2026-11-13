@@ -281,9 +281,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-dynamodb"
-version = "1.138.0"
+version = "1.139.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "492f578612e1441c9bd5a6d33ac63548ba45c507c8fcef96234f2b00fcf744cf"
+checksum = "22fedb4ba5f51528c2607fc0a4c8504c9a80852842e1599b4c2e40f928867336"
 dependencies = [
  "arc-swap",
  "aws-credential-types",
